@@ -7,8 +7,9 @@
 
 #import <Foundation/Foundation.h>
 #import "AddTransactionViewController.h"
+#import "ViewController.h"
 
-@interface AddTransactionViewController () <UIPickerViewDelegate, UIPickerViewDataSource, UITextFieldDelegate>
+@interface AddTransactionViewController () <UIPickerViewDelegate, UIPickerViewDataSource, UITextFieldDelegate, AddTransactionDelegate>
 
 @end
 
@@ -72,13 +73,18 @@
 
 
 
-
-#pragma mark -
+#pragma mark - Save Button
 
 - (IBAction)addTransactionButton:(UIButton *)sender {
-    NSLog(@"Amount: %@", self.amountTextField.text);
-    NSLog(@"Picker Value: %@", self.selectedCategory);
-    NSLog(@"Date: %@", self.datePickerOutlet.date);
+    NSInteger amount = [self.amountTextField.text intValue];
+    NSString *category = self.selectedCategory;
+    NSDate *date = self.datePickerOutlet.date;
+    
+    Transaction *transaction = [[Transaction alloc] initWithAmount:&amount content:category createdAt:date];
+    [self.transactions addObject:transaction];
+    
+    [self.delegate didSaveTransactions:self.transactions];
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 

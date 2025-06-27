@@ -42,6 +42,9 @@
                         <viewLayoutGuide key="safeArea" id="y1F-ys-nu8"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                     </view>
+                    <connections>
+                        <outlet property="transactionTableView" destination="Gp8-2q-KcS" id="Jrk-2o-eGa"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Z56-ii-kel" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
