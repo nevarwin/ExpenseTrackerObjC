@@ -9,6 +9,7 @@
 #define AddTransactionViewController_h
 
 #import <UIKit/UIKit.h>
+#import "Transaction.h"
 
 @interface AddTransactionViewController : UIViewController
 
@@ -24,6 +25,10 @@
 @property (weak, nonatomic) IBOutlet UIDatePicker *datePickerOutlet;
 
 @property (weak, nonatomic) NSString *selectedCategory;
+
+@property (nonatomic, strong) NSMutableArray<Transaction *> *transactions;
+
+@property (nonatomic, weak) id delegate;
 
 @end
 

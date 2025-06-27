@@ -11,7 +11,14 @@
 
 - (IBAction)addTransaction:(UIButton *)sender;
 
+@property (weak, nonatomic) IBOutlet UITableView *transactionTableView;
 
+@property (strong, nonatomic) NSMutableArray *transactionsArray;
 
 @end
+
+
+@protocol AddTransactionDelegate <NSObject>
+- (void) didSaveTransactions: (NSMutableArray *) transactions;
+@end;
 
