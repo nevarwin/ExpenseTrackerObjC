@@ -10,9 +10,9 @@
 
 @implementation Transaction
 
-- (instancetype)initWithAmount:(NSInteger *)amount
+- (instancetype)initWithAmount:(NSInteger)amount
                       category:(NSString *)category
-                    createdAt:(NSDate *)createdAt{
+                     createdAt:(NSDate *)createdAt{
     
     self = [super init];
     if (self) {

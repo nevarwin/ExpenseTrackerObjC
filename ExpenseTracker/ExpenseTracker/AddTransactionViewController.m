@@ -16,13 +16,14 @@
 @implementation AddTransactionViewController
 
 - (void) viewDidLoad{
+    self.transactions = [NSMutableArray array];
     self.categoryValues = @[@"Apple", @"Banana", @"Orange"];
     self.pickerView.delegate = self;
     self.pickerView.dataSource = self;
     self.amountTextField.delegate = self;
     
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissKeyboard)];
-        [self.view addGestureRecognizer:tapGesture];
+    [self.view addGestureRecognizer:tapGesture];
 }
 
 - (void)dismissKeyboard {
@@ -67,23 +68,29 @@
     return self.categoryValues[row];
 }
 
-- (void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component {
-    self.selectedCategory = self.categoryValues[row];
-}
-
 
 
 #pragma mark - Save Button
 
 - (IBAction)addTransactionButton:(UIButton *)sender {
+    NSInteger row = [self.pickerView selectedRowInComponent:0];
+    self.selectedCategory = [self.categoryValues objectAtIndex:(NSUInteger)row];
+    
+    
     NSInteger amount = [self.amountTextField.text intValue];
     NSString *category = self.selectedCategory;
     NSDate *date = self.datePickerOutlet.date;
     
-    Transaction *transaction = [[Transaction alloc] initWithAmount:&amount content:category createdAt:date];
-    [self.transactions addObject:transaction];
+    if (amount == 0 || !category || !date) {
+        NSLog(@"Invalid input: Amount=%ld, Category=%@, Date=%@",
+              (long)amount, category, date);
+        return;
+    }
     
-    [self.delegate didSaveTransactions:self.transactions];
+    Transaction *transaction = [[Transaction alloc] initWithAmount:amount category:category createdAt:date];
+    
+    [self.delegate didSaveTransactions:transaction];
+    
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
