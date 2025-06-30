@@ -10,12 +10,12 @@
 
 @interface Transaction  : NSObject
 
-@property (nonatomic, nonatomic) NSInteger *amount;
+@property (nonatomic, assign) NSInteger amount;
 @property (nonatomic, strong) NSString *category;
 @property (nonatomic, strong) NSDate *createdAt;
 
-- (instancetype)initWithAmount:(NSInteger *)amount
-                      content:(NSString *)category
+- (instancetype)initWithAmount:(NSInteger)amount
+                      category:(NSString *)category
                     createdAt:(NSDate *)createdAt;
 
 @end

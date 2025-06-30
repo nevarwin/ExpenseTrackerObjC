@@ -9,7 +9,7 @@
 #import "Transaction.h"
 #import "AddTransactionViewController.h"
 
-@interface ViewController () <UITableViewDataSource>
+@interface ViewController () <UITableViewDataSource, UITableViewDelegate>
 
 @end
 
@@ -17,6 +17,9 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.transactionTableView.delegate = self;
+    self.transactionTableView.dataSource = self;
+    self.transactionsArray = [NSMutableArray array];
 }
 
 
@@ -35,13 +38,13 @@
 
 #pragma mark - UITableViewDataSource
 
-- (NSInteger)tableView:(UITableView *)tableview numberOfRowsInSection:(NSInteger)section{
+- (NSInteger)tableView:(UITableView *)tableview numberOfRowsInSection:(NSInteger)section {
     return self.transactionsArray.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     
-    static NSString *cellIdentifier = @"PostCell";
+    static NSString *cellIdentifier = @"TransactionsCell";
     
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
     
@@ -50,7 +53,7 @@
     }
     Transaction *transaction = self.transactionsArray[indexPath.row];
     cell.editing = true;
-    cell.textLabel.text = [NSString stringWithFormat:@"Title: %ld", (long) transaction.amount];
+    cell.textLabel.text = [NSString stringWithFormat:@"Amount: %ld", (long) transaction.amount];
     cell.detailTextLabel.text = transaction.category;
     
     return cell;
@@ -58,8 +61,8 @@
 
 
 #pragma mark -
-- (void) didSaveTransactions:(NSMutableArray *)transactions{
-    self.transactionsArray = transactions;
+- (void) didSaveTransactions:(Transaction *)transactions{
+    [self.transactionsArray addObject:transactions];
     [self.transactionTableView reloadData];
 }
 
