@@ -10,6 +10,7 @@
 
 @protocol AddTransactionDelegate <NSObject>
 - (void) didSaveTransactions: (Transaction *) transactions;
+- (void) didUpdateTransaction: (Transaction *) transaction id:(NSString *) id;
 @end;
 
 
