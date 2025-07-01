@@ -7,9 +7,9 @@
 
 #import "ViewController.h"
 #import "Transaction.h"
-#import "AddTransactionViewController.h"
+#import "TransactionsViewController.h"
 
-@interface ViewController () <UITableViewDataSource, UITableViewDelegate>
+@interface ViewController () <UITableViewDataSource, UITableViewDelegate, AddTransactionDelegate>
 
 @end
 
@@ -28,8 +28,9 @@
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    if ([segue.identifier isEqualToString:@"AddTransactionViewController"]) {
-        AddTransactionViewController *secondVC = segue.destinationViewController;
+    if ([segue.identifier isEqualToString:@"TransactionsViewController"]) {
+        TransactionsViewController *secondVC = segue.destinationViewController;
+        secondVC.isEditMode = NO;
         secondVC.delegate = self;
     }
 }
@@ -59,12 +60,29 @@
     return cell;
 }
 
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(nonnull NSIndexPath *)indexPath{
+    TransactionsViewController *transactionVC = [self.storyboard instantiateViewControllerWithIdentifier:@"TransactionsViewController"];
+    
+    transactionVC.delegate = self;
+    transactionVC.existingTransaction = self.transactionsArray[indexPath.row];
+    transactionVC.isEditMode = YES;
+    [self presentViewController:transactionVC animated:YES completion:nil];
+    
+    
+}
 
-#pragma mark -
+
+#pragma mark - AddTransactionDelegate
 - (void) didSaveTransactions:(Transaction *)transactions{
     [self.transactionsArray addObject:transactions];
+    
+    self.transactionsArray =  [[self.transactionsArray sortedArrayUsingComparator:^NSComparisonResult(Transaction *t1, Transaction *t2) {
+        return [t2.createdAt compare:t1.createdAt];
+    }] mutableCopy];
+    
     [self.transactionTableView reloadData];
 }
+
 
 
 @end

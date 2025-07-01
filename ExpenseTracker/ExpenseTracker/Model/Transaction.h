@@ -10,6 +10,7 @@
 
 @interface Transaction  : NSObject
 
+@property (nonatomic, copy) NSString *transactionId;
 @property (nonatomic, assign) NSInteger amount;
 @property (nonatomic, strong) NSString *category;
 @property (nonatomic, strong) NSDate *createdAt;

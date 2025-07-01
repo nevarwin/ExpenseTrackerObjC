@@ -6,19 +6,22 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "Transaction.h"
+
+@protocol AddTransactionDelegate <NSObject>
+- (void) didSaveTransactions: (Transaction *) transactions;
+@end;
+
+
 
 @interface ViewController : UIViewController
 
-- (IBAction)addTransaction:(UIButton *)sender;
-
 @property (weak, nonatomic) IBOutlet UITableView *transactionTableView;
-
 @property (strong, nonatomic) NSMutableArray *transactionsArray;
+
+- (IBAction)addTransaction:(UIButton *)sender;
 
 @end
 
 
-@protocol AddTransactionDelegate <NSObject>
-- (void) didSaveTransactions: (NSMutableArray *) transactions;
-@end;
 
