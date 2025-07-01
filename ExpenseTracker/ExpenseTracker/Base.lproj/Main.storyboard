@@ -34,8 +34,8 @@
                                 <state key="normal" title="Button"/>
                                 <buttonConfiguration key="configuration" style="filled" image="pencil" catalog="system" title="Add"/>
                                 <connections>
-                                    <action selector="addTransaction:" destination="fNs-MW-Ipb" eventType="touchUpInside" id="pFv-gx-74K"/>
-                                    <segue destination="yti-2d-iFL" kind="show" identifier="AddTransactionViewController" id="3oY-hi-rAk"/>
+                                    <action selector="addTransaction:" destination="fNs-MW-Ipb" eventType="touchUpInside" id="bva-u0-sM3"/>
+                                    <segue destination="yti-2d-iFL" kind="show" identifier="TransactionsViewController" id="3oY-hi-rAk"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -50,10 +50,10 @@
             </objects>
             <point key="canvasLocation" x="-547.32824427480909" y="-144.36619718309859"/>
         </scene>
-        <!--Add Transaction View Controller-->
+        <!--Transactions View Controller-->
         <scene sceneID="nrW-hX-nzW">
             <objects>
-                <viewController id="yti-2d-iFL" customClass="AddTransactionViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="TransactionsViewController" id="yti-2d-iFL" customClass="TransactionsViewController" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="gyZ-lr-buj">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="783"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -114,6 +114,7 @@
                     <navigationItem key="navigationItem" id="6Hh-1h-r3D"/>
                     <connections>
                         <outlet property="amountTextField" destination="upQ-M0-CvF" id="vvY-TW-wU5"/>
+                        <outlet property="button" destination="RDe-zw-brV" id="hFc-ze-key"/>
                         <outlet property="datePickerOutlet" destination="3bS-yC-T5c" id="pEw-of-8BF"/>
                         <outlet property="pickerView" destination="hQx-6A-alc" id="ROe-dQ-THe"/>
                     </connections>

@@ -1,19 +1,19 @@
 //
-//  AddTransactionViewController.m
+//  TransactionsViewController.m
 //  ExpenseTracker
 //
 //  Created by XOO_Raven on 6/27/25.
 //
 
 #import <Foundation/Foundation.h>
-#import "AddTransactionViewController.h"
+#import "TransactionsViewController.h"
 #import "ViewController.h"
 
-@interface AddTransactionViewController () <UIPickerViewDelegate, UIPickerViewDataSource, UITextFieldDelegate, AddTransactionDelegate>
+@interface TransactionsViewController () <UIPickerViewDelegate, UIPickerViewDataSource, UITextFieldDelegate, DataPassingDelegate>
 
 @end
 
-@implementation AddTransactionViewController
+@implementation TransactionsViewController
 
 - (void) viewDidLoad{
     self.transactions = [NSMutableArray array];
@@ -24,6 +24,8 @@
     
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissKeyboard)];
     [self.view addGestureRecognizer:tapGesture];
+    
+    [self configureViewForMode];
 }
 
 - (void)dismissKeyboard {
@@ -35,6 +37,25 @@
     if (self) {
     }
     return self;
+}
+
+-(void)configureViewForMode{
+    if(self.isEditMode){
+        self.amountTextField.text = [NSString stringWithFormat:@"%.2ld", (long)self.existingTransaction.amount];
+        
+        NSUInteger categoryIndex = [self.categoryValues indexOfObject:self.existingTransaction.category];
+        if (categoryIndex != NSNotFound) {
+            [self.pickerView selectRow:categoryIndex inComponent:0 animated:NO];
+        }
+        
+        [self.datePickerOutlet setDate:self.existingTransaction.createdAt];
+        [self.button setTitle:@"Update" forState:UIControlStateNormal];
+    } else {
+        self.amountTextField.text = @"";
+        [self.pickerView selectRow:0 inComponent:0 animated:NO];
+        [self.datePickerOutlet setDate:[NSDate date]];
+        [self.button setTitle:@"Add" forState:UIControlStateNormal];
+    }
 }
 
 
@@ -76,7 +97,6 @@
     NSInteger row = [self.pickerView selectedRowInComponent:0];
     self.selectedCategory = [self.categoryValues objectAtIndex:(NSUInteger)row];
     
-    
     NSInteger amount = [self.amountTextField.text intValue];
     NSString *category = self.selectedCategory;
     NSDate *date = self.datePickerOutlet.date;
@@ -87,13 +107,30 @@
         return;
     }
     
-    Transaction *transaction = [[Transaction alloc] initWithAmount:amount category:category createdAt:date];
+    Transaction *transaction;
+    
+    if (self.isEditMode && self.existingTransaction.transactionId) {
+        self.existingTransaction.amount = amount;
+        self.existingTransaction.category = category;
+        self.existingTransaction.createdAt = date;
+        
+        transaction = self.existingTransaction;
+    } else {
+        transaction = [[Transaction alloc] init];
+        transaction.transactionId = [[NSUUID UUID] UUIDString];
+        transaction.amount = amount;
+        transaction.category = category;
+        transaction.createdAt = date;
+    }
     
     [self.delegate didSaveTransactions:transaction];
     
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
+- (void)didUpdateItem:(Transaction *)item {
+    NSLog(@"DidUpdateItem");
+}
 
 - (void)datePicker:(UIDatePicker *)sender __attribute__((ibaction)) {
 }
