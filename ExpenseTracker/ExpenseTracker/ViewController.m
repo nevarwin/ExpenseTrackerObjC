@@ -83,6 +83,10 @@
     [self.transactionTableView reloadData];
 }
 
+- (void) didUpdateTransaction:(Transaction *) transaction id:(NSString *) id{
+    [self.transactionsArray insertObject:transaction atIndex:1];
+}
+
 
 
 @end
