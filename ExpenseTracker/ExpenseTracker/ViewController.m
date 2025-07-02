@@ -67,9 +67,20 @@
     transactionVC.existingTransaction = self.transactionsArray[indexPath.row];
     transactionVC.isEditMode = YES;
     [self presentViewController:transactionVC animated:YES completion:nil];
-    
-    
+
 }
+
+// Deleting via swipe gesture
+- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (editingStyle == UITableViewCellEditingStyleDelete) {
+        // Remove the item from your data source
+        [self.transactionsArray removeObjectAtIndex:indexPath.row];
+        
+        // Delete the row from the table view
+        [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+    }
+}
+
 
 
 #pragma mark - TransactionDelegate
