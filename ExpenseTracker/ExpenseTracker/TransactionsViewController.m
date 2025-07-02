@@ -115,7 +115,7 @@
         self.existingTransaction.createdAt = date;
         
         transaction = self.existingTransaction;
-        if ([self.delegate respondsToSelector:@selector(didSaveTransaction:)]) {
+        if ([self.delegate respondsToSelector:@selector(didUpdateTransaction:id:)]) {
             [self.delegate didUpdateTransaction:transaction id:self.existingTransaction.transactionId];
         }
     } else {
