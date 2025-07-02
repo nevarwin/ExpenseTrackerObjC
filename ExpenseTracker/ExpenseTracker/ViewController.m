@@ -9,7 +9,7 @@
 #import "Transaction.h"
 #import "TransactionsViewController.h"
 
-@interface ViewController () <UITableViewDataSource, UITableViewDelegate, AddTransactionDelegate>
+@interface ViewController () <UITableViewDataSource, UITableViewDelegate>
 
 @end
 
@@ -72,8 +72,8 @@
 }
 
 
-#pragma mark - AddTransactionDelegate
-- (void) didSaveTransactions:(Transaction *)transactions{
+#pragma mark - TransactionDelegate
+- (void) didSaveTransaction:(Transaction *)transactions{
     [self.transactionsArray addObject:transactions];
     
     self.transactionsArray =  [[self.transactionsArray sortedArrayUsingComparator:^NSComparisonResult(Transaction *t1, Transaction *t2) {
@@ -84,7 +84,25 @@
 }
 
 - (void) didUpdateTransaction:(Transaction *) transaction id:(NSString *) id{
-    [self.transactionsArray insertObject:transaction atIndex:1];
+    NSInteger indexToUpdate = NSNotFound;
+    
+    for (NSInteger i = 0; i < self.transactionsArray.count; i++){
+        Transaction *existingTransaction = self.transactionsArray[i];
+        if([existingTransaction.transactionId isEqualToString:transaction.transactionId]){
+            indexToUpdate = i;
+            break;
+        }
+    }
+    
+    if(indexToUpdate != NSNotFound){
+        [self.transactionsArray replaceObjectAtIndex:indexToUpdate withObject:transaction];
+    }
+    
+    self.transactionsArray =  [[self.transactionsArray sortedArrayUsingComparator:^NSComparisonResult(Transaction *t1, Transaction *t2) {
+        return [t2.createdAt compare:t1.createdAt];
+    }] mutableCopy];
+    
+    [self.transactionTableView reloadData];
 }
 
 

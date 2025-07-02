@@ -9,7 +9,7 @@
 #import "TransactionsViewController.h"
 #import "ViewController.h"
 
-@interface TransactionsViewController () <UIPickerViewDelegate, UIPickerViewDataSource, UITextFieldDelegate, DataPassingDelegate>
+@interface TransactionsViewController () <UIPickerViewDelegate, UIPickerViewDataSource, UITextFieldDelegate>
 
 @end
 
@@ -115,15 +115,20 @@
         self.existingTransaction.createdAt = date;
         
         transaction = self.existingTransaction;
+        if ([self.delegate respondsToSelector:@selector(didSaveTransaction:)]) {
+            [self.delegate didUpdateTransaction:transaction id:self.existingTransaction.transactionId];
+        }
     } else {
         transaction = [[Transaction alloc] init];
         transaction.transactionId = [[NSUUID UUID] UUIDString];
         transaction.amount = amount;
         transaction.category = category;
         transaction.createdAt = date;
+        if ([self.delegate respondsToSelector:@selector(didSaveTransaction:)]) {
+            [self.delegate didSaveTransaction:transaction];
+        }
     }
     
-    [self.delegate didSaveTransactions:transaction];
     
     [self dismissViewControllerAnimated:YES completion:nil];
 }

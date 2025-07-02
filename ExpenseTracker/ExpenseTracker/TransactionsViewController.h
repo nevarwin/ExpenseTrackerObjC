@@ -11,10 +11,6 @@
 #import <UIKit/UIKit.h>
 #import "Transaction.h"
 
-@protocol DataPassingDelegate <NSObject>
-- (void) didUpdateItem:(Transaction *) item;
-@end
-
 
 @interface TransactionsViewController : UIViewController
 
