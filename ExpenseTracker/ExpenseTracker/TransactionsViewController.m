@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 #import "TransactionsViewController.h"
 #import "ViewController.h"
+#import "AppDelegate.h"
 
 @interface TransactionsViewController () <UIPickerViewDelegate, UIPickerViewDataSource, UITextFieldDelegate>
 
@@ -16,7 +17,6 @@
 @implementation TransactionsViewController
 
 - (void) viewDidLoad{
-    self.transactions = [NSMutableArray array];
     self.categoryValues = @[@"Apple", @"Banana", @"Orange"];
     self.pickerView.delegate = self;
     self.pickerView.dataSource = self;
@@ -94,6 +94,7 @@
 #pragma mark - Save Button
 
 - (IBAction)addTransactionButton:(UIButton *)sender {
+    //UIPickerView
     NSInteger row = [self.pickerView selectedRowInComponent:0];
     self.selectedCategory = [self.categoryValues objectAtIndex:(NSUInteger)row];
     
@@ -101,16 +102,19 @@
     NSString *category = self.selectedCategory;
     NSDate *date = self.datePickerOutlet.date;
     
+    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+    NSManagedObjectContext *context = appDelegate.persistentContainer.viewContext;
+    
+    Transaction *transaction = [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
+    
     if (amount == 0 || !category || !date) {
         NSLog(@"Invalid input: Amount=%ld, Category=%@, Date=%@",
               (long)amount, category, date);
         return;
     }
     
-    Transaction *transaction;
-    
     if (self.isEditMode && self.existingTransaction.transactionId) {
-        self.existingTransaction.amount = amount;
+        self.existingTransaction.amount = (int32_t)amount;
         self.existingTransaction.category = category;
         self.existingTransaction.createdAt = date;
         
@@ -119,9 +123,8 @@
             [self.delegate didUpdateTransaction:transaction id:self.existingTransaction.transactionId];
         }
     } else {
-        transaction = [[Transaction alloc] init];
         transaction.transactionId = [[NSUUID UUID] UUIDString];
-        transaction.amount = amount;
+        transaction.amount = (int32_t)amount;
         transaction.category = category;
         transaction.createdAt = date;
         if ([self.delegate respondsToSelector:@selector(didSaveTransaction:)]) {

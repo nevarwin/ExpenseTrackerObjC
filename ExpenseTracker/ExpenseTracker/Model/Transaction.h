@@ -7,18 +7,16 @@
 
 #ifndef Transaction_h
 #define Transaction_h
+#import <CoreData/CoreData.h>
 
-@interface Transaction  : NSObject
+@interface Transaction  : NSManagedObject
 
-@property (nonatomic, copy) NSString *transactionId;
-@property (nonatomic, assign) NSInteger amount;
-@property (nonatomic, strong) NSString *category;
-@property (nonatomic, strong) NSDate *createdAt;
-
-- (instancetype)initWithAmount:(NSInteger)amount
-                      category:(NSString *)category
-                    createdAt:(NSDate *)createdAt;
+@property (nullable, nonatomic, copy) NSString *transactionId;
+@property (nonatomic) int32_t amount;
+@property (nullable, nonatomic, copy) NSString *category;
+@property (nullable, nonatomic, copy) NSDate *createdAt;
 
 @end
 
 #endif /* Transaction_h */
+
