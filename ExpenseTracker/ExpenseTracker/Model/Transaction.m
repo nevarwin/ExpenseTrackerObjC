@@ -10,17 +10,10 @@
 
 @implementation Transaction
 
-- (instancetype)initWithAmount:(NSInteger)amount
-                      category:(NSString *)category
-                     createdAt:(NSDate *)createdAt{
-    
-    self = [super init];
-    if (self) {
-        _amount = amount;
-        _category = category;
-        _createdAt = createdAt;
-    }
-    return self;
-}
+@dynamic transactionId;
+@dynamic amount;
+@dynamic category;
+@dynamic createdAt;
+
 
 @end

@@ -20,7 +20,7 @@
 @property (strong, nonatomic) NSArray *categoryValues;
 @property (weak, nonatomic) IBOutlet UIButton *button;
 @property (weak, nonatomic) NSString *selectedCategory;
-@property (nonatomic, strong) NSMutableArray<Transaction *> *transactions;
+
 @property (nonatomic, assign) BOOL isEditMode;
 @property (nonatomic, weak) id delegate;
 @property (nonatomic, strong) Transaction *existingTransaction;
