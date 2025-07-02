@@ -8,8 +8,8 @@
 #import <UIKit/UIKit.h>
 #import "Transaction.h"
 
-@protocol AddTransactionDelegate <NSObject>
-- (void) didSaveTransactions: (Transaction *) transactions;
+@protocol TransactionDelegate <NSObject>
+- (void) didSaveTransaction: (Transaction *) transactions;
 - (void) didUpdateTransaction: (Transaction *) transaction id:(NSString *) id;
 @end;
 
