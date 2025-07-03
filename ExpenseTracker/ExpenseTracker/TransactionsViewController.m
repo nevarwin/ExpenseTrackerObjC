@@ -40,6 +40,12 @@
 }
 
 -(void)configureViewForMode{
+    // Get Core Data Context
+    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+    NSManagedObjectContext *context = appDelegate.persistentContainer.viewContext;
+    
+    Transaction *transaction = self.isEditMode && self.existingTransaction.transactionId ? self.existingTransaction : [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
+    
     if(self.isEditMode){
         self.amountTextField.text = [NSString stringWithFormat:@"%.2ld", (long)self.existingTransaction.amount];
         
@@ -48,7 +54,7 @@
             [self.pickerView selectRow:categoryIndex inComponent:0 animated:NO];
         }
         
-        [self.datePickerOutlet setDate:self.existingTransaction.createdAt];
+        [self.datePickerOutlet setDate:self.existingTransaction.date];
         [self.button setTitle:@"Update" forState:UIControlStateNormal];
     } else {
         self.amountTextField.text = @"";
@@ -94,44 +100,41 @@
 #pragma mark - Save Button
 
 - (IBAction)addTransactionButton:(UIButton *)sender {
-    //UIPickerView
+    //Get selected categor from picker
     NSInteger row = [self.pickerView selectedRowInComponent:0];
-    self.selectedCategory = [self.categoryValues objectAtIndex:(NSUInteger)row];
+    NSString *category = self.categoryValues[row];
     
-    NSInteger amount = [self.amountTextField.text intValue];
-    NSString *category = self.selectedCategory;
+    //Parse amount using NSNumberFormatter for safety
+    NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
+    formatter.numberStyle = NSNumberFormatterDecimalStyle;
+    NSNumber *amountNumber = [formatter numberFromString:self.amountTextField.text];
+    NSInteger amount = amountNumber ? amountNumber.integerValue : 0;
+    
     NSDate *date = self.datePickerOutlet.date;
     
-    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = appDelegate.persistentContainer.viewContext;
-    
-    Transaction *transaction = [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
-    
-    if (amount == 0 || !category || !date) {
+    if (amount == 0 || !category.length || !date) {
         NSLog(@"Invalid input: Amount=%ld, Category=%@, Date=%@",
               (long)amount, category, date);
         return;
     }
     
-    if (self.isEditMode && self.existingTransaction.transactionId) {
-        self.existingTransaction.amount = (int32_t)amount;
-        self.existingTransaction.category = category;
-        self.existingTransaction.createdAt = date;
-        
-        transaction = self.existingTransaction;
-        if ([self.delegate respondsToSelector:@selector(didUpdateTransaction:id:)]) {
-            [self.delegate didUpdateTransaction:transaction id:self.existingTransaction.transactionId];
-        }
-    } else {
-        transaction.transactionId = [[NSUUID UUID] UUIDString];
-        transaction.amount = (int32_t)amount;
-        transaction.category = category;
-        transaction.createdAt = date;
-        if ([self.delegate respondsToSelector:@selector(didSaveTransaction:)]) {
-            [self.delegate didSaveTransaction:transaction];
-        }
+    // Get Core Data Context
+    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+    NSManagedObjectContext *context = appDelegate.persistentContainer.viewContext;
+    
+    Transaction *transaction = self.isEditMode && self.existingTransaction.transactionId ? self.existingTransaction : [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
+    
+    //Assign transaction values
+    if (self.isEditMode || !self.existingTransaction.transactionId){
+        transaction.transactionId = [NSUUID UUID].UUIDString;
+        transaction.updatedAt = [NSDate date];
     }
     
+    transaction.amount = (int32_t)amount;
+    transaction.category = category;
+    transaction.date = date;
+    transaction.createdAt = [NSDate date];
+    transaction.updatedAt = nil;
     
     [self dismissViewControllerAnimated:YES completion:nil];
 }

@@ -14,7 +14,10 @@
 @property (nullable, nonatomic, copy) NSString *transactionId;
 @property (nonatomic) int32_t amount;
 @property (nullable, nonatomic, copy) NSString *category;
+@property (nullable, nonatomic, copy) NSDate *date;
 @property (nullable, nonatomic, copy) NSDate *createdAt;
+@property (nullable, nonatomic, copy) NSDate *updatedAt;
+@property (nonatomic, assign) BOOL isActive;
 
 @end
 

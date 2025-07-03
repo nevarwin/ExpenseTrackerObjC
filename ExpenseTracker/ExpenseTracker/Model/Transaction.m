@@ -13,7 +13,14 @@
 @dynamic transactionId;
 @dynamic amount;
 @dynamic category;
+@dynamic date;
 @dynamic createdAt;
+@dynamic updatedAt;
+@dynamic isActive;
 
+- (void)awakeFromInsert {
+    [super awakeFromInsert];
+    self.isActive = YES;
+}
 
 @end
