@@ -8,8 +8,9 @@
 #import "ViewController.h"
 #import "Transaction.h"
 #import "TransactionsViewController.h"
+#import "AppDelegate.h"
 
-@interface ViewController () <UITableViewDataSource, UITableViewDelegate>
+@interface ViewController () <UITableViewDataSource, UITableViewDelegate, NSFetchedResultsControllerDelegate>
 
 @end
 
@@ -39,8 +40,13 @@
 
 #pragma mark - UITableViewDataSource
 
-- (NSInteger)tableView:(UITableView *)tableview numberOfRowsInSection:(NSInteger)section {
-    return self.transactionsArray.count;
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    id <NSFetchedResultsSectionInfo> sectionInfo = [self.fetchedResultsController sections][section];
+    return [sectionInfo numberOfObjects];
+}
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    return [[self.fetchedResultsController sections] count];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -52,7 +58,7 @@
     if (!cell) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
     }
-    Transaction *transaction = self.transactionsArray[indexPath.row];
+    Transaction *transaction = [self.fetchedResultsController objectAtIndexPath:indexPath];
     cell.editing = true;
     cell.textLabel.text = [NSString stringWithFormat:@"Amount: %ld", (long) transaction.amount];
     cell.detailTextLabel.text = transaction.category;
@@ -64,58 +70,109 @@
     TransactionsViewController *transactionVC = [self.storyboard instantiateViewControllerWithIdentifier:@"TransactionsViewController"];
     
     transactionVC.delegate = self;
-    transactionVC.existingTransaction = self.transactionsArray[indexPath.row];
+    // Fetch the Transaction object directly from NSFetchedResultsController
+    Transaction *selectedTransaction = [self.fetchedResultsController objectAtIndexPath:indexPath];
+    transactionVC.existingTransaction = selectedTransaction;
     transactionVC.isEditMode = YES;
     [self presentViewController:transactionVC animated:YES completion:nil];
-
+    
 }
 
 // Deleting via swipe gesture
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
     if (editingStyle == UITableViewCellEditingStyleDelete) {
-        // Remove the item from your data source
-        [self.transactionsArray removeObjectAtIndex:indexPath.row];
+        // Fetch the Transaction object directly from NSFetchedResultsController
+        Transaction *transactionToDelete = [self.fetchedResultsController objectAtIndexPath:indexPath ];
         
-        // Delete the row from the table view
-        [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-    }
-}
-
-
-
-#pragma mark - TransactionDelegate
-- (void) didSaveTransaction:(Transaction *)transactions{
-    [self.transactionsArray addObject:transactions];
-    
-    self.transactionsArray =  [[self.transactionsArray sortedArrayUsingComparator:^NSComparisonResult(Transaction *t1, Transaction *t2) {
-        return [t2.createdAt compare:t1.createdAt];
-    }] mutableCopy];
-    
-    [self.transactionTableView reloadData];
-}
-
-- (void) didUpdateTransaction:(Transaction *) transaction id:(NSString *) id{
-    NSInteger indexToUpdate = NSNotFound;
-    
-    for (NSInteger i = 0; i < self.transactionsArray.count; i++){
-        Transaction *existingTransaction = self.transactionsArray[i];
-        if([existingTransaction.transactionId isEqualToString:transaction.transactionId]){
-            indexToUpdate = i;
-            break;
+        AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+        NSManagedObjectContext *context = appDelegate.persistentContainer.viewContext;
+        //[context deleteObject:transactionToDelete]; // Actual Deletion
+        transactionToDelete.isActive = NO;
+        
+        NSError *error = nil;
+        if (![context save:&error]) {
+            NSLog(@"Error deleting transaction: %@, %@", error, error.userInfo);
+            // Optionally: present an alert or error to user
         }
     }
-    
-    if(indexToUpdate != NSNotFound){
-        [self.transactionsArray replaceObjectAtIndex:indexToUpdate withObject:transaction];
-    }
-    
-    self.transactionsArray =  [[self.transactionsArray sortedArrayUsingComparator:^NSComparisonResult(Transaction *t1, Transaction *t2) {
-        return [t2.createdAt compare:t1.createdAt];
-    }] mutableCopy];
-    
-    [self.transactionTableView reloadData];
 }
 
 
+
+#pragma mark - FetchResultsController
+- (NSFetchedResultsController *)fetchedResultsController {
+    if (_fetchedResultsController) {
+        return _fetchedResultsController;
+    }
+    
+    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+    NSManagedObjectContext *context = appDelegate.persistentContainer.viewContext;
+    
+    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Transaction"];
+    
+    // Add predicate to only fetch active transactions
+    NSPredicate *activePredicate = [NSPredicate predicateWithFormat:@"isActive == YES"];
+    fetchRequest.predicate = activePredicate;
+    
+    // Sort: newest first
+    NSSortDescriptor *sort = [NSSortDescriptor sortDescriptorWithKey:@"createdAt" ascending:NO];
+    fetchRequest.sortDescriptors = @[sort];
+    
+    _fetchedResultsController = [[NSFetchedResultsController alloc]
+                                 initWithFetchRequest:fetchRequest
+                                 managedObjectContext:context
+                                 sectionNameKeyPath:nil
+                                 cacheName:nil];
+    _fetchedResultsController.delegate = self;
+    
+    NSError *error = nil;
+    if (![_fetchedResultsController performFetch:&error]) {
+        NSLog(@"Unresolved error %@, %@", error, error.userInfo);
+        abort();
+    }
+    
+    return _fetchedResultsController;
+}
+
+
+
+#pragma mark - NSFetchResultsControllerDelegate
+
+- (void)controllerWillChangeContent:(NSFetchedResultsController *)controller {
+    [self.transactionTableView beginUpdates];
+}
+
+- (void)controllerDidChangeContent:(NSFetchedResultsController *)controller {
+    [self.transactionTableView endUpdates];
+}
+
+- (void)controller:(NSFetchedResultsController *)controller
+   didChangeObject:(id)anObject
+       atIndexPath:(NSIndexPath *)indexPath
+     forChangeType:(NSFetchedResultsChangeType)type
+      newIndexPath:(NSIndexPath *)newIndexPath
+{
+    UITableView *tableView = self.transactionTableView;
+    switch(type) {
+        case NSFetchedResultsChangeInsert:
+            [tableView insertRowsAtIndexPaths:@[newIndexPath]
+                             withRowAnimation:UITableViewRowAnimationAutomatic];
+            break;
+            
+        case NSFetchedResultsChangeDelete:
+            [tableView deleteRowsAtIndexPaths:@[indexPath]
+                             withRowAnimation:UITableViewRowAnimationAutomatic];
+            break;
+            
+        case NSFetchedResultsChangeUpdate:
+            [tableView reloadRowsAtIndexPaths:@[indexPath]
+                             withRowAnimation:UITableViewRowAnimationAutomatic];
+            break;
+            
+        case NSFetchedResultsChangeMove:
+            [tableView moveRowAtIndexPath:indexPath toIndexPath:newIndexPath];
+            break;
+    }
+}
 
 @end
