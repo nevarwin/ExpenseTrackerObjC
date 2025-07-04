@@ -47,14 +47,14 @@
     Transaction *transaction = self.isEditMode && self.existingTransaction.transactionId ? self.existingTransaction : [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
     
     if(self.isEditMode){
-        self.amountTextField.text = [NSString stringWithFormat:@"%.2ld", (long)self.existingTransaction.amount];
+        self.amountTextField.text = [NSString stringWithFormat:@"%.2ld", (long)transaction.amount];
         
-        NSUInteger categoryIndex = [self.categoryValues indexOfObject:self.existingTransaction.category];
+        NSUInteger categoryIndex = [self.categoryValues indexOfObject:transaction.category];
         if (categoryIndex != NSNotFound) {
             [self.pickerView selectRow:categoryIndex inComponent:0 animated:NO];
         }
         
-        [self.datePickerOutlet setDate:self.existingTransaction.date];
+        [self.datePickerOutlet setDate:transaction.date];
         [self.button setTitle:@"Update" forState:UIControlStateNormal];
     } else {
         self.amountTextField.text = @"";
@@ -108,7 +108,7 @@
     NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
     formatter.numberStyle = NSNumberFormatterDecimalStyle;
     NSNumber *amountNumber = [formatter numberFromString:self.amountTextField.text];
-    NSInteger amount = amountNumber ? amountNumber.integerValue : 0;
+    NSInteger amount = amountNumber.integerValue;
     
     NSDate *date = self.datePickerOutlet.date;
     
@@ -139,8 +139,9 @@
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
-- (void)didUpdateItem:(Transaction *)item {
-    NSLog(@"DidUpdateItem");
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+    NSLog(@"Manually Dismissed");
 }
 
 - (void)datePicker:(UIDatePicker *)sender __attribute__((ibaction)) {
