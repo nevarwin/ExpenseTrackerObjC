@@ -32,6 +32,7 @@
     if ([segue.identifier isEqualToString:@"TransactionsViewController"]) {
         TransactionsViewController *secondVC = segue.destinationViewController;
         secondVC.isEditMode = NO;
+        NSLog(@"Segue Edit Mode: %d", secondVC.isEditMode);
         secondVC.delegate = self;
     }
 }
@@ -74,6 +75,7 @@
     Transaction *selectedTransaction = [self.fetchedResultsController objectAtIndexPath:indexPath];
     transactionVC.existingTransaction = selectedTransaction;
     transactionVC.isEditMode = YES;
+    NSLog(@"didSelectRowAtIndexPath Edit Mode: %d", transactionVC.isEditMode);
     [self presentViewController:transactionVC animated:YES completion:nil];
     
 }
