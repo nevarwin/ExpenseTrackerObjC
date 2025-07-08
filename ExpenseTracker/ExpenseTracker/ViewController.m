@@ -30,7 +30,8 @@
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
     if ([segue.identifier isEqualToString:@"TransactionsViewController"]) {
-        TransactionsViewController *secondVC = segue.destinationViewController;
+        UINavigationController *navController = segue.destinationViewController;
+        TransactionsViewController *secondVC = (TransactionsViewController *)navController.topViewController;
         secondVC.isEditMode = NO;
         NSLog(@"Segue Edit Mode: %d", secondVC.isEditMode);
         secondVC.delegate = self;
@@ -68,7 +69,11 @@
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(nonnull NSIndexPath *)indexPath{
-    TransactionsViewController *transactionVC = [self.storyboard instantiateViewControllerWithIdentifier:@"TransactionsViewController"];
+    // Instantiate the navigation controller
+    UINavigationController *navController = [self.storyboard instantiateViewControllerWithIdentifier:@"TransactionNavController"];
+    
+    // Get your TransactionsViewController from the nav controller
+    TransactionsViewController *transactionVC = (TransactionsViewController *)navController.topViewController;
     
     transactionVC.delegate = self;
     // Fetch the Transaction object directly from NSFetchedResultsController
@@ -76,7 +81,7 @@
     transactionVC.existingTransaction = selectedTransaction;
     transactionVC.isEditMode = YES;
     NSLog(@"didSelectRowAtIndexPath Edit Mode: %d", transactionVC.isEditMode);
-    [self presentViewController:transactionVC animated:YES completion:nil];
+    [self presentViewController:navController animated:YES completion:nil];
     
 }
 
