@@ -26,6 +26,28 @@
     [self.view addGestureRecognizer:tapGesture];
     
     [self configureViewForMode];
+    
+    self.title = @"Transaction";
+    
+    // Left bar button item
+    self.leftButton = [[UIBarButtonItem alloc]
+                       initWithTitle:@"Back"
+                       style:UIBarButtonItemStylePlain
+                       target:self
+                       action:@selector(leftButtonTapped)];
+    self.navigationItem.leftBarButtonItem = self.leftButton;
+    
+    
+    // Right bar button item
+    self.rightButton = [[UIBarButtonItem alloc]
+                        initWithBarButtonSystemItem:UIBarButtonSystemItemSave
+                        target:self
+                        action:@selector(rightButtonTapped)];
+    self.navigationItem.rightBarButtonItem = self.rightButton;
+}
+
+- (void)leftButtonTapped {
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)dismissKeyboard {
@@ -55,12 +77,10 @@
         }
         
         [self.datePickerOutlet setDate:transaction.date];
-        [self.button setTitle:@"Update" forState:UIControlStateNormal];
     } else {
         self.amountTextField.text = @"";
         [self.pickerView selectRow:0 inComponent:0 animated:NO];
         [self.datePickerOutlet setDate:[NSDate date]];
-        [self.button setTitle:@"Add" forState:UIControlStateNormal];
     }
 }
 
@@ -99,8 +119,7 @@
 
 #pragma mark - Save Button
 
-- (IBAction)addTransactionButton:(UIButton *)sender {
-    //Get selected categor from picker
+- (void)rightButtonTapped {
     NSInteger row = [self.pickerView selectedRowInComponent:0];
     NSString *category = self.categoryValues[row];
     
