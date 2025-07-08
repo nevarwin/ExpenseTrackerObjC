@@ -141,12 +141,13 @@
     AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
     NSManagedObjectContext *context = appDelegate.persistentContainer.viewContext;
     
-    Transaction *transaction = self.isEditMode && self.existingTransaction.transactionId ? self.existingTransaction : [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
+    Transaction *transaction;
     
     //Assign transaction values
-    if (self.isEditMode || !self.existingTransaction.transactionId){
-        transaction.transactionId = [NSUUID UUID].UUIDString;
-        transaction.updatedAt = [NSDate date];
+    if (self.isEditMode && self.existingTransaction.transactionId) {
+        transaction = self.existingTransaction;
+    } else {
+        transaction = [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
     }
     
     transaction.amount = (int32_t)amount;
