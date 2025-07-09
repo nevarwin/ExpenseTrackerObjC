@@ -62,21 +62,15 @@
 }
 
 -(void)configureViewForMode{
-    // Get Core Data Context
-    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = appDelegate.persistentContainer.viewContext;
-    
-    Transaction *transaction = self.isEditMode && self.existingTransaction.transactionId ? self.existingTransaction : [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
-    
     if(self.isEditMode){
-        self.amountTextField.text = [NSString stringWithFormat:@"%.2ld", (long)transaction.amount];
+        self.amountTextField.text = [NSString stringWithFormat:@"%.2ld", (long)self.existingTransaction.amount];
         
-        NSUInteger categoryIndex = [self.categoryValues indexOfObject:transaction.category];
+        NSUInteger categoryIndex = [self.categoryValues indexOfObject:self.existingTransaction.category];
         if (categoryIndex != NSNotFound) {
             [self.pickerView selectRow:categoryIndex inComponent:0 animated:NO];
         }
         
-        [self.datePickerOutlet setDate:transaction.date];
+        [self.datePickerOutlet setDate:self.existingTransaction.date];
     } else {
         self.amountTextField.text = @"";
         [self.pickerView selectRow:0 inComponent:0 animated:NO];
@@ -146,15 +140,21 @@
     //Assign transaction values
     if (self.isEditMode && self.existingTransaction.transactionId) {
         transaction = self.existingTransaction;
+        transaction.updatedAt = [NSDate date];
     } else {
         transaction = [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
+        transaction.createdAt = [NSDate date];
+        transaction.transactionId = [[NSUUID UUID] UUIDString];
     }
     
     transaction.amount = (int32_t)amount;
     transaction.category = category;
     transaction.date = date;
-    transaction.createdAt = [NSDate date];
-    transaction.updatedAt = nil;
+    
+    NSError *error = nil;
+    if (![context save:&error]) {
+        NSLog(@"Failed to save transaction: %@", error);
+    }
     
     [self dismissViewControllerAnimated:YES completion:nil];
 }
