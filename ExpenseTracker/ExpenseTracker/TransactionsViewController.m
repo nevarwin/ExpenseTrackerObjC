@@ -187,4 +187,51 @@
 - (void)datePicker:(UIDatePicker *)sender __attribute__((ibaction)) {
 }
 
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    [self drawCircleIndicatorInView:self.view];
+}
+
+// In your UIView subclass or ViewController
+
+- (void)drawCircleIndicatorInView:(UIView *)view {
+    CGFloat lineWidth = 20.0;
+    CGFloat radius = (MIN(view.bounds.size.width, view.bounds.size.height) - lineWidth) / 2.0;
+    CGPoint center = CGPointMake(CGRectGetMidX(view.bounds), CGRectGetMidY(view.bounds));
+
+    // 1. Background Circle (opacity 0.3)
+    UIBezierPath *bgCirclePath = [UIBezierPath bezierPathWithArcCenter:center
+                                                                radius:radius
+                                                            startAngle:0
+                                                              endAngle:2*M_PI
+                                                             clockwise:YES];
+
+    CAShapeLayer *bgCircleLayer = [CAShapeLayer layer];
+    bgCircleLayer.path = bgCirclePath.CGPath;
+    bgCircleLayer.strokeColor = [UIColor.redColor colorWithAlphaComponent:0.3].CGColor;
+    bgCircleLayer.fillColor = UIColor.clearColor.CGColor;
+    bgCircleLayer.lineWidth = lineWidth;
+
+    [view.layer addSublayer:bgCircleLayer];
+
+    // 2. Foreground Arc (trimmed, opacity 1.0)
+    CGFloat startAngle = -M_PI_2; // Start at top
+    CGFloat endAngle = startAngle + 2 * M_PI * 0.3; // 30% of the circle
+
+    UIBezierPath *fgCirclePath = [UIBezierPath bezierPathWithArcCenter:center
+                                                                radius:radius
+                                                            startAngle:startAngle
+                                                              endAngle:endAngle
+                                                             clockwise:YES];
+
+    CAShapeLayer *fgCircleLayer = [CAShapeLayer layer];
+    fgCircleLayer.path = fgCirclePath.CGPath;
+    fgCircleLayer.strokeColor = UIColor.redColor.CGColor;
+    fgCircleLayer.fillColor = UIColor.blueColor.CGColor;
+    fgCircleLayer.lineWidth = lineWidth;
+    fgCircleLayer.lineCap = kCALineCapRound;
+
+    [view.layer addSublayer:fgCircleLayer];
+}
+
 @end
