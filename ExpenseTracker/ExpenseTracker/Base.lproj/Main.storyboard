@@ -89,14 +89,6 @@
                                     <action selector="datePicker:" destination="yti-2d-iFL" eventType="valueChanged" id="Lis-ip-SpF"/>
                                 </connections>
                             </datePicker>
-                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" translatesAutoresizingMaskIntoConstraints="NO" id="9h7-X0-b57">
-                                <rect key="frame" x="23" y="278" width="340" height="44"/>
-                                <autoresizingMask key="autoresizingMask"/>
-                                <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="9h7-X0-b57" id="0O0-Oe-8HN">
-                                    <rect key="frame" x="0.0" y="0.0" width="340" height="44"/>
-                                    <autoresizingMask key="autoresizingMask"/>
-                                </tableViewCellContentView>
-                            </tableViewCell>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Date" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="VP9-XF-L42">
                                 <rect key="frame" x="16" y="410" width="52" height="33"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -117,7 +109,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="rrK-9u-D4P" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="1252.6717557251907" y="-144.36619718309859"/>
+            <point key="canvasLocation" x="1251.145038167939" y="-144.36619718309859"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="Fh4-SQ-F2t">

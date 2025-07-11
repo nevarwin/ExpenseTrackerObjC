@@ -16,7 +16,40 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    if (![defaults boolForKey:@"isDefaultDataInserted"]) {
+        [self insertDefaultData];
+        [defaults setBool:YES forKey:@"isDefaultDataInserted"];
+        [defaults synchronize];
+    }
     return YES;
+}
+
+#pragma mark - User Default
+
+- (void)insertDefaultData {
+    // 1. Get your Core Data context
+    NSManagedObjectContext *context = self.persistentContainer.viewContext;
+
+    // 2. Create a new entity object
+    NSArray *names = @[@"Test1", @"Test2", @"Test3"];
+
+    for (NSString *name in names) {
+        NSManagedObject *item = [NSEntityDescription insertNewObjectForEntityForName:@"Category"
+                                                              inManagedObjectContext:context];
+        [item setValue:name forKey:@"name"];
+        NSString *uuid = [[NSUUID UUID] UUIDString];
+        [item setValue:uuid forKey:@"id"];
+    }
+
+    // 3. Save to Core Data
+    NSError *error = nil;
+    [context save:&error];
+    if (error) {
+        NSLog(@"Failed to save default data: %@", error);
+    } else {
+        NSLog(@"Default data inserted!");
+    }
 }
 
 
@@ -58,7 +91,7 @@
                      * The device is out of space.
                      * The store could not be migrated to the current model version.
                      Check the error message to determine what the actual problem was.
-                    */
+                     */
                     NSLog(@"Unresolved error %@, %@", error, error.userInfo);
                     abort();
                 }

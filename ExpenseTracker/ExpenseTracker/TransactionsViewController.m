@@ -17,7 +17,32 @@
 @implementation TransactionsViewController
 
 - (void) viewDidLoad{
-    self.categoryValues = @[@"Apple", @"Banana", @"Orange"];
+    // Get context
+    NSManagedObjectContext *context = [(AppDelegate *)[[UIApplication sharedApplication] delegate] persistentContainer].viewContext;
+    
+    // Create fetch request for Category
+    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Category"];
+    
+    NSError *error = nil;
+    NSArray *categories = [context executeFetchRequest:fetchRequest error:&error];
+    
+    if (error) {
+        NSLog(@"Error fetching categories: %@", error);
+        self.categoryValues = @[]; // Set empty if there's an error
+        return;
+    }
+    
+    // Extract names from the results
+    NSMutableArray *names = [NSMutableArray array];
+    for (NSManagedObject *category in categories) {
+        NSString *name = [category valueForKey:@"name"];
+        if (name) {
+            [names addObject:name];
+        }
+    }
+    
+    self.categoryValues = names;
+    
     self.pickerView.delegate = self;
     self.pickerView.dataSource = self;
     self.amountTextField.delegate = self;
@@ -157,11 +182,6 @@
     }
     
     [self dismissViewControllerAnimated:YES completion:nil];
-}
-
-- (void)viewWillDisappear:(BOOL)animated {
-    [super viewWillDisappear:animated];
-    NSLog(@"Manually Dismissed");
 }
 
 - (void)datePicker:(UIDatePicker *)sender __attribute__((ibaction)) {
