@@ -33,7 +33,6 @@
         UINavigationController *navController = segue.destinationViewController;
         TransactionsViewController *secondVC = (TransactionsViewController *)navController.topViewController;
         secondVC.isEditMode = NO;
-        NSLog(@"Segue Edit Mode: %d", secondVC.isEditMode);
         secondVC.delegate = self;
     }
 }
@@ -80,7 +79,6 @@
     Transaction *selectedTransaction = [self.fetchedResultsController objectAtIndexPath:indexPath];
     transactionVC.existingTransaction = selectedTransaction;
     transactionVC.isEditMode = YES;
-    NSLog(@"didSelectRowAtIndexPath Edit Mode: %d", transactionVC.isEditMode);
     [self presentViewController:navController animated:YES completion:nil];
     
 }
