@@ -18,6 +18,7 @@
 @property (nullable, nonatomic, copy) NSDate *createdAt;
 @property (nullable, nonatomic, copy) NSDate *updatedAt;
 @property (nonatomic, assign) BOOL isActive;
+@property (nonatomic, assign) int16_t type;
 
 @end
 
