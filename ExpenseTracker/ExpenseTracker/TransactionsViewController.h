@@ -27,6 +27,7 @@
 @property (strong, nonatomic) UIBarButtonItem *rightButton;
 @property (strong, nonatomic) UIBarButtonItem *leftButton;
 
+@property (strong, nonatomic) UISegmentedControl *segmentControl;
 
 - (IBAction)datePicker:(UIDatePicker *)sender;
 

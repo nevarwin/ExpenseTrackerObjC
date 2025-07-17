@@ -69,6 +69,31 @@
                         target:self
                         action:@selector(rightButtonTapped)];
     self.navigationItem.rightBarButtonItem = self.rightButton;
+    
+    // Create Segments
+    NSArray *items = @[@"Expense", @"Income"];
+    self.segmentControl = [[UISegmentedControl alloc] initWithItems:items];
+    CGFloat margin = 16;
+    CGFloat width = self.view.frame.size.width - 2 * margin;
+    self.segmentControl.frame = CGRectMake(margin, 52, width, 32);
+    
+    // Set default selected segment
+    self.segmentControl.selectedSegmentIndex = 0;
+    
+    // Add target for value changed
+    [self.segmentControl addTarget:self
+                            action:@selector(segmentChanged:)
+                  forControlEvents:UIControlEventValueChanged];
+    
+    // Add to view
+    [self.view addSubview:self.segmentControl];
+
+}
+
+-(void)segmentChanged:(UISegmentedControl *)sender {
+    NSInteger selectedIndex = sender.selectedSegmentIndex;
+    NSLog(@"Selected segment: %ld", (long)selectedIndex);
+    
 }
 
 - (void)leftButtonTapped {
@@ -175,6 +200,7 @@
     transaction.amount = (int32_t)amount;
     transaction.category = category;
     transaction.date = date;
+    transaction.type = self.segmentControl.selectedSegmentIndex;
     
     NSError *error = nil;
     if (![context save:&error]) {
