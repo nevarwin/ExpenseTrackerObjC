@@ -21,6 +21,8 @@
     self.transactionTableView.delegate = self;
     self.transactionTableView.dataSource = self;
     self.transactionsArray = [NSMutableArray array];
+    
+    //TODO: add pagination to show transactions per day, weekly, monthly, yearly
 }
 
 
@@ -60,11 +62,48 @@
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
     }
     Transaction *transaction = [self.fetchedResultsController objectAtIndexPath:indexPath];
-    cell.editing = true;
-    cell.textLabel.text = [NSString stringWithFormat:@"Amount: %ld", (long) transaction.amount];
-    cell.detailTextLabel.text = transaction.category;
+        
+    // Date formatter
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    dateFormatter.dateStyle = NSDateFormatterShortStyle;
+    NSString *formattedDate = [dateFormatter stringFromDate:transaction.date];
     
+    // Type indicator emoji
+    NSString *typeIndicator = transaction.type == 0 ? @"💸" : @"💰";
+    
+    // Currency formatting
+    NSNumberFormatter *currencyFormatter = [[NSNumberFormatter alloc] init];
+    currencyFormatter.numberStyle = NSNumberFormatterCurrencyStyle;
+    NSString *formattedAmount = [currencyFormatter stringFromNumber:@(transaction.amount)];
+
+    // Create a label for the date
+    UILabel *dateLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 80, 20)];
+    dateLabel.text = formattedDate;
+    dateLabel.font = [UIFont systemFontOfSize:12];
+    dateLabel.textColor = [UIColor grayColor];
+    dateLabel.textAlignment = NSTextAlignmentRight;
+
+    cell.imageView.image = [self emojiToImage:typeIndicator];
+    cell.textLabel.text = formattedAmount;
+    cell.detailTextLabel.text = transaction.category;
+    cell.accessoryView = dateLabel;
+
     return cell;
+}
+
+// Helper method to convert emoji to image
+- (UIImage *)emojiToImage:(NSString *)emoji {
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 30, 30)];
+    label.text = emoji;
+    label.textAlignment = NSTextAlignmentCenter;
+    label.font = [UIFont systemFontOfSize:24];
+    
+    UIGraphicsBeginImageContextWithOptions(label.bounds.size, NO, 0.0);
+    [label.layer renderInContext:UIGraphicsGetCurrentContext()];
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    return image;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(nonnull NSIndexPath *)indexPath{

@@ -17,6 +17,7 @@
 @dynamic createdAt;
 @dynamic updatedAt;
 @dynamic isActive;
+@dynamic type;
 
 - (void)awakeFromInsert {
     [super awakeFromInsert];
