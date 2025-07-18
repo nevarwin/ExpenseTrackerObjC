@@ -80,6 +80,11 @@
     // Set default selected segment
     self.segmentControl.selectedSegmentIndex = 0;
     
+    // If editing an existing transaction, set segment index from transaction
+    if (self.existingTransaction) {
+        self.segmentControl.selectedSegmentIndex = self.existingTransaction.type;
+    }
+    
     // Add target for value changed
     [self.segmentControl addTarget:self
                             action:@selector(segmentChanged:)
@@ -92,8 +97,6 @@
 
 -(void)segmentChanged:(UISegmentedControl *)sender {
     NSInteger selectedIndex = sender.selectedSegmentIndex;
-    NSLog(@"Selected segment: %ld", (long)selectedIndex);
-    
 }
 
 - (void)leftButtonTapped {
@@ -121,6 +124,8 @@
         }
         
         [self.datePickerOutlet setDate:self.existingTransaction.date];
+        self.segmentControl.selectedSegmentIndex = self.existingTransaction.type;
+
     } else {
         self.amountTextField.text = @"";
         [self.pickerView selectRow:0 inComponent:0 animated:NO];
@@ -200,7 +205,7 @@
     transaction.amount = (int32_t)amount;
     transaction.category = category;
     transaction.date = date;
-    transaction.type = self.segmentControl.selectedSegmentIndex;
+    transaction.type = (int32_t)self.segmentControl.selectedSegmentIndex;
     
     NSError *error = nil;
     if (![context save:&error]) {
