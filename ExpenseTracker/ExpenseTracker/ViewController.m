@@ -22,7 +22,75 @@
     self.transactionTableView.dataSource = self;
     self.transactionsArray = [NSMutableArray array];
     
-    //TODO: add pagination to show transactions per day, weekly, monthly, yearly
+    CGFloat margin = 16;
+    CGFloat width = self.view.frame.size.width - 2 * margin;
+    CGFloat segmentHeight = 32;
+    CGFloat gap = 8;
+    
+    // Get the bottom Y of the last XIB element
+    CGFloat topY = CGRectGetMaxY(self.headerView.frame) + gap;
+    
+    // Type segment (top)
+    self.typeSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"Expense", @"Income"]];
+    self.typeSegmentControl.frame = CGRectMake(margin, topY, width, segmentHeight);
+    
+    // Date segment (below type segment)
+    self.dateSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"D", @"W", @"M", @"6M"]];
+    self.dateSegmentControl.frame = CGRectMake(margin, topY + segmentHeight + gap, width, segmentHeight);
+    
+    // Add target for value changed
+    [self.dateSegmentControl addTarget:self
+                            action:@selector(dateSegmentChange:)
+                  forControlEvents:UIControlEventValueChanged];
+    
+    [self.view addSubview:self.typeSegmentControl];
+    [self.view addSubview:self.dateSegmentControl];
+
+}
+
+- (void)dateSegmentChange:(UISegmentedControl *)sender {
+    self.currentSegmentIndex = sender.selectedSegmentIndex;
+    [self updateFetchPredicateForSegment:self.currentSegmentIndex];
+    [self.transactionTableView reloadData];
+}
+
+- (void)updateFetchPredicateForSegment:(NSInteger)index {
+    NSPredicate *predicate;
+    NSDate *now = [NSDate date];
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    NSDate *startDate = nil;
+
+    switch (index) {
+        case 0: // Day
+            startDate = [calendar startOfDayForDate:now];
+            break;
+        case 1: // Week
+            [calendar rangeOfUnit:NSCalendarUnitWeekOfYear startDate:&startDate interval:NULL forDate:now];
+            break;
+        case 2: // Month
+            [calendar rangeOfUnit:NSCalendarUnitMonth startDate:&startDate interval:NULL forDate:now];
+            break;
+        case 3: // 6 Months
+            startDate = [calendar dateByAddingUnit:NSCalendarUnitMonth value:-6 toDate:now options:0];
+            break;
+        default:
+            startDate = nil;
+            break;
+    }
+
+    if (startDate) {
+        predicate = [NSPredicate predicateWithFormat:@"isActive == YES AND date >= %@", startDate];
+    } else {
+        predicate = [NSPredicate predicateWithFormat:@"isActive == YES"];
+    }
+
+    self.fetchedResultsController.fetchRequest.predicate = predicate;
+    
+    NSError *error = nil;
+    [self.fetchedResultsController performFetch:&error];
+    if (error) {
+        NSLog(@"Fetch error: %@", error);
+    }
 }
 
 
