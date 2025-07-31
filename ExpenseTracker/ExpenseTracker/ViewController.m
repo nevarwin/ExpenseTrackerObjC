@@ -33,9 +33,9 @@
     // Calculate positions
     CGFloat dateSegmentY = tableViewY - segmentHeight - gap;
     CGFloat typeSegmentY = dateSegmentY - segmentHeight - gap;
-
+    
     // Type segment (top)
-    self.typeSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"Expense", @"Income"]];
+    self.typeSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"Expense", @"Income", @"All"]];
     self.typeSegmentControl.frame = CGRectMake(margin, typeSegmentY, width, segmentHeight);
     
     // Date segment (below type segment)
@@ -44,27 +44,46 @@
     
     // Add target for value changed
     [self.dateSegmentControl addTarget:self
-                            action:@selector(dateSegmentChange:)
-                  forControlEvents:UIControlEventValueChanged];
+                                action:@selector(dateSegmentChange:)
+                      forControlEvents:UIControlEventValueChanged];
+    
+    [self.typeSegmentControl addTarget:self
+                                action:@selector(typeSegmentChange:)
+                      forControlEvents:UIControlEventValueChanged];
+    
+    self.typeSegmentControl.selectedSegmentIndex = 2;
+    self.dateSegmentControl.selectedSegmentIndex = 0;
     
     [self.view addSubview:self.typeSegmentControl];
     [self.view addSubview:self.dateSegmentControl];
-
+    
+    // Updates the table for the defaults
+    [self updateFetchPredicateForSegment:self.dateSegmentIndex typeIndex:@(self.typeSegmentIndex)];
+    [self.transactionTableView reloadData];
+    
 }
 
-- (void)dateSegmentChange:(UISegmentedControl *)sender {
-    self.currentSegmentIndex = sender.selectedSegmentIndex;
-    [self updateFetchPredicateForSegment:self.currentSegmentIndex];
+- (void)typeSegmentChange:(UISegmentedControl *)sender{
+    self.typeSegmentIndex = sender.selectedSegmentIndex;
+    [self updateFetchPredicateForSegment:self.dateSegmentIndex typeIndex:@(self.typeSegmentIndex)];
     [self.transactionTableView reloadData];
 }
 
-- (void)updateFetchPredicateForSegment:(NSInteger)index {
-    NSPredicate *predicate;
+- (void)dateSegmentChange:(UISegmentedControl *)sender {
+    self.dateSegmentIndex = sender.selectedSegmentIndex;
+    [self updateFetchPredicateForSegment:self.dateSegmentIndex typeIndex:@(self.typeSegmentIndex)];
+    [self.transactionTableView reloadData];
+}
+
+- (void)updateFetchPredicateForSegment:(NSInteger)dateIndex typeIndex:(NSNumber * _Nullable)typeIndex{
+    NSMutableArray *subpredicates = [NSMutableArray array];
+    [subpredicates addObject:[NSPredicate predicateWithFormat:@"isActive == YES"]];
+    
     NSDate *now = [NSDate date];
     NSCalendar *calendar = [NSCalendar currentCalendar];
     NSDate *startDate = nil;
-
-    switch (index) {
+    
+    switch (dateIndex) {
         case 0: // Day
             startDate = [calendar startOfDayForDate:now];
             break;
@@ -81,13 +100,16 @@
             startDate = nil;
             break;
     }
-
+    
     if (startDate) {
-        predicate = [NSPredicate predicateWithFormat:@"isActive == YES AND date >= %@", startDate];
-    } else {
-        predicate = [NSPredicate predicateWithFormat:@"isActive == YES"];
+        [subpredicates addObject:[NSPredicate predicateWithFormat:@"date >= %@", startDate]];
     }
-
+    if (typeIndex != nil && [typeIndex integerValue] != 2) {
+        [subpredicates addObject:[NSPredicate predicateWithFormat:@"type == %@", typeIndex]];
+    }
+    NSPredicate *predicate = [NSCompoundPredicate andPredicateWithSubpredicates:subpredicates];
+    self.fetchedResultsController.fetchRequest.predicate = predicate;
+    
     self.fetchedResultsController.fetchRequest.predicate = predicate;
     
     NSError *error = nil;
@@ -134,7 +156,7 @@
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
     }
     Transaction *transaction = [self.fetchedResultsController objectAtIndexPath:indexPath];
-        
+    
     // Date formatter
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     dateFormatter.dateStyle = NSDateFormatterShortStyle;
@@ -147,19 +169,19 @@
     NSNumberFormatter *currencyFormatter = [[NSNumberFormatter alloc] init];
     currencyFormatter.numberStyle = NSNumberFormatterCurrencyStyle;
     NSString *formattedAmount = [currencyFormatter stringFromNumber:@(transaction.amount)];
-
+    
     // Create a label for the date
     UILabel *dateLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 80, 20)];
     dateLabel.text = formattedDate;
     dateLabel.font = [UIFont systemFontOfSize:12];
     dateLabel.textColor = [UIColor grayColor];
     dateLabel.textAlignment = NSTextAlignmentRight;
-
+    
     cell.imageView.image = [self emojiToImage:typeIndicator];
     cell.textLabel.text = formattedAmount;
     cell.detailTextLabel.text = transaction.category;
     cell.accessoryView = dateLabel;
-
+    
     return cell;
 }
 
