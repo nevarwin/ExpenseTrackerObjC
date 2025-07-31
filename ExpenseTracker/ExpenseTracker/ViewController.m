@@ -27,16 +27,20 @@
     CGFloat segmentHeight = 32;
     CGFloat gap = 8;
     
-    // Get the bottom Y of the last XIB element
-    CGFloat topY = CGRectGetMaxY(self.headerView.frame) + gap;
+    // Get the Y position of the table view
+    CGFloat tableViewY = CGRectGetMinY(self.transactionTableView.frame);
     
+    // Calculate positions
+    CGFloat dateSegmentY = tableViewY - segmentHeight - gap;
+    CGFloat typeSegmentY = dateSegmentY - segmentHeight - gap;
+
     // Type segment (top)
     self.typeSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"Expense", @"Income"]];
-    self.typeSegmentControl.frame = CGRectMake(margin, topY, width, segmentHeight);
+    self.typeSegmentControl.frame = CGRectMake(margin, typeSegmentY, width, segmentHeight);
     
     // Date segment (below type segment)
     self.dateSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"D", @"W", @"M", @"6M"]];
-    self.dateSegmentControl.frame = CGRectMake(margin, topY + segmentHeight + gap, width, segmentHeight);
+    self.dateSegmentControl.frame = CGRectMake(margin, dateSegmentY, width, segmentHeight);
     
     // Add target for value changed
     [self.dateSegmentControl addTarget:self

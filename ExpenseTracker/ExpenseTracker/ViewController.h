@@ -14,9 +14,8 @@
 @property (strong, nonatomic) NSMutableArray *transactionsArray;
 @property (strong, nonatomic) NSFetchedResultsController *fetchedResultsController;
 @property (strong, nonatomic) UISegmentedControl *dateSegmentControl;
-@property (nonatomic, assign) NSInteger currentSegmentIndex;
 @property (strong, nonatomic) UISegmentedControl *typeSegmentControl;
-@property (weak, nonatomic) IBOutlet UIView *headerView;
+@property (nonatomic, assign) NSInteger currentSegmentIndex;
 
 - (IBAction)addTransaction:(UIButton *)sender;
 
