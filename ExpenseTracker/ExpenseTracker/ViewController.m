@@ -39,7 +39,7 @@
     self.typeSegmentControl.frame = CGRectMake(margin, typeSegmentY, width, segmentHeight);
     
     // Date segment (below type segment)
-    self.dateSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"D", @"W", @"M", @"6M"]];
+    self.dateSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"D", @"W", @"M", @"6M", @"Y"]];
     self.dateSegmentControl.frame = CGRectMake(margin, dateSegmentY, width, segmentHeight);
     
     // Add target for value changed
@@ -107,6 +107,7 @@
     if (typeIndex != nil && [typeIndex integerValue] != 2) {
         [subpredicates addObject:[NSPredicate predicateWithFormat:@"type == %@", typeIndex]];
     }
+    
     NSPredicate *predicate = [NSCompoundPredicate andPredicateWithSubpredicates:subpredicates];
     self.fetchedResultsController.fetchRequest.predicate = predicate;
     
