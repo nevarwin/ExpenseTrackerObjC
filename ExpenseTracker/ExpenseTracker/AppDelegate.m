@@ -22,6 +22,17 @@
         [defaults setBool:YES forKey:@"isDefaultDataInserted"];
         [defaults synchronize];
     }
+    
+    UITabBarController *tabBarController = [[UITabBarController alloc] init];
+
+    UIViewController *vc1 = [[UIViewController alloc] init];
+    vc1.tabBarItem.title = @"Home";
+
+    UIViewController *vc2 = [[UIViewController alloc] init];
+    vc2.tabBarItem.title = @"Settings";
+
+    tabBarController.viewControllers = @[vc1, vc2];
+    self.window.rootViewController = tabBarController;
     return YES;
 }
 
