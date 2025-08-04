@@ -18,6 +18,7 @@
 
 - (void)viewDidLoad {	
     [super viewDidLoad];
+    self.view.backgroundColor = [UIColor systemBackgroundColor];
     self.transactionTableView.delegate = self;
     self.transactionTableView.dataSource = self;
     self.transactionsArray = [NSMutableArray array];

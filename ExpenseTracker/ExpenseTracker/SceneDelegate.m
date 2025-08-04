@@ -7,6 +7,8 @@
 
 #import "SceneDelegate.h"
 #import "AppDelegate.h"
+#import "ViewController.h"
+#import "BudgetViewController.h"
 
 @interface SceneDelegate ()
 
@@ -19,6 +21,38 @@
     // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
     // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
     // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
+    UIWindowScene *windowScene = (UIWindowScene *)scene;
+    self.window = [[UIWindow alloc] initWithWindowScene:windowScene];
+    
+    UIViewController *transactionVC = [[ViewController alloc] init];
+    transactionVC.tabBarItem = [[UITabBarItem alloc] initWithTitle:@"Transactions"
+                                                         image:[UIImage systemImageNamed:@"heart.fill"]
+                                                           tag:0];
+    
+    UIViewController *budgetVC = [[BudgetViewController alloc] init];
+    budgetVC.tabBarItem = [[UITabBarItem alloc] initWithTitle:@"Budget"
+                                                        image:[UIImage systemImageNamed:@"magnifyingglass"]
+                                                          tag:1];
+    
+    UITabBarController *tabBarController = [[UITabBarController alloc] init];
+    tabBarController.viewControllers = @[transactionVC, budgetVC];
+    
+    // Customize tab bar appearance
+    UITabBarAppearance *appearance = [[UITabBarAppearance alloc] init];
+    [appearance configureWithOpaqueBackground];
+    appearance.backgroundColor = [UIColor systemBackgroundColor];
+    appearance.stackedLayoutAppearance.selected.iconColor = [UIColor systemTealColor];
+    appearance.stackedLayoutAppearance.selected.titleTextAttributes = @{NSForegroundColorAttributeName: [UIColor systemTealColor]};
+    appearance.stackedLayoutAppearance.normal.iconColor = [UIColor labelColor];
+    appearance.stackedLayoutAppearance.normal.titleTextAttributes = @{NSForegroundColorAttributeName: [UIColor labelColor]};
+    
+    tabBarController.tabBar.standardAppearance = appearance;
+    if (@available(iOS 15.0, *)) {
+        tabBarController.tabBar.scrollEdgeAppearance = appearance;
+    }
+    
+    self.window.rootViewController = tabBarController;
+    [self.window makeKeyAndVisible];
 }
 
 
@@ -52,7 +86,7 @@
     // Called as the scene transitions from the foreground to the background.
     // Use this method to save data, release shared resources, and store enough scene-specific state information
     // to restore the scene back to its current state.
-
+    
     // Save changes in the application's managed object context when the application transitions to the background.
     [(AppDelegate *)UIApplication.sharedApplication.delegate saveContext];
 }
