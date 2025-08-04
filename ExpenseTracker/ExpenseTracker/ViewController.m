@@ -60,7 +60,6 @@
     self.dateSegmentIndex = 0;
     
     // Updates the table for the defaults
-    NSLog(@"Initial Fetch Predicate %d", (long)self.typeSegmentIndex == 2);
     [self updateFetchPredicateForSegment:self.dateSegmentIndex typeIndex:@(self.typeSegmentIndex)];
     [self.transactionTableView reloadData];
     
@@ -110,9 +109,6 @@
     if (startDate) {
         [subpredicates addObject:[NSPredicate predicateWithFormat:@"date >= %@", startDate]];
     }
-    NSLog(@"Type Index Condition: %d", typeIndex != nil && [typeIndex integerValue] != 2);
-    NSLog(@"Type Index Value: %@", typeIndex);
-    NSLog(@"Type Index Integer: %d", [typeIndex integerValue] != 2);
 
     if (typeIndex != nil && [typeIndex integerValue] != 2) {
         [subpredicates addObject:[NSPredicate predicateWithFormat:@"type == %@", typeIndex]];
