@@ -35,7 +35,7 @@
     CGFloat typeSegmentY = dateSegmentY - segmentHeight - gap;
     
     // Type segment (top)
-    self.typeSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"All", @"Expense", @"Income"]];
+    self.typeSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"Expense", @"Income", @"All"]];
     self.typeSegmentControl.frame = CGRectMake(margin, typeSegmentY, width, segmentHeight);
     
     // Date segment (below type segment)
@@ -51,7 +51,7 @@
                                 action:@selector(typeSegmentChange:)
                       forControlEvents:UIControlEventValueChanged];
     
-    self.typeSegmentControl.selectedSegmentIndex = 0;
+    self.typeSegmentControl.selectedSegmentIndex = 2;
     self.dateSegmentControl.selectedSegmentIndex = 0;
     
     [self.view addSubview:self.typeSegmentControl];
@@ -95,6 +95,9 @@
             break;
         case 3: // 6 Months
             startDate = [calendar dateByAddingUnit:NSCalendarUnitMonth value:-6 toDate:now options:0];
+            break;
+        case 4: // Year
+            [calendar rangeOfUnit:NSCalendarUnitYear startDate:&startDate interval:NULL forDate:now];
             break;
         default:
             startDate = nil;
