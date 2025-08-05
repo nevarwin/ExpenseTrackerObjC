@@ -24,10 +24,14 @@
     UIWindowScene *windowScene = (UIWindowScene *)scene;
     self.window = [[UIWindow alloc] initWithWindowScene:windowScene];
     
-    UIViewController *transactionVC = [[ViewController alloc] init];
+    // Load the storyboard
+    UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+    
+    // Instantiate view controllers from storyboard
+    UIViewController *transactionVC = [mainStoryboard instantiateViewControllerWithIdentifier:@"TransactionViewController"];
     transactionVC.tabBarItem = [[UITabBarItem alloc] initWithTitle:@"Transactions"
-                                                         image:[UIImage systemImageNamed:@"heart.fill"]
-                                                           tag:0];
+                                                             image:[UIImage systemImageNamed:@"heart.fill"]
+                                                               tag:0];
     
     UIViewController *budgetVC = [[BudgetViewController alloc] init];
     budgetVC.tabBarItem = [[UITabBarItem alloc] initWithTitle:@"Budget"
