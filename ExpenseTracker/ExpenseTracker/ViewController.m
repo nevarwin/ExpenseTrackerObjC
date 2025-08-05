@@ -13,10 +13,10 @@
 @interface ViewController () <UITableViewDataSource, UITableViewDelegate, NSFetchedResultsControllerDelegate>
 
 @end
-	
+
 @implementation ViewController
 
-- (void)viewDidLoad {	
+- (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor systemBackgroundColor];
     self.transactionTableView.delegate = self;
@@ -110,7 +110,7 @@
     if (startDate) {
         [subpredicates addObject:[NSPredicate predicateWithFormat:@"date >= %@", startDate]];
     }
-
+    
     if (typeIndex != nil && [typeIndex integerValue] != 2) {
         [subpredicates addObject:[NSPredicate predicateWithFormat:@"type == %@", typeIndex]];
     }
