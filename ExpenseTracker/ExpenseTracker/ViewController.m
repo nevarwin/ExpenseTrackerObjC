@@ -18,51 +18,12 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = [UIColor systemBackgroundColor];
-    self.transactionTableView.delegate = self;
-    self.transactionTableView.dataSource = self;
-    self.transactionsArray = [NSMutableArray array];
+    [self setupHeaderView];
+    [self setupTableView];
+    [self setupSegmentControls];
     
-    CGFloat margin = 16;
-    CGFloat width = self.view.frame.size.width - 2 * margin;
-    CGFloat segmentHeight = 32;
-    CGFloat gap = 8;
-    
-    // Get the Y position of the table view
-    CGFloat tableViewY = CGRectGetMinY(self.transactionTableView.frame);
-    
-    // Calculate positions
-    CGFloat dateSegmentY = tableViewY - segmentHeight - gap;
-    CGFloat typeSegmentY = dateSegmentY - segmentHeight - gap;
-    
-    // Type segment (top)
-    self.typeSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"Expense", @"Income", @"All"]];
-    self.typeSegmentControl.frame = CGRectMake(margin, typeSegmentY, width, segmentHeight);
-    
-    // Date segment (below type segment)
-    self.dateSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"D", @"W", @"M", @"6M", @"Y"]];
-    self.dateSegmentControl.frame = CGRectMake(margin, dateSegmentY, width, segmentHeight);
-    
-    // Add target for value changed
-    [self.dateSegmentControl addTarget:self
-                                action:@selector(dateSegmentChange:)
-                      forControlEvents:UIControlEventValueChanged];
-    
-    [self.typeSegmentControl addTarget:self
-                                action:@selector(typeSegmentChange:)
-                      forControlEvents:UIControlEventValueChanged];
-    
-    self.typeSegmentControl.selectedSegmentIndex = 2;
-    self.dateSegmentControl.selectedSegmentIndex = 0;
-    
-    [self.view addSubview:self.typeSegmentControl];
-    [self.view addSubview:self.dateSegmentControl];
-    self.typeSegmentIndex = 2;
-    self.dateSegmentIndex = 0;
-    
-    // Updates the table for the defaults
-    [self updateFetchPredicateForSegment:self.dateSegmentIndex typeIndex:@(self.typeSegmentIndex)];
-    [self.transactionTableView reloadData];
+    self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
+//    self.transactionsArray = [NSMutableArray array];
     
 }
 
@@ -128,10 +89,6 @@
 }
 
 
-- (IBAction)addTransaction:(UIButton *)sender {
-    NSLog(@"Button Pressed");
-}
-
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
     if ([segue.identifier isEqualToString:@"TransactionsViewController"]) {
         UINavigationController *navController = segue.destinationViewController;
@@ -140,6 +97,130 @@
         secondVC.delegate = self;
     }
 }
+
+
+#pragma mark - setupHeaderView
+- (void)setupHeaderView {
+    // Create header container
+    self.headerContainer = [[UIView alloc] init];
+    UIView *headerContainer = self.headerContainer;    headerContainer.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:headerContainer];
+    
+    // Setup header label (left side)
+    self.headerLabel = [[UILabel alloc] init];
+    self.headerLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    self.headerLabel.text = @"Transactions";
+    self.headerLabel.font = [UIFont systemFontOfSize:34 weight:UIFontWeightBold];
+    self.headerLabel.textColor = [UIColor labelColor];
+    [headerContainer addSubview:self.headerLabel];
+    
+    // Setup add button (right side)
+    self.addButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    self.addButton.translatesAutoresizingMaskIntoConstraints = NO;
+    self.addButton.tintColor = [UIColor systemBlueColor];
+    [self.addButton setTitle:@"Add Data" forState:UIControlStateNormal];
+    self.addButton.titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightMedium];
+    [self.addButton addTarget:self action:@selector(addButtonTapped) forControlEvents:UIControlEventTouchUpInside];
+    self.addButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    // Increase button size to match Health app
+    [self.addButton.imageView setContentMode:UIViewContentModeScaleAspectFit];
+    [headerContainer addSubview:self.addButton];
+    
+    // Setup constraints for header container
+    [NSLayoutConstraint activateConstraints:@[
+        [headerContainer.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
+        [headerContainer.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
+        [headerContainer.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
+        [headerContainer.heightAnchor constraintEqualToConstant:60]
+    ]];
+    
+    // Setup constraints for header label
+    [NSLayoutConstraint activateConstraints:@[
+        [self.headerLabel.leadingAnchor constraintEqualToAnchor:headerContainer.leadingAnchor],
+        [self.headerLabel.centerYAnchor constraintEqualToAnchor:headerContainer.centerYAnchor],
+        [self.headerLabel.trailingAnchor constraintEqualToAnchor:self.addButton.leadingAnchor constant:-10]
+    ]];
+    
+    // Setup constraints for add button - make it larger like in Health app
+    [NSLayoutConstraint activateConstraints:@[
+        [self.addButton.trailingAnchor constraintEqualToAnchor:headerContainer.trailingAnchor],
+        [self.addButton.centerYAnchor constraintEqualToAnchor:headerContainer.centerYAnchor],
+    ]];
+}
+
+
+#pragma mark - setupSegmetControls
+
+- (void)setupSegmentControls {
+    // 1. Create the segment controls
+    self.typeSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"Expense", @"Income", @"All"]];
+    self.typeSegmentControl.translatesAutoresizingMaskIntoConstraints = NO;
+    self.typeSegmentControl.selectedSegmentIndex = 2;
+    
+    self.dateSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"D", @"W", @"M", @"6M", @"Y"]];
+    self.dateSegmentControl.translatesAutoresizingMaskIntoConstraints = NO;
+    self.dateSegmentControl.selectedSegmentIndex = 0;
+    
+    [self.typeSegmentControl addTarget:self
+                                action:@selector(typeSegmentChange:)
+                      forControlEvents:UIControlEventValueChanged];
+    [self.dateSegmentControl addTarget:self
+                                action:@selector(dateSegmentChange:)
+                      forControlEvents:UIControlEventValueChanged];
+    [self.view addSubview:self.typeSegmentControl];
+    [self.view addSubview:self.dateSegmentControl];
+    
+    // 2. Setup auto layout constraints
+    CGFloat margin = 16.0;
+    CGFloat segmentHeight = 32.0;
+    CGFloat gap = 8.0;
+    
+    [NSLayoutConstraint activateConstraints:@[
+        // Type segment at top, under safe area
+        [self.typeSegmentControl.topAnchor constraintEqualToAnchor:self.headerContainer.bottomAnchor constant:16.0],
+        [self.typeSegmentControl.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:margin],
+        [self.typeSegmentControl.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-margin],
+        [self.typeSegmentControl.heightAnchor constraintEqualToConstant:segmentHeight],
+        
+        // Date segment under type segment
+        [self.dateSegmentControl.topAnchor constraintEqualToAnchor:self.typeSegmentControl.bottomAnchor constant:gap],
+        [self.dateSegmentControl.leadingAnchor constraintEqualToAnchor:self.typeSegmentControl.leadingAnchor],
+        [self.dateSegmentControl.trailingAnchor constraintEqualToAnchor:self.typeSegmentControl.trailingAnchor],
+        [self.dateSegmentControl.heightAnchor constraintEqualToConstant:segmentHeight],
+        
+        // Table view below date segment (modify your tableView's top constraint!)
+        [self.transactionTableView.topAnchor constraintEqualToAnchor:self.dateSegmentControl.bottomAnchor constant:gap]
+    ]];
+    
+    // 3. Initialize states
+    self.typeSegmentIndex = self.typeSegmentControl.selectedSegmentIndex;
+    self.dateSegmentIndex = self.dateSegmentControl.selectedSegmentIndex;
+}
+
+
+#pragma mark - setupTableView
+- (void)setupTableView {
+    // Setup table view for budget items - use inset grouped style like Health app
+    self.transactionTableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStyleInsetGrouped];
+    self.transactionTableView.translatesAutoresizingMaskIntoConstraints = NO;
+    self.transactionTableView.delegate = self;
+    self.transactionTableView.dataSource = self;
+    
+    // Clear background to match the parent view background
+    self.transactionTableView.backgroundColor = [UIColor clearColor];
+    [self.view addSubview:self.transactionTableView];
+    
+    // Register cell with subtitle style to show budget amounts
+    [self.transactionTableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"BudgetCell"];
+    
+    // Setup constraints for table view
+    [NSLayoutConstraint activateConstraints:@[
+        [self.transactionTableView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [self.transactionTableView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [self.transactionTableView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
+    ]];
+}
+
 
 
 
@@ -208,6 +289,9 @@
     return image;
 }
 
+
+#pragma mark - UITableViewDelegate
+
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(nonnull NSIndexPath *)indexPath{
     // Instantiate the navigation controller
     UINavigationController *navController = [self.storyboard instantiateViewControllerWithIdentifier:@"TransactionNavController"];
@@ -241,6 +325,14 @@
             // Optionally: present an alert or error to user
         }
     }
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    return @"Transactions";
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
+    return @"Tap Add Data to add a new transaction";
 }
 
 
