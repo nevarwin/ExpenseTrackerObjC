@@ -30,12 +30,12 @@
     // Instantiate view controllers from storyboard
     UIViewController *transactionVC = [mainStoryboard instantiateViewControllerWithIdentifier:@"TransactionViewController"];
     transactionVC.tabBarItem = [[UITabBarItem alloc] initWithTitle:@"Transactions"
-                                                             image:[UIImage systemImageNamed:@"heart.fill"]
+                                                             image:[UIImage systemImageNamed:@"banknote.fill"]
                                                                tag:0];
     
     UIViewController *budgetVC = [[BudgetViewController alloc] init];
     budgetVC.tabBarItem = [[UITabBarItem alloc] initWithTitle:@"Budget"
-                                                        image:[UIImage systemImageNamed:@"magnifyingglass"]
+                                                        image:[UIImage systemImageNamed:@"chart.pie.fill"]
                                                           tag:1];
     
     UITabBarController *tabBarController = [[UITabBarController alloc] init];
