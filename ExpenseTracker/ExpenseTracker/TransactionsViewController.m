@@ -17,6 +17,7 @@
 @implementation TransactionsViewController
 
 - (void) viewDidLoad{
+    self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
     // Get context
     NSManagedObjectContext *context = [(AppDelegate *)[[UIApplication sharedApplication] delegate] persistentContainer].viewContext;
     

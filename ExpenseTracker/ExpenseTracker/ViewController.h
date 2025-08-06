@@ -10,15 +10,20 @@
 
 @interface ViewController : UIViewController
 
-@property (weak, nonatomic) IBOutlet UITableView *transactionTableView;
+@property (nonatomic, strong) UIView *headerContainer;
+@property (nonatomic, strong) UILabel *headerLabel;
+@property (nonatomic, strong) UIButton *addButton;
+
+@property (strong, nonatomic) UITableView *transactionTableView;
 @property (strong, nonatomic) NSMutableArray *transactionsArray;
+
 @property (strong, nonatomic) NSFetchedResultsController *fetchedResultsController;
+
 @property (strong, nonatomic) UISegmentedControl *dateSegmentControl;
 @property (strong, nonatomic) UISegmentedControl *typeSegmentControl;
 @property (nonatomic, assign) NSInteger typeSegmentIndex;
 @property (nonatomic, assign) NSInteger dateSegmentIndex;
 
-- (IBAction)addTransaction:(UIButton *)sender;
 
 @end
 
