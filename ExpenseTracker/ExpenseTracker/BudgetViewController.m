@@ -5,12 +5,9 @@
 //
 
 #import "BudgetViewController.h"
+#import "BudgetFormViewController.h"
 
 @interface BudgetViewController () <UITableViewDelegate, UITableViewDataSource>
-
-@property (nonatomic, strong) UILabel *headerLabel;
-@property (nonatomic, strong) UIButton *addButton;
-@property (nonatomic, strong) UITableView *budgetTableView;
 
 @end
 
@@ -101,41 +98,18 @@
 #pragma mark - Actions
 
 - (void)addButtonTapped {
-    // Handle add button tap - show alert to create new budget
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"New Budget"
-                                                                             message:@"Create a new budget category"
-                                                                      preferredStyle:UIAlertControllerStyleAlert];
+    // Create BudgetFormViewController programmatically
+    BudgetFormViewController *budgetFormVC = [[BudgetFormViewController alloc] init];
     
-    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-        textField.placeholder = @"Budget Name";
-        textField.autocapitalizationType = UITextAutocapitalizationTypeSentences;
-    }];
+    // Configure the view controller
+    budgetFormVC.delegate = self;
+    budgetFormVC.isEditMode = NO; // Since we're adding a new budget, not editing
     
-    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-        textField.placeholder = @"Budget Amount";
-        textField.keyboardType = UIKeyboardTypeDecimalPad;
-    }];
+    // Wrap in a navigation controller
+    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:budgetFormVC];
     
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel"
-                                                           style:UIAlertActionStyleCancel
-                                                         handler:nil];
-    
-    UIAlertAction *addAction = [UIAlertAction actionWithTitle:@"Add"
-                                                        style:UIAlertActionStyleDefault
-                                                      handler:^(UIAlertAction * _Nonnull action) {
-        // Handle saving the new budget
-        NSString *name = alertController.textFields[0].text;
-        NSString *amount = alertController.textFields[1].text;
-        
-        // Add your logic to save the budget
-        NSLog(@"New budget: %@ - $%@", name, amount);
-        [self.budgetTableView reloadData];
-    }];
-    
-    [alertController addAction:cancelAction];
-    [alertController addAction:addAction];
-    
-    [self presentViewController:alertController animated:YES completion:nil];
+    // Present modally
+    [self presentViewController:navController animated:YES completion:nil];
 }
 
 #pragma mark - UITableViewDataSource

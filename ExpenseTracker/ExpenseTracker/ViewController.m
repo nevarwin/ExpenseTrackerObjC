@@ -23,8 +23,6 @@
     [self setupSegmentControls];
     
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
-//    self.transactionsArray = [NSMutableArray array];
-    
 }
 
 - (void)typeSegmentChange:(UISegmentedControl *)sender{
