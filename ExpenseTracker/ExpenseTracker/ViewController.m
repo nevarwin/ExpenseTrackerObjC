@@ -99,6 +99,20 @@
 }
 
 
+#pragma mark - Actions
+
+- (void)addButtonTapped {
+    UINavigationController *navController = [self.storyboard instantiateViewControllerWithIdentifier:@"TransactionNavController"];
+    
+    // Get your TransactionsViewController from the nav controller
+    TransactionsViewController *transactionVC = (TransactionsViewController *)navController.topViewController;
+    
+    transactionVC.delegate = self;
+    transactionVC.isEditMode = YES;
+    [self presentViewController:navController animated:YES completion:nil];
+}
+
+
 #pragma mark - setupHeaderView
 - (void)setupHeaderView {
     // Create header container
@@ -119,7 +133,6 @@
     self.addButton.translatesAutoresizingMaskIntoConstraints = NO;
     self.addButton.tintColor = [UIColor systemBlueColor];
     [self.addButton setTitle:@"Add Data" forState:UIControlStateNormal];
-    self.addButton.titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightMedium];
     [self.addButton addTarget:self action:@selector(addButtonTapped) forControlEvents:UIControlEventTouchUpInside];
     self.addButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     // Increase button size to match Health app
