@@ -6,6 +6,7 @@
 
 #import "BudgetViewController.h"
 #import "BudgetFormViewController.h"
+#import "AppDelegate.h"
 
 @interface BudgetViewController () <UITableViewDelegate, UITableViewDataSource>
 
@@ -99,7 +100,15 @@
 
 - (void)addButtonTapped {
     // Create BudgetFormViewController programmatically
+    
+    if (!self.managedObjectContext) {
+        AppDelegate *delegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+        self.managedObjectContext = delegate.persistentContainer.viewContext;
+    }
+    // Initialize BudgetFormViewController
     BudgetFormViewController *budgetFormVC = [[BudgetFormViewController alloc] init];
+    
+    budgetFormVC.managedObjectContext = self.managedObjectContext;
     
     // Configure the view controller
     budgetFormVC.delegate = self;
