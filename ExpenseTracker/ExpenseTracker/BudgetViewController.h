@@ -6,6 +6,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <CoreData/CoreData.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -14,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) UILabel *headerLabel;
 @property (nonatomic, strong) UIButton *addButton;
 @property (nonatomic, strong) UITableView *budgetTableView;
+@property (nonatomic, strong) NSManagedObjectContext *managedObjectContext;
 
 @end
 

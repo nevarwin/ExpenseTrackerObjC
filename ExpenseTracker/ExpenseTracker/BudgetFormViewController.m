@@ -6,13 +6,15 @@
 //
 
 #import "BudgetFormViewController.h"
+#import <CoreData/CoreData.h>
+
 
 @protocol BudgetFormViewControllerDelegate <NSObject>
 - (void)budgetFormViewController:(BudgetFormViewController *)controller didSaveBudget:(id)budget;
 - (void)budgetFormViewControllerDidCancel:(BudgetFormViewController *)controller;
 @end
 
-@interface BudgetFormViewController () <UITableViewDelegate, UITableViewDataSource>
+@interface BudgetFormViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate>
 
 @end
 
@@ -20,13 +22,18 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+    
+    NSEntityDescription *expenseEntity = [NSEntityDescription entityForName:@"Expenses" inManagedObjectContext:self.managedObjectContext];
+    NSEntityDescription *incomeEntity = [NSEntityDescription entityForName:@"Income" inManagedObjectContext:self.managedObjectContext];
+    
+    self.expenseAttributes = expenseEntity.attributesByName;
+    self.incomeAttributes = incomeEntity.attributesByName;
     
     // Initialize properties
     self.selectedDate = [NSDate date];
     self.budgetName = @"";
-    self.salary = [NSDecimalNumber zero];
-    self.bonus = [NSDecimalNumber zero];
-    self.savings = [NSDecimalNumber zero];
     
     // Setup UI
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
@@ -59,6 +66,16 @@
                                           action:@selector(dismissKeyboard)];
     tapGesture.cancelsTouchesInView = NO;
     [self.view addGestureRecognizer:tapGesture];
+    
+    // Add observer for keyboard notifications
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardWillShow:)
+                                                 name:UIKeyboardWillShowNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardWillHide:)
+                                                 name:UIKeyboardWillHideNotification
+                                               object:nil];
 }
 
 - (void)setupTableView {
@@ -86,6 +103,29 @@
     
 }
 
+#pragma mark - Keyboard Notifications
+// Keyboard handlers
+- (void)keyboardWillShow:(NSNotification *)notification {
+    CGRect kbFrame = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    CGFloat kbHeight = kbFrame.size.height;
+    self.tableView.contentInset = UIEdgeInsetsMake(0, 0, kbHeight, 0);
+    self.tableView.scrollIndicatorInsets = self.tableView.contentInset;
+}
+
+- (void)keyboardWillHide:(NSNotification *)notification {
+    self.tableView.contentInset = UIEdgeInsetsZero;
+    self.tableView.scrollIndicatorInsets = UIEdgeInsetsZero;
+}
+
+// UITextFieldDelegate
+- (void)textFieldDidBeginEditing:(UITextField *)textField {
+    UITableViewCell *cell = (UITableViewCell *)textField.superview.superview;
+    NSIndexPath *indexPath = [self.tableView indexPathForCell:cell];
+    [self.tableView scrollToRowAtIndexPath:indexPath
+                          atScrollPosition:UITableViewScrollPositionMiddle
+                                  animated:YES];
+}
+
 
 #pragma mark - UITableViewDataSource
 
@@ -94,128 +134,102 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    switch (section) {
-        case 0: // Budget info
-            return 1;
-        case 1: // Date
-            return 2;
-        case 2: // Time
-            return 2;
-        default:
-            return 0;
-    }
+    if (section == 0) return 1;
+    if (section == 1) return self.expenseAttributes.allKeys.count;
+    if (section == 2) return self.incomeAttributes.allKeys.count;
+    return 0;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    
+    // cellForRowAtIndexPath
     if (indexPath.section == 0) {
+        // Only one row for budget name
         UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TextFieldCell" forIndexPath:indexPath];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
-        
-        // Remove any existing text fields
         for (UIView *subview in cell.contentView.subviews) {
             [subview removeFromSuperview];
         }
-        
         UITextField *textField = [[UITextField alloc] init];
         textField.translatesAutoresizingMaskIntoConstraints = NO;
-        textField.clearButtonMode = UITextFieldViewModeWhileEditing;
-        textField.tag = 100 + indexPath.row;
-        [textField addTarget:self action:@selector(textFieldChanged:) forControlEvents:UIControlEventEditingChanged];
-        
-        [cell.contentView addSubview:textField];
-        
-        [NSLayoutConstraint activateConstraints:@[
-            [textField.topAnchor constraintEqualToAnchor:cell.contentView.topAnchor],
-            [textField.leadingAnchor constraintEqualToAnchor:cell.contentView.leadingAnchor constant:16],
-            [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
-            [textField.bottomAnchor constraintEqualToAnchor:cell.contentView.bottomAnchor]
-        ]];
-        
         textField.placeholder = @"Budget Name";
         textField.text = self.budgetName;
-        
+        [cell.contentView addSubview:textField];
+        [NSLayoutConstraint activateConstraints:@[
+            [textField.topAnchor constraintEqualToAnchor:cell.contentView.topAnchor],
+            [textField.leadingAnchor constraintEqualToAnchor:cell.contentView.leadingAnchor constant:16],
+            [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
+            [textField.bottomAnchor constraintEqualToAnchor:cell.contentView.bottomAnchor]
+        ]];
         return cell;
     } else if (indexPath.section == 1) {
-        UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TextFieldCell" forIndexPath:indexPath];
-        cell.selectionStyle = UITableViewCellSelectionStyleNone;
-        
-        // Remove any existing text fields
-        for (UIView *subview in cell.contentView.subviews) {
-            [subview removeFromSuperview];
-        }
-        
-        UITextField *textField = [[UITextField alloc] init];
-        textField.translatesAutoresizingMaskIntoConstraints = NO;
-        textField.clearButtonMode = UITextFieldViewModeWhileEditing;
-        textField.tag = 100 + indexPath.row;
-        [textField addTarget:self action:@selector(textFieldChanged:) forControlEvents:UIControlEventEditingChanged];
-        
-        [cell.contentView addSubview:textField];
-        
-        [NSLayoutConstraint activateConstraints:@[
-            [textField.topAnchor constraintEqualToAnchor:cell.contentView.topAnchor],
-            [textField.leadingAnchor constraintEqualToAnchor:cell.contentView.leadingAnchor constant:16],
-            [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
-            [textField.bottomAnchor constraintEqualToAnchor:cell.contentView.bottomAnchor]
-        ]];
-        
-        
-        if (indexPath.row == 0) {
-            textField.placeholder = @"Paycheck";
-            textField.text = self.budgetName;
-            textField.keyboardType = UIKeyboardTypeDecimalPad;
-            if (![self.salary isEqualToNumber:[NSDecimalNumber zero]]) {
-                NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
-                formatter.numberStyle = NSNumberFormatterCurrencyStyle;
-                textField.text = [formatter stringFromNumber:self.salary];
-            }
-        } else {
-            textField.placeholder = @"Savings";
-            textField.keyboardType = UIKeyboardTypeDecimalPad;
-            if (![self.salary isEqualToNumber:[NSDecimalNumber zero]]) {
-                NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
-                formatter.numberStyle = NSNumberFormatterCurrencyStyle;
-                textField.text = [formatter stringFromNumber:self.salary];
-            }
-        }
-        
-        return cell;
-    } else {
-        UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TextFieldCell" forIndexPath:indexPath];
-        cell.selectionStyle = UITableViewCellSelectionStyleNone;
-        
-        // Remove any existing text fields
-        for (UIView *subview in cell.contentView.subviews) {
-            [subview removeFromSuperview];
-        }
-        
-        UITextField *textField = [[UITextField alloc] init];
-        textField.translatesAutoresizingMaskIntoConstraints = NO;
-        textField.clearButtonMode = UITextFieldViewModeWhileEditing;
-        textField.tag = 100 + indexPath.row;
-        [textField addTarget:self action:@selector(textFieldChanged:) forControlEvents:UIControlEventEditingChanged];
-        
-        [cell.contentView addSubview:textField];
-        
-        [NSLayoutConstraint activateConstraints:@[
-            [textField.topAnchor constraintEqualToAnchor:cell.contentView.topAnchor],
-            [textField.leadingAnchor constraintEqualToAnchor:cell.contentView.leadingAnchor constant:16],
-            [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
-            [textField.bottomAnchor constraintEqualToAnchor:cell.contentView.bottomAnchor]
-        ]];
-        
-        
-            textField.placeholder = @"Amount";
-            textField.keyboardType = UIKeyboardTypeDecimalPad;
-        if (![self.electricity isEqualToNumber:[NSDecimalNumber zero]]) {
-            NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
-            formatter.numberStyle = NSNumberFormatterCurrencyStyle;
-            textField.text = [formatter stringFromNumber:self.electricity];
-        }
-        
-        return cell;
+        // Expense attributes
+        NSArray *expenseKeys = [self.expenseAttributes allKeys];
+        NSString *attributeName = expenseKeys[indexPath.row];
+        NSDecimalNumber *value = self.expenseValues[attributeName];
+        return [self configuredTextFieldCellForTableView:tableView
+                                               indexPath:indexPath
+                                             placeholder:[attributeName capitalizedString]
+                                            keyboardType:UIKeyboardTypeDecimalPad
+                                                   value:value
+                                           attributeName:attributeName];
+    } else if (indexPath.section == 2) {
+        // Income attributes
+        NSArray *incomeKeys = [self.incomeAttributes allKeys];
+        NSString *attributeName = incomeKeys[indexPath.row];
+        NSDecimalNumber *value = self.incomeValues[attributeName];
+        return [self configuredTextFieldCellForTableView:tableView
+                                               indexPath:indexPath
+                                             placeholder:[attributeName capitalizedString]
+                                            keyboardType:UIKeyboardTypeDecimalPad
+                                                   value:value
+                                           attributeName:attributeName];
     }
+    return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"DefaultCell"];
 }
+
+- (UITableViewCell *)configuredTextFieldCellForTableView:(UITableView *)tableView
+                                               indexPath:(NSIndexPath *)indexPath
+                                             placeholder:(NSString *)placeholder
+                                            keyboardType:(UIKeyboardType)keyboardType
+                                                   value:(NSDecimalNumber *)value
+                                           attributeName:(NSString *)attributeName {
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TextFieldCell" forIndexPath:indexPath];
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    
+    // Remove old views
+    for (UIView *subview in cell.contentView.subviews) {
+        [subview removeFromSuperview];
+    }
+    
+    UITextField *textField = [[UITextField alloc] init];
+    textField.delegate = self;
+    textField.translatesAutoresizingMaskIntoConstraints = NO;
+    textField.clearButtonMode = UITextFieldViewModeWhileEditing;
+    textField.tag = 100 + indexPath.row;
+    textField.placeholder = placeholder;
+    textField.keyboardType = keyboardType;
+    textField.accessibilityIdentifier = attributeName; // store key for later use
+    [textField addTarget:self action:@selector(textFieldChanged:) forControlEvents:UIControlEventEditingChanged];
+    
+    if (value && ![value isEqualToNumber:[NSDecimalNumber zero]]) {
+        NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
+        formatter.numberStyle = NSNumberFormatterCurrencyStyle;
+        textField.text = [formatter stringFromNumber:value];
+    }
+    
+    [cell.contentView addSubview:textField];
+    
+    [NSLayoutConstraint activateConstraints:@[
+        [textField.topAnchor constraintEqualToAnchor:cell.contentView.topAnchor],
+        [textField.leadingAnchor constraintEqualToAnchor:cell.contentView.leadingAnchor constant:16],
+        [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
+        [textField.bottomAnchor constraintEqualToAnchor:cell.contentView.bottomAnchor]
+    ]];
+    
+    return cell;
+}
+
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     switch (section) {
@@ -247,33 +261,19 @@
 #pragma mark - Event Handlers
 
 - (void)textFieldChanged:(UITextField *)textField {
-    if (textField.tag == 100) {
-        self.budgetName = textField.text;
-    } else if (textField.tag == 101) {
-        NSString *cleanString = [[textField.text componentsSeparatedByCharactersInSet:
-                                  [[NSCharacterSet decimalDigitCharacterSet] invertedSet]]
-                                 componentsJoinedByString:@""];
-        
-        double value = [cleanString doubleValue] / 100.0;
-        self.salary = [NSDecimalNumber decimalNumberWithString:[NSString stringWithFormat:@"%.2f", value]];
-        
-        NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
-        formatter.numberStyle = NSNumberFormatterCurrencyStyle;
-        
-        if (value > 0) {
-            NSString *formattedString = [formatter stringFromNumber:self.salary];
-            textField.text = formattedString;
-        }
-    }
+    NSString *attributeKey = textField.accessibilityIdentifier;
     
-    [self validateForm];
+    NSDecimalNumber *decimalValue = [NSDecimalNumber decimalNumberWithString:textField.text];
+    if (decimalValue) {
+        self.expenseValues[attributeKey] = decimalValue;
+    }
 }
 
 - (void)validateForm {
-    BOOL isValid = self.budgetName.length > 0 &&
-    ![self.salary isEqualToNumber:[NSDecimalNumber zero]];
+    //    BOOL isValid = self.budgetName.length > 0 &&
+    //    ![self.salary isEqualToNumber:[NSDecimalNumber zero]];
     
-    self.rightButton.enabled = isValid;
+    //    self.rightButton.enabled = isValid;
 }
 
 #pragma mark - Actions
@@ -282,7 +282,6 @@
     // Create budget object - replace with your actual Budget model
     NSDictionary *budgetData = @{
         @"name": self.budgetName,
-        @"amount": self.salary,
         @"date": self.selectedDate
     };
     
