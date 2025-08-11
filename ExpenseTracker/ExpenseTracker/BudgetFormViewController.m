@@ -262,18 +262,31 @@
 
 - (void)textFieldChanged:(UITextField *)textField {
     NSString *attributeKey = textField.accessibilityIdentifier;
-    
-    NSDecimalNumber *decimalValue = [NSDecimalNumber decimalNumberWithString:textField.text];
-    if (decimalValue) {
-        self.expenseValues[attributeKey] = decimalValue;
+    if (attributeKey) {
+        NSDecimalNumber *decimalValue = [NSDecimalNumber decimalNumberWithString:textField.text];
+        if ([self.expenseAttributes objectForKey:attributeKey]) {
+            self.expenseValues[attributeKey] = decimalValue ?: [NSDecimalNumber zero];
+        } else if ([self.incomeAttributes objectForKey:attributeKey]) {
+            self.incomeValues[attributeKey] = decimalValue ?: [NSDecimalNumber zero];
+        }
+    } else {
+        // Budget name field
+        self.budgetName = textField.text ?: @"";
     }
+    [self validateForm];
 }
 
 - (void)validateForm {
-    //    BOOL isValid = self.budgetName.length > 0 &&
-    //    ![self.salary isEqualToNumber:[NSDecimalNumber zero]];
-    
-    //    self.rightButton.enabled = isValid;
+    BOOL hasBudgetName = self.budgetName.length > 0;
+    BOOL hasIncome = NO;
+    for (NSString *key in self.incomeAttributes) {
+        NSDecimalNumber *value = self.incomeValues[key];
+        if (value && [value compare:[NSDecimalNumber zero]] == NSOrderedDescending) {
+            hasIncome = YES;
+            break;
+        }
+    }
+    self.rightButton.enabled = hasBudgetName && hasIncome;
 }
 
 #pragma mark - Actions
