@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23788.4" systemVersion="24G84" minimumToolsVersion="Automatic" sourceLanguage="Objective-C" userDefinedModelVersionIdentifier="">
+    <entity name="Budget" representedClassName="Budget" syncable="YES" codeGenerationType="class">
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="budgettoexpenses" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Expenses" inverseName="expensestobudget" inverseEntity="Expenses"/>
+        <relationship name="budgettoincome" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Income" inverseName="incometobudget" inverseEntity="Income"/>
+    </entity>
     <entity name="Category" representedClassName="Category" syncable="YES" codeGenerationType="class">
         <attribute name="id" optional="YES" attributeType="String"/>
         <attribute name="name" optional="YES" attributeType="String"/>
@@ -11,11 +18,13 @@
         <attribute name="housing" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="save" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="travel" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <relationship name="expensestobudget" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Budget" inverseName="budgettoexpenses" inverseEntity="Budget"/>
     </entity>
     <entity name="Income" representedClassName="Income" syncable="YES" codeGenerationType="class">
         <attribute name="bonus" optional="YES" attributeType="Decimal" defaultValueString="0"/>
         <attribute name="salary" optional="YES" attributeType="Decimal" defaultValueString="0"/>
         <attribute name="savings" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <relationship name="incometobudget" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Budget" inverseName="budgettoincome" inverseEntity="Budget"/>
     </entity>
     <entity name="Transaction" representedClassName="Transaction" syncable="YES">
         <attribute name="amount" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
