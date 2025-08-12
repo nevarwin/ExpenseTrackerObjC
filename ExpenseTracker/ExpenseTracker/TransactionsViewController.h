@@ -17,8 +17,12 @@
 @property (weak, nonatomic) IBOutlet UIPickerView *pickerView;
 @property (weak, nonatomic) IBOutlet UITextField *amountTextField;
 @property (weak, nonatomic) IBOutlet UIDatePicker *datePickerOutlet;
+
 @property (strong, nonatomic) NSArray *categoryValues;
 @property (weak, nonatomic) NSString *selectedCategory;
+
+@property (strong, nonatomic) NSDictionary *expenseAttributes;
+@property (strong, nonatomic) NSDictionary *incomeAttributes;
 
 @property (nonatomic, assign) BOOL isEditMode;
 @property (nonatomic, weak) id delegate;

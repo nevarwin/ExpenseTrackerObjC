@@ -18,31 +18,15 @@
 
 - (void) viewDidLoad{
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
-    // Get context
-    NSManagedObjectContext *context = [(AppDelegate *)[[UIApplication sharedApplication] delegate] persistentContainer].viewContext;
     
-    // Create fetch request for Category
-    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Category"];
+    // Initialize the AppDelegate
+    AppDelegate *appDelegate = [[AppDelegate alloc] init];
     
-    NSError *error = nil;
-    NSArray *categories = [context executeFetchRequest:fetchRequest error:&error];
+    NSDictionary *attributes = [appDelegate.self fetchAttributes];
     
-    if (error) {
-        NSLog(@"Error fetching categories: %@", error);
-        self.categoryValues = @[]; // Set empty if there's an error
-        return;
-    }
-    
-    // Extract names from the results
-    NSMutableArray *names = [NSMutableArray array];
-    for (NSManagedObject *category in categories) {
-        NSString *name = [category valueForKey:@"name"];
-        if (name) {
-            [names addObject:name];
-        }
-    }
-    
-    self.categoryValues = names;
+    // Access Expense and Income attributes
+    self.expenseAttributes = attributes[@"Expenses"];
+    self.incomeAttributes = attributes[@"Income"];
     
     self.pickerView.delegate = self;
     self.pickerView.dataSource = self;
@@ -98,6 +82,7 @@
 
 -(void)segmentChanged:(UISegmentedControl *)sender {
     NSInteger selectedIndex = sender.selectedSegmentIndex;
+    [self updatePickerViewForSegment:selectedIndex];
 }
 
 - (void)leftButtonTapped {
@@ -119,13 +104,10 @@
     if(self.isEditMode){
         self.amountTextField.text = [NSString stringWithFormat:@"%.2ld", (long)self.existingTransaction.amount];
         
-        NSUInteger categoryIndex = [self.categoryValues indexOfObject:self.existingTransaction.category];
-        if (categoryIndex != NSNotFound) {
-            [self.pickerView selectRow:categoryIndex inComponent:0 animated:NO];
-        }
+        NSLog(@"self.segmentControl.selectedSegmentIndex: %ld", (long)self.existingTransaction.type);
         
+        // TODO: bug when in edit mode
         [self.datePickerOutlet setDate:self.existingTransaction.date];
-        self.segmentControl.selectedSegmentIndex = self.existingTransaction.type;
 
     } else {
         self.amountTextField.text = @"";
@@ -146,23 +128,55 @@
 
 #pragma mark - UIPickerViewDataSource
 
-// 1. Number of columns (aka components)
+// Number of components (columns) in the picker view
 - (NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView {
     return 1;
 }
 
-// 2. Number of rows
+// Update the UIPickerView based on the selected segment index
+- (void)updatePickerViewForSegment:(NSInteger)segmentIndex {
+    // Reload the picker view to reflect changes in the data
+    [self.pickerView reloadAllComponents];
+    [self.pickerView selectRow:0 inComponent:0 animated:YES];
+}
+
+// Number of rows in the picker view for each component
 - (NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component {
-    return self.categoryValues.count;
+    if (self.segmentControl.selectedSegmentIndex == 0) {
+        // If the "Expenses" segment is selected, show the Expenses rows
+        return self.expenseAttributes.count;
+    } else {
+        // If the "Income" segment is selected, show the Income rows
+        return self.incomeAttributes.count;
+    }
+}
+
+// Handle row selection in the picker view
+- (void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component {
+    if (self.segmentControl.selectedSegmentIndex == 0) {
+        // If "Expenses" is selected, get the selected expense attribute
+        self.categoryValues = [self.expenseAttributes allKeys];
+    } else {
+        // If "Income" is selected, get the selected income attribute
+        self.categoryValues = [self.incomeAttributes allKeys];
+    }
 }
 
 
 
 #pragma mark - UIPickerViewDelegate
 
-// 3. Title for each row
+// Title for each row in the picker view
 - (NSString *)pickerView:(UIPickerView *)pickerView titleForRow:(NSInteger)row forComponent:(NSInteger)component {
-    return self.categoryValues[row];
+    if (self.segmentControl.selectedSegmentIndex == 0) {
+        // If the "Expenses" segment is selected, fetch titles from expenseAttributes
+        NSArray *expenseKeys = [self.expenseAttributes allKeys];
+        return [expenseKeys[row] capitalizedString]; // Display expense name
+    } else {
+        // If the "Income" segment is selected, fetch titles from incomeAttributes
+        NSArray *incomeKeys = [self.incomeAttributes allKeys];
+        return [incomeKeys[row] capitalizedString]; // Display income name
+    }
 }
 
 
@@ -221,49 +235,48 @@
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
-    [self drawCircleIndicatorInView:self.view];
+    //    [self drawCircleIndicatorInView:self.view];
 }
 
 // In your UIView subclass or ViewController
-
-- (void)drawCircleIndicatorInView:(UIView *)view {
-    CGFloat lineWidth = 20.0;
-    CGFloat radius = (MIN(view.bounds.size.width, view.bounds.size.height) - lineWidth) / 2.0;
-    CGPoint center = CGPointMake(CGRectGetMidX(view.bounds), CGRectGetMidY(view.bounds));
-
-    // 1. Background Circle (opacity 0.3)
-    UIBezierPath *bgCirclePath = [UIBezierPath bezierPathWithArcCenter:center
-                                                                radius:radius
-                                                            startAngle:0
-                                                              endAngle:2*M_PI
-                                                             clockwise:YES];
-
-    CAShapeLayer *bgCircleLayer = [CAShapeLayer layer];
-    bgCircleLayer.path = bgCirclePath.CGPath;
-    bgCircleLayer.strokeColor = [UIColor.redColor colorWithAlphaComponent:0.3].CGColor;
-    bgCircleLayer.fillColor = UIColor.clearColor.CGColor;
-    bgCircleLayer.lineWidth = lineWidth;
-
-    [view.layer addSublayer:bgCircleLayer];
-
-    // 2. Foreground Arc (trimmed, opacity 1.0)
-    CGFloat startAngle = -M_PI_2; // Start at top
-    CGFloat endAngle = startAngle + 2 * M_PI * 0.3; // 30% of the circle
-
-    UIBezierPath *fgCirclePath = [UIBezierPath bezierPathWithArcCenter:center
-                                                                radius:radius
-                                                            startAngle:startAngle
-                                                              endAngle:endAngle
-                                                             clockwise:YES];
-
-    CAShapeLayer *fgCircleLayer = [CAShapeLayer layer];
-    fgCircleLayer.path = fgCirclePath.CGPath;
-    fgCircleLayer.strokeColor = UIColor.redColor.CGColor;
-    fgCircleLayer.fillColor = UIColor.blueColor.CGColor;
-    fgCircleLayer.lineWidth = lineWidth;
-    fgCircleLayer.lineCap = kCALineCapRound;
-
-    [view.layer addSublayer:fgCircleLayer];
-}
+//- (void)drawCircleIndicatorInView:(UIView *)view {
+//    CGFloat lineWidth = 20.0;
+//    CGFloat radius = (MIN(view.bounds.size.width, view.bounds.size.height) - lineWidth) / 2.0;
+//    CGPoint center = CGPointMake(CGRectGetMidX(view.bounds), CGRectGetMidY(view.bounds));
+//
+//    // 1. Background Circle (opacity 0.3)
+//    UIBezierPath *bgCirclePath = [UIBezierPath bezierPathWithArcCenter:center
+//                                                                radius:radius
+//                                                            startAngle:0
+//                                                              endAngle:2*M_PI
+//                                                             clockwise:YES];
+//
+//    CAShapeLayer *bgCircleLayer = [CAShapeLayer layer];
+//    bgCircleLayer.path = bgCirclePath.CGPath;
+//    bgCircleLayer.strokeColor = [UIColor.redColor colorWithAlphaComponent:0.3].CGColor;
+//    bgCircleLayer.fillColor = UIColor.clearColor.CGColor;
+//    bgCircleLayer.lineWidth = lineWidth;
+//
+//    [view.layer addSublayer:bgCircleLayer];
+//
+//    // 2. Foreground Arc (trimmed, opacity 1.0)
+//    CGFloat startAngle = -M_PI_2; // Start at top
+//    CGFloat endAngle = startAngle + 2 * M_PI * 0.3; // 30% of the circle
+//
+//    UIBezierPath *fgCirclePath = [UIBezierPath bezierPathWithArcCenter:center
+//                                                                radius:radius
+//                                                            startAngle:startAngle
+//                                                              endAngle:endAngle
+//                                                             clockwise:YES];
+//
+//    CAShapeLayer *fgCircleLayer = [CAShapeLayer layer];
+//    fgCircleLayer.path = fgCirclePath.CGPath;
+//    fgCircleLayer.strokeColor = UIColor.redColor.CGColor;
+//    fgCircleLayer.fillColor = UIColor.blueColor.CGColor;
+//    fgCircleLayer.lineWidth = lineWidth;
+//    fgCircleLayer.lineCap = kCALineCapRound;
+//
+//    [view.layer addSublayer:fgCircleLayer];
+//}
 
 @end

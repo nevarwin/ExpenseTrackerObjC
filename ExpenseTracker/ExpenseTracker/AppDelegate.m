@@ -18,7 +18,7 @@
     // Override point for customization after application launch.
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     if (![defaults boolForKey:@"isDefaultDataInserted"]) {
-        [self insertDefaultData];
+        [self fetchAttributes];
         [defaults setBool:YES forKey:@"isDefaultDataInserted"];
         [defaults synchronize];
     }
@@ -27,30 +27,26 @@
 
 #pragma mark - User Default
 
-- (void)insertDefaultData {
-    // 1. Get your Core Data context
+// Method to fetch attributes for a specific entity
+- (NSDictionary<NSString *, NSAttributeDescription *> *)attributesForEntity:(NSString *)entityName inContext:(NSManagedObjectContext *)context {
+    NSEntityDescription *entity = [NSEntityDescription entityForName:entityName inManagedObjectContext:context];
+    return entity.attributesByName;
+}
+
+// Method to fetch attributes for specific entities and return them as a dictionary
+- (NSDictionary<NSString *, NSDictionary<NSString *, NSAttributeDescription *> *> *)fetchAttributes {
+    // 1. Get Core Data context
     NSManagedObjectContext *context = self.persistentContainer.viewContext;
 
-    // 2. Create a new entity object
-    NSArray *names = @[@"Test1", @"Test2", @"Test3"];
-
-    for (NSString *name in names) {
-        NSManagedObject *item = [NSEntityDescription insertNewObjectForEntityForName:@"Category"
-                                                              inManagedObjectContext:context];
-        [item setValue:name forKey:@"name"];
-        NSString *uuid = [[NSUUID UUID] UUIDString];
-        [item setValue:uuid forKey:@"id"];
-    }
-
-    // 3. Save to Core Data
-    NSError *error = nil;
-    [context save:&error];
-    if (error) {
-        NSLog(@"Failed to save default data: %@", error);
-    } else {
-        NSLog(@"Default data inserted!");
-    }
+    // 2. Fetch attributes for the "Expenses" and "Income" entities
+    NSDictionary *attributes = @{
+        @"Expenses" : [self attributesForEntity:@"Expenses" inContext:context],
+        @"Income" : [self attributesForEntity:@"Income" inContext:context]
+    };
+    
+    return attributes;
 }
+
 
 
 #pragma mark - UISceneSession lifecycle
