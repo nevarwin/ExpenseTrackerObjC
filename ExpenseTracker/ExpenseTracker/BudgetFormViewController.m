@@ -31,6 +31,15 @@
     self.expenseAttributes = expenseEntity.attributesByName;
     self.incomeAttributes = incomeEntity.attributesByName;
     
+    self.expenseValues = [NSMutableDictionary dictionary];
+    for (NSString *key in self.expenseAttributes) {
+        self.expenseValues[key] = [NSDecimalNumber zero];
+    }
+    self.incomeValues = [NSMutableDictionary dictionary];
+    for (NSString *key in self.incomeAttributes) {
+        self.incomeValues[key] = [NSDecimalNumber zero];
+    }
+    
     // Initialize properties
     self.selectedDate = [NSDate date];
     self.budgetName = @"";
@@ -152,8 +161,11 @@
         }
         UITextField *textField = [[UITextField alloc] init];
         textField.translatesAutoresizingMaskIntoConstraints = NO;
+        textField.clearButtonMode = UITextFieldViewModeWhileEditing;
         textField.placeholder = @"Budget Name";
         textField.text = self.budgetName;
+        textField.delegate = self;
+        [textField addTarget:self action:@selector(textFieldChanged:) forControlEvents:UIControlEventEditingChanged];
         [cell.contentView addSubview:textField];
         [NSLayoutConstraint activateConstraints:@[
             [textField.topAnchor constraintEqualToAnchor:cell.contentView.topAnchor],
@@ -212,12 +224,6 @@
     textField.accessibilityIdentifier = attributeName; // store key for later use
     [textField addTarget:self action:@selector(textFieldChanged:) forControlEvents:UIControlEventEditingChanged];
     
-    if (value && ![value isEqualToNumber:[NSDecimalNumber zero]]) {
-        NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
-        formatter.numberStyle = NSNumberFormatterCurrencyStyle;
-        textField.text = [formatter stringFromNumber:value];
-    }
-    
     [cell.contentView addSubview:textField];
     
     [NSLayoutConstraint activateConstraints:@[
@@ -263,30 +269,39 @@
 - (void)textFieldChanged:(UITextField *)textField {
     NSString *attributeKey = textField.accessibilityIdentifier;
     if (attributeKey) {
+        // Expense or income field
         NSDecimalNumber *decimalValue = [NSDecimalNumber decimalNumberWithString:textField.text];
+        
         if ([self.expenseAttributes objectForKey:attributeKey]) {
-            self.expenseValues[attributeKey] = decimalValue ?: [NSDecimalNumber zero];
+            self.expenseValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
+            
         } else if ([self.incomeAttributes objectForKey:attributeKey]) {
-            self.incomeValues[attributeKey] = decimalValue ?: [NSDecimalNumber zero];
+            self.incomeValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
         }
     } else {
         // Budget name field
         self.budgetName = textField.text ?: @"";
     }
+    
+    
     [self validateForm];
 }
 
 - (void)validateForm {
     BOOL hasBudgetName = self.budgetName.length > 0;
-    BOOL hasIncome = NO;
+    
+    // Check at least one valid income value
+    BOOL hasValidIncome = NO;
     for (NSString *key in self.incomeAttributes) {
         NSDecimalNumber *value = self.incomeValues[key];
-        if (value && [value compare:[NSDecimalNumber zero]] == NSOrderedDescending) {
-            hasIncome = YES;
+        if (value && [value isKindOfClass:[NSDecimalNumber class]] &&
+            ![value isEqualToNumber:[NSDecimalNumber notANumber]] &&
+            [value compare:[NSDecimalNumber zero]] == NSOrderedDescending) {
+            hasValidIncome = YES;
             break;
         }
     }
-    self.rightButton.enabled = hasBudgetName && hasIncome;
+    self.rightButton.enabled = hasBudgetName && hasValidIncome;
 }
 
 #pragma mark - Actions
