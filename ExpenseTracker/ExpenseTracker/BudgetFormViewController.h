@@ -16,7 +16,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) UIDatePicker *datePicker;
 @property (nonatomic, strong) UIDatePicker *timePicker;
 @property (nonatomic, strong) NSString *budgetName;
-@property (nonatomic, strong) NSDate *selectedDate;
 @property (nonatomic, strong) NSManagedObjectContext *managedObjectContext;
 
 @property (nonatomic, strong) NSDictionary<NSString *, NSAttributeDescription *> *expenseAttributes;

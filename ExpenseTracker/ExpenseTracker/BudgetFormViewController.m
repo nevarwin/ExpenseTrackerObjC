@@ -41,7 +41,6 @@
     }
     
     // Initialize properties
-    self.selectedDate = [NSDate date];
     self.budgetName = @"";
     
     // Setup UI
@@ -307,18 +306,52 @@
 #pragma mark - Actions
 
 - (void)rightButtonTapped {
-    // Create budget object - replace with your actual Budget model
-    NSDictionary *budgetData = @{
-        @"name": self.budgetName,
-        @"date": self.selectedDate
-    };
+    // Gather all budget data
+    NSMutableDictionary *budgetData = [NSMutableDictionary dictionary];
+    budgetData[@"name"] = self.budgetName ?: @"";
+    budgetData[@"createdAt"] = [NSDate date];
+    budgetData[@"expenses"] = [self.expenseValues copy];
+    budgetData[@"income"] = [self.incomeValues copy];
     
-    // Notify delegate
+    // Create Budget object
+    NSManagedObject *budget = [NSEntityDescription insertNewObjectForEntityForName:@"Budget" inManagedObjectContext:self.managedObjectContext];
+    [budget setValue:self.budgetName forKey:@"name"];
+    [budget setValue:[NSDate date] forKey:@"createdAt"];
+    if (self.isEditMode) {
+        [budget setValue:[NSDate date] forKey:@"updatedAt"];
+    }
+
+    // Create Expenses object
+    NSManagedObject *expenses = [NSEntityDescription insertNewObjectForEntityForName:@"Expenses" inManagedObjectContext:self.managedObjectContext];
+    for (NSString *key in self.expenseValues) {
+        [expenses setValue:self.expenseValues[key] forKey:key];
+    }
+
+    // Create Income object
+    NSManagedObject *income = [NSEntityDescription insertNewObjectForEntityForName:@"Income" inManagedObjectContext:self.managedObjectContext];
+    for (NSString *key in self.incomeValues) {
+        [income setValue:self.incomeValues[key] forKey:key];
+    }
+
+    // Set relationships
+    [budget setValue:expenses forKey:@"expenses"];
+    [budget setValue:income forKey:@"income"];
+
+    // Save context
+    NSError *error = nil;
+    if (![self.managedObjectContext save:&error]) {
+        NSLog(@"Failed to save budget: %@", error);
+    }
+
+    // Notify delegate or dismiss
     if ([self.delegate respondsToSelector:@selector(budgetFormViewController:didSaveBudget:)]) {
         [self.delegate budgetFormViewController:self didSaveBudget:budgetData];
     } else {
         [self dismissViewControllerAnimated:YES completion:nil];
     }
+    
+    NSLog(@"Budget Data: %@", budgetData);
+
 }
 
 - (void)leftButtonTapped {
