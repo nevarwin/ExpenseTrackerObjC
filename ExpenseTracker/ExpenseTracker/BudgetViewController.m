@@ -7,9 +7,10 @@
 #import "BudgetViewController.h"
 #import "BudgetFormViewController.h"
 #import "AppDelegate.h"
+#import "Budget+CoreDataClass.h"
 
 @interface BudgetViewController () <UITableViewDelegate, UITableViewDataSource>
-
+@property (nonatomic, strong) NSArray *budgets;
 @end
 
 @implementation BudgetViewController
@@ -23,6 +24,22 @@
     // Setup UI components
     [self setupHeaderView];
     [self setupTableView];
+    [self fetchBudgets];
+}
+
+- (void)fetchBudgets {
+    if (!self.managedObjectContext) {
+        AppDelegate *delegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+        self.managedObjectContext = delegate.persistentContainer.viewContext;
+    }
+    NSFetchRequest *request = [Budget fetchRequest];
+    NSError *error = nil;
+    self.budgets = [self.managedObjectContext executeFetchRequest:request error:&error];
+    if (error) {
+        NSLog(@"Error fetching budgets: %@", error);
+        self.budgets = @[];
+    }
+    [self.budgetTableView reloadData];
 }
 
 - (void)setupHeaderView {
@@ -129,7 +146,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     // Return your budget items count here
-    return 5; // Placeholder count
+    return self.budgets.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
