@@ -16,7 +16,7 @@
         <attribute name="electricity" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="grocery" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="housing" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="save" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="save" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="travel" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <relationship name="budget" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Budget" inverseName="expenses" inverseEntity="Budget"/>
     </entity>

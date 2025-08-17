@@ -350,6 +350,10 @@
         [self dismissViewControllerAnimated:YES completion:nil];
     }
     
+    if ([self.delegate respondsToSelector:@selector(didAddOrEditBudget)]) {
+        [self.delegate didAddOrEditBudget];
+    }
+    
     NSLog(@"Budget Data: %@", budgetData);
 
 }

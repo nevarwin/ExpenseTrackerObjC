@@ -32,4 +32,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+@protocol BudgetFormViewControllerDelegate <NSObject>
+- (void)didAddOrEditBudget;
+@end
+
+
 NS_ASSUME_NONNULL_END
