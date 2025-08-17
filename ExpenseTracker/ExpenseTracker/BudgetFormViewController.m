@@ -300,7 +300,20 @@
             break;
         }
     }
-    self.rightButton.enabled = hasBudgetName && hasValidIncome;
+    
+    // Check at least one valid expense value
+    BOOL hasValidExpense = NO;
+    for (NSString *key in self.expenseAttributes) {
+        NSDecimalNumber *value = self.expenseValues[key];
+        if (value && [value isKindOfClass:[NSDecimalNumber class]] &&
+            ![value isEqualToNumber:[NSDecimalNumber notANumber]] &&
+            [value compare:[NSDecimalNumber zero]] == NSOrderedDescending) {
+            hasValidExpense = YES;
+            break;
+        }
+    }
+    
+    self.rightButton.enabled = hasBudgetName && hasValidIncome && hasValidExpense;
 }
 
 #pragma mark - Actions
