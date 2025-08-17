@@ -8,6 +8,8 @@
 #import "BudgetFormViewController.h"
 #import "AppDelegate.h"
 #import "Budget+CoreDataClass.h"
+#import "Expenses+CoreDataClass.h"
+#import "Income+CoreDataClass.h"
 
 @interface BudgetViewController () <UITableViewDelegate, UITableViewDataSource>
 @property (nonatomic, strong) NSArray *budgets;
@@ -101,9 +103,6 @@
     self.budgetTableView.backgroundColor = [UIColor clearColor];
     [self.view addSubview:self.budgetTableView];
     
-    // Register cell with subtitle style to show budget amounts
-    [self.budgetTableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"BudgetCell"];
-    
     // Setup constraints for table view
     [NSLayoutConstraint activateConstraints:@[
         [self.budgetTableView.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:70],
@@ -150,25 +149,46 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"BudgetCell" forIndexPath:indexPath];
+    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"BudgetCell"];
     
-    CGFloat progress = (indexPath.row + 1) / 5.0;
+    Budget *budget = self.budgets[indexPath.row];
+    cell.textLabel.text = budget.name ?: @"No Name";
     
-    // For subtitle, show amount and progress
-    NSString *amountText = [NSString stringWithFormat:@"$%d / $1,000", (int)(1000 * progress)];
-    cell.detailTextLabel.text = amountText;
+    // Date formatter
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    dateFormatter.dateStyle = NSDateFormatterShortStyle;
+    NSString *formattedDate = [dateFormatter stringFromDate:budget.createdAt];
     
-    // Use a disclosure indicator like Health app
-    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    // Create a label for the date
+    UILabel *dateLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 80, 20)];
+    dateLabel.text = formattedDate;
+    dateLabel.font = [UIFont systemFontOfSize:12];
+    dateLabel.textColor = [UIColor grayColor];
+    dateLabel.textAlignment = NSTextAlignmentRight;
     
-    // Ensure the cell uses subtitle style
-    if (cell.detailTextLabel == nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"BudgetCell"];
-        cell.textLabel.text = [NSString stringWithFormat:@"Budget Category %ld", (long)indexPath.row + 1];
-        cell.detailTextLabel.text = amountText;
-        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    cell.accessoryView = dateLabel;
+    
+    // Calculate total expense (using NSDecimalNumber)
+    NSDecimalNumber *totalExpense = [NSDecimalNumber zero];
+    if (budget.expenses) {
+        totalExpense = [budget.expenses.travel decimalNumberByAdding:budget.expenses.save];
+        totalExpense = [totalExpense decimalNumberByAdding:budget.expenses.housing];
+        totalExpense = [totalExpense decimalNumberByAdding:budget.expenses.grocery];
+        totalExpense = [totalExpense decimalNumberByAdding:budget.expenses.electricity];
     }
+
+    // Calculate total income (using NSDecimalNumber)
+    NSDecimalNumber *totalIncome = [NSDecimalNumber zero];
+    if (budget.income) {
+        totalIncome = [budget.income.salary decimalNumberByAdding:budget.income.savings];
+        totalIncome = [totalIncome decimalNumberByAdding:budget.income.bonus];
+    }
+
+    // Set detail text with totals
+    NSString *detailText = [NSString stringWithFormat:@"Expenses: $%.2f | Income: $%.2f", totalExpense.doubleValue, totalIncome.doubleValue];
+    cell.detailTextLabel.text = detailText;
     
+    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     return cell;
 }
 
@@ -186,6 +206,11 @@
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
     // Add a helpful footer message like in Health app
     return @"Tap + to add a new budget category";
+}
+
+#pragma mark - BudgetFormViewControllerDelegate
+- (void)didAddOrEditBudget {
+    [self fetchBudgets];
 }
 
 @end
