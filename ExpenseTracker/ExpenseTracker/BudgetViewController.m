@@ -185,7 +185,7 @@
     }
 
     // Set detail text with totals
-    NSString *detailText = [NSString stringWithFormat:@"Expenses: $%.2f | Income: $%.2f", totalExpense.doubleValue, totalIncome.doubleValue];
+    NSString *detailText = [NSString stringWithFormat:@"Expenses: ₱%.2f | Income: ₱%.2f", totalExpense.doubleValue, totalIncome.doubleValue];
     cell.detailTextLabel.text = detailText;
     
     cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
