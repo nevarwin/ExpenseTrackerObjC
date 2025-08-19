@@ -12,6 +12,7 @@
 @protocol BudgetFormViewControllerDelegate <NSObject>
 - (void)budgetFormViewController:(BudgetFormViewController *)controller didSaveBudget:(id)budget;
 - (void)budgetFormViewControllerDidCancel:(BudgetFormViewController *)controller;
+- (void)didAddOrEditBudget;
 @end
 
 @interface BudgetFormViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate>

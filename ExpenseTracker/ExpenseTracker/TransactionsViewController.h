@@ -14,9 +14,9 @@
 
 @interface TransactionsViewController : UIViewController
 
-@property (weak, nonatomic) IBOutlet UIPickerView *pickerView;
-@property (weak, nonatomic) IBOutlet UITextField *amountTextField;
-@property (weak, nonatomic) IBOutlet UIDatePicker *datePickerOutlet;
+@property (weak, nonatomic) UIPickerView *pickerView;
+@property (weak, nonatomic) UITextField *amountTextField;
+@property (weak, nonatomic) UIDatePicker *datePickerOutlet;
 
 @property (strong, nonatomic) NSArray *categoryValues;
 @property (weak, nonatomic) NSString *selectedCategory;
@@ -32,6 +32,8 @@
 @property (strong, nonatomic) UIBarButtonItem *leftButton;
 
 @property (strong, nonatomic) UISegmentedControl *segmentControl;
+
+@property (nonatomic, strong) UITableView *tableView;
 
 - (IBAction)datePicker:(UIDatePicker *)sender;
 
