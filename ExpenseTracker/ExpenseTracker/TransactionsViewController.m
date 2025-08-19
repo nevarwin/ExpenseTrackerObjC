@@ -10,7 +10,13 @@
 #import "ViewController.h"
 #import "AppDelegate.h"
 
-@interface TransactionsViewController () <UIPickerViewDelegate, UIPickerViewDataSource, UITextFieldDelegate>
+@protocol TransactionsViewControllerDelegate <NSObject>
+- (void)transactionsViewController:(TransactionsViewController *)controller didSaveTransaction:(id)transaction;
+- (void)transactionsViewControllerDidCancel:(TransactionsViewController *)controller;
+- (void)didAddOrEditTransaction;
+@end
+
+@interface TransactionsViewController () <UIPickerViewDelegate, UIPickerViewDataSource, UITextFieldDelegate, UITableViewDelegate, UITableViewDataSource>
 
 @end
 
@@ -31,6 +37,7 @@
     self.pickerView.delegate = self;
     self.pickerView.dataSource = self;
     self.amountTextField.delegate = self;
+    
     
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissKeyboard)];
     [self.view addGestureRecognizer:tapGesture];
@@ -55,6 +62,12 @@
                         action:@selector(rightButtonTapped)];
     self.navigationItem.rightBarButtonItem = self.rightButton;
     
+    self.rightButton.enabled = NO; // Initially disable the save button until valid input is provided
+    [self createSegment];
+    [self setupTableView];
+}
+
+- (void)createSegment {
     // Create Segments
     NSArray *items = @[@"Expense", @"Income"];
     self.segmentControl = [[UISegmentedControl alloc] initWithItems:items];
@@ -77,7 +90,29 @@
     
     // Add to view
     [self.view addSubview:self.segmentControl];
+}
 
+- (void)setupTableView {
+    self.tableView = [[UITableView alloc] initWithFrame:CGRectZero
+                                                  style:UITableViewStyleInsetGrouped];
+    self.tableView.translatesAutoresizingMaskIntoConstraints = NO;
+    self.tableView.delegate = self;
+    self.tableView.dataSource = self;
+    self.tableView.backgroundColor = [UIColor systemGroupedBackgroundColor];
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
+    [self.view addSubview:self.tableView];
+    
+    // Register cell classes
+    [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"TextFieldCell"];
+    
+    // Setup constraints
+    [NSLayoutConstraint activateConstraints:@[
+        [self.tableView.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
+        [self.tableView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [self.tableView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [self.tableView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
+    ]];
+    
 }
 
 -(void)segmentChanged:(UISegmentedControl *)sender {
@@ -87,6 +122,11 @@
 
 - (void)leftButtonTapped {
     [self dismissViewControllerAnimated:YES completion:nil];
+    if ([self.delegate respondsToSelector:@selector(transactionsViewControllerDidCancel:)]) {
+        [self.delegate transactionsViewControllerDidCancel:self];
+    } else {
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }
 }
 
 - (void)dismissKeyboard {
@@ -116,6 +156,34 @@
     }
 }
 
+#pragma mark - UITableViewDelegate
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    return 1;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TextFieldCell" forIndexPath:indexPath];
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    for (UIView *subview in cell.contentView.subviews) {
+        [subview removeFromSuperview];
+    }
+    UITextField *textField = [[UITextField alloc] init];
+    textField.delegate = self;
+    textField.translatesAutoresizingMaskIntoConstraints = NO;
+    textField.clearButtonMode = UITextFieldViewModeWhileEditing;
+    [cell.contentView addSubview:textField];
+    
+    [NSLayoutConstraint activateConstraints:@[
+        [textField.topAnchor constraintEqualToAnchor:cell.contentView.topAnchor],
+        [textField.leadingAnchor constraintEqualToAnchor:cell.contentView.leadingAnchor constant:16],
+        [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
+        [textField.bottomAnchor constraintEqualToAnchor:cell.contentView.bottomAnchor]
+    ]];
+    
+    return cell;
+}
 
 #pragma mark - UITextFieldDelegate
 
