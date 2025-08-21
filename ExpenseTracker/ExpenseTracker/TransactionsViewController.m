@@ -107,7 +107,7 @@
     
     // Setup constraints
     [NSLayoutConstraint activateConstraints:@[
-        [self.tableView.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
+        [self.tableView.topAnchor constraintEqualToAnchor:self.segmentControl.bottomAnchor],
         [self.tableView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
         [self.tableView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
         [self.tableView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
@@ -171,19 +171,29 @@
     }
     UITextField *textField = [[UITextField alloc] init];
     textField.delegate = self;
+    textField.placeholder = @"Enter amount";
     textField.translatesAutoresizingMaskIntoConstraints = NO;
     textField.clearButtonMode = UITextFieldViewModeWhileEditing;
     [cell.contentView addSubview:textField];
     
     [NSLayoutConstraint activateConstraints:@[
-        [textField.topAnchor constraintEqualToAnchor:cell.contentView.topAnchor],
+        [textField.topAnchor constraintEqualToAnchor:cell.contentView.topAnchor constant:8],
         [textField.leadingAnchor constraintEqualToAnchor:cell.contentView.leadingAnchor constant:16],
         [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
-        [textField.bottomAnchor constraintEqualToAnchor:cell.contentView.bottomAnchor]
+        [textField.bottomAnchor constraintEqualToAnchor:cell.contentView.bottomAnchor constant:-8]
     ]];
     
     return cell;
 }
+
+#pragma mark - UITableViewDataSource
+
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    return @"TRANSACTION DETAILS";
+    
+}
+
+
 
 #pragma mark - UITextFieldDelegate
 
