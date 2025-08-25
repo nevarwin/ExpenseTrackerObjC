@@ -14,30 +14,25 @@
 
 @interface TransactionsViewController : UIViewController
 
-@property (weak, nonatomic) UIPickerView *pickerView;
-@property (weak, nonatomic) UITextField *amountTextField;
-@property (weak, nonatomic) UIDatePicker *datePickerOutlet;
-
-@property (strong, nonatomic) NSArray *categoryValues;
-@property (weak, nonatomic) NSString *selectedCategory;
-
-@property (strong, nonatomic) NSDictionary *expenseAttributes;
-@property (strong, nonatomic) NSDictionary *incomeAttributes;
-
 @property (nonatomic, assign) BOOL isEditMode;
 @property (nonatomic, weak) id delegate;
 @property (nonatomic, strong) Transaction *existingTransaction;
 
-@property (strong, nonatomic) UIBarButtonItem *rightButton;
-@property (strong, nonatomic) UIBarButtonItem *leftButton;
-
-@property (strong, nonatomic) UISegmentedControl *segmentControl;
-
 @property (nonatomic, strong) UITableView *tableView;
+@property (nonatomic, strong) UIBarButtonItem *leftButton;
+@property (nonatomic, strong) UIBarButtonItem *rightButton;
+@property (nonatomic, strong) UIDatePicker *datePicker;
+@property (nonatomic, strong) UIDatePicker *timePicker;
+@property (nonatomic, strong) UITextField *amountTextField;
+@property (nonatomic, strong) UIPickerView *categoryPicker;
+@property (nonatomic, strong) UIPickerView *budgetPicker;
+@property (nonatomic, strong) NSArray *categoryValues;
+@property (nonatomic, strong) NSDictionary *expenseAttributes;
+@property (nonatomic, strong) NSDictionary *incomeAttributes;
 
-- (IBAction)datePicker:(UIDatePicker *)sender;
-
-- (void)configureViewForMode;
+@property (nonatomic, assign) NSInteger selectedTypeIndex;
+@property (nonatomic, strong) NSArray *typeValues;
+@property (nonatomic, strong) UIPickerView *typePicker;
 
 @end
 
