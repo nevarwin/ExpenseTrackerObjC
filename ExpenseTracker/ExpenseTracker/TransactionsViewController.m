@@ -1,360 +1,188 @@
-//
-//  TransactionsViewController.m
-//  ExpenseTracker
-//
-//  Created by XOO_Raven on 6/27/25.
-//
+// ExpenseTracker/ExpenseTracker/TransactionsViewController.m
 
-#import <Foundation/Foundation.h>
 #import "TransactionsViewController.h"
-#import "ViewController.h"
 #import "AppDelegate.h"
 
-@protocol TransactionsViewControllerDelegate <NSObject>
-- (void)transactionsViewController:(TransactionsViewController *)controller didSaveTransaction:(id)transaction;
-- (void)transactionsViewControllerDidCancel:(TransactionsViewController *)controller;
-- (void)didAddOrEditTransaction;
-@end
-
-@interface TransactionsViewController () <UIPickerViewDelegate, UIPickerViewDataSource, UITextFieldDelegate, UITableViewDelegate, UITableViewDataSource>
-
+@interface TransactionsViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate, UIPickerViewDelegate, UIPickerViewDataSource>
+@property (nonatomic, assign) BOOL isDatePickerVisible;
 @end
 
 @implementation TransactionsViewController
 
-- (void) viewDidLoad{
+- (void)viewDidLoad {
+    [super viewDidLoad];
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
     
-    // Initialize the AppDelegate
-    AppDelegate *appDelegate = [[AppDelegate alloc] init];
-    
-    NSDictionary *attributes = [appDelegate.self fetchAttributes];
-    
-    // Access Expense and Income attributes
-    self.expenseAttributes = attributes[@"Expenses"];
-    self.incomeAttributes = attributes[@"Income"];
-    
-    self.pickerView.delegate = self;
-    self.pickerView.dataSource = self;
-    self.amountTextField.delegate = self;
-    
-    
-    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissKeyboard)];
-    [self.view addGestureRecognizer:tapGesture];
-    
-    [self configureViewForMode];
-    
     self.title = @"Transaction";
-    
-    // Left bar button item
-    self.leftButton = [[UIBarButtonItem alloc]
-                       initWithTitle:@"Back"
-                       style:UIBarButtonItemStylePlain
-                       target:self
-                       action:@selector(leftButtonTapped)];
+    self.leftButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(leftButtonTapped)];
+    self.rightButton = [[UIBarButtonItem alloc] initWithTitle:@"Add" style:UIBarButtonItemStyleDone target:self action:@selector(rightButtonTapped)];
     self.navigationItem.leftBarButtonItem = self.leftButton;
-    
-    
-    // Right bar button item
-    self.rightButton = [[UIBarButtonItem alloc]
-                        initWithBarButtonSystemItem:UIBarButtonSystemItemSave
-                        target:self
-                        action:@selector(rightButtonTapped)];
     self.navigationItem.rightBarButtonItem = self.rightButton;
     
-    self.rightButton.enabled = NO; // Initially disable the save button until valid input is provided
-    [self createSegment];
+    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+    NSDictionary *attributes = [appDelegate fetchAttributes];
+    self.expenseAttributes = attributes[@"Expenses"];
+    self.incomeAttributes = attributes[@"Income"];
+    self.categoryValues = [self.expenseAttributes allKeys];
+    
     [self setupTableView];
-}
-
-- (void)createSegment {
-    // Create Segments
-    NSArray *items = @[@"Expense", @"Income"];
-    self.segmentControl = [[UISegmentedControl alloc] initWithItems:items];
-    CGFloat margin = 16;
-    CGFloat width = self.view.frame.size.width - 2 * margin;
-    self.segmentControl.frame = CGRectMake(margin, 52, width, 32);
-    
-    // Set default selected segment
-    self.segmentControl.selectedSegmentIndex = 0;
-    
-    // If editing an existing transaction, set segment index from transaction
-    if (self.existingTransaction) {
-        self.segmentControl.selectedSegmentIndex = self.existingTransaction.type;
-    }
-    
-    // Add target for value changed
-    [self.segmentControl addTarget:self
-                            action:@selector(segmentChanged:)
-                  forControlEvents:UIControlEventValueChanged];
-    
-    // Add to view
-    [self.view addSubview:self.segmentControl];
+    [self setupPickers];
+    [self setupTypePicker];
+    [self selectEmptyScreen];
 }
 
 - (void)setupTableView {
-    self.tableView = [[UITableView alloc] initWithFrame:CGRectZero
-                                                  style:UITableViewStyleInsetGrouped];
+    self.tableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStyleInsetGrouped];
     self.tableView.translatesAutoresizingMaskIntoConstraints = NO;
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
-    self.tableView.backgroundColor = [UIColor systemGroupedBackgroundColor];
-    self.tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
     [self.view addSubview:self.tableView];
     
-    // Register cell classes
-    [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"TextFieldCell"];
-    
-    // Setup constraints
     [NSLayoutConstraint activateConstraints:@[
-        [self.tableView.topAnchor constraintEqualToAnchor:self.segmentControl.bottomAnchor],
+        [self.tableView.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
         [self.tableView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
         [self.tableView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
         [self.tableView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
     ]];
+}
+
+- (void)setupPickers {
+    self.datePicker = [[UIDatePicker alloc] init];
+    self.datePicker.datePickerMode = UIDatePickerModeDate;
+    self.timePicker = [[UIDatePicker alloc] init];
+    self.timePicker.datePickerMode = UIDatePickerModeTime;
+    self.categoryPicker = [[UIPickerView alloc] init];
+    self.categoryPicker.delegate = self;
+    self.categoryPicker.dataSource = self;
+    self.amountTextField = [[UITextField alloc] init];
+    self.amountTextField.placeholder = @"Enter amount";
+    self.amountTextField.keyboardType = UIKeyboardTypeDecimalPad;
+    self.amountTextField.delegate = self;
+}
+
+- (void)setupTypePicker {
+    self.typeValues = @[@"Expense", @"Income"];
+    self.selectedTypeIndex = 0;
+    self.typePicker = [[UIPickerView alloc] init];
+    self.typePicker.delegate = self;
+    self.typePicker.dataSource = self;
+}
+
+- (void)selectEmptyScreen {
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissKeyboard)];
+    tap.cancelsTouchesInView = NO;
+    [self.view addGestureRecognizer:tap];
+}
+
+#pragma mark - UITableViewDataSource
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView { return 1; }
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section { return 6; }
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    static NSString *cellId = @"FormCell";
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellId];
+    if (!cell) cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:cellId];
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
     
-}
-
--(void)segmentChanged:(UISegmentedControl *)sender {
-    NSInteger selectedIndex = sender.selectedSegmentIndex;
-    [self updatePickerViewForSegment:selectedIndex];
-}
-
-- (void)leftButtonTapped {
-    [self dismissViewControllerAnimated:YES completion:nil];
-    if ([self.delegate respondsToSelector:@selector(transactionsViewControllerDidCancel:)]) {
-        [self.delegate transactionsViewControllerDidCancel:self];
-    } else {
-        [self dismissViewControllerAnimated:YES completion:nil];
+    switch (indexPath.row) {
+        case 0: // Date
+            cell.textLabel.text = @"Date";
+            [cell.contentView addSubview:self.datePicker];
+            self.datePicker.translatesAutoresizingMaskIntoConstraints = NO;
+            [NSLayoutConstraint activateConstraints:@[
+                [self.datePicker.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
+                [self.datePicker.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+                [self.datePicker.widthAnchor constraintEqualToConstant:140]
+            ]];
+            break;
+        case 1: // Time
+            cell.textLabel.text = @"Time";
+            [cell.contentView addSubview:self.timePicker];
+            self.timePicker.translatesAutoresizingMaskIntoConstraints = NO;
+            [NSLayoutConstraint activateConstraints:@[
+                [self.timePicker.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
+                [self.timePicker.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+                [self.timePicker.widthAnchor constraintEqualToConstant:140]
+            ]];
+            break;
+        case 2: // Amount
+            cell.textLabel.text = @"Amount";
+            [cell.contentView addSubview:self.amountTextField];
+            self.amountTextField.translatesAutoresizingMaskIntoConstraints = NO;
+            [NSLayoutConstraint activateConstraints:@[
+                [self.amountTextField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
+                [self.amountTextField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+                [self.amountTextField.widthAnchor constraintEqualToConstant:120]
+            ]];
+            break;
+        case 3: // Budget
+            cell.textLabel.text = @"Budget";
+            break;
+        case 4: // Type
+            cell.textLabel.text = @"Type";
+            cell.detailTextLabel.text = self.typeValues[self.selectedTypeIndex];
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+            break;
+        case 5: // Category
+            cell.textLabel.text = @"Category";
+            cell.detailTextLabel.text = self.categoryValues.count ? [self.categoryValues[0] capitalizedString] : @"";
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+            break;
     }
+    return cell;
+}
+
+#pragma mark - UITableViewDelegate
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (indexPath.row == 0) { // Date
+        self.isDatePickerVisible = !self.isDatePickerVisible;
+        [tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+    } else if (indexPath.row == 1) { // Time
+        UITextField *hiddenField = [[UITextField alloc] initWithFrame:CGRectZero];
+        [self.view addSubview:hiddenField];
+        hiddenField.inputView = self.timePicker;
+        [hiddenField becomeFirstResponder];
+    } else if (indexPath.row == 3) { // Category
+        UITextField *hiddenField = [[UITextField alloc] initWithFrame:CGRectZero];
+        [self.view addSubview:hiddenField];
+        hiddenField.inputView = self.categoryPicker;
+        [hiddenField becomeFirstResponder];
+    }
+}
+
+#pragma mark - UIPickerViewDataSource/Delegate
+
+- (NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView {
+    if (pickerView == self.typePicker) return 1;
+    return 1;
+}
+- (NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component {
+    if (pickerView == self.typePicker) return self.typeValues.count;
+    return self.categoryValues.count;
+}
+- (NSString *)pickerView:(UIPickerView *)pickerView titleForRow:(NSInteger)row forComponent:(NSInteger)component {
+    if (pickerView == self.typePicker) return self.typeValues[row];
+    return [self.categoryValues[row] capitalizedString];
+}
+- (void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component {
+    if (pickerView == self.typePicker) {
+        self.selectedTypeIndex = row;
+        NSIndexPath *typeIndexPath = [NSIndexPath indexPathForRow:4 inSection:0];
+        [self.tableView reloadRowsAtIndexPaths:@[typeIndexPath] withRowAnimation:UITableViewRowAnimationNone];
+    }
+}
+#pragma mark - Actions
+
+- (void)leftButtonTapped { [self dismissViewControllerAnimated:YES completion:nil]; }
+- (void)rightButtonTapped {
+    // Save logic here
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)dismissKeyboard {
     [self.view endEditing:YES];
 }
-
-- (instancetype)initWithIdentifier:(NSString *)identifier source:(UIViewController *)source destination:(UIViewController *)destination; {
-    self = [super init];
-    if (self) {
-    }
-    return self;
-}
-
--(void)configureViewForMode{
-    if(self.isEditMode){
-        self.amountTextField.text = [NSString stringWithFormat:@"%.2ld", (long)self.existingTransaction.amount];
-        
-        NSLog(@"self.segmentControl.selectedSegmentIndex: %ld", (long)self.existingTransaction.type);
-        
-        // TODO: bug when in edit mode
-        [self.datePickerOutlet setDate:self.existingTransaction.date];
-
-    } else {
-        self.amountTextField.text = @"";
-        [self.pickerView selectRow:0 inComponent:0 animated:NO];
-        [self.datePickerOutlet setDate:[NSDate date]];
-    }
-}
-
-#pragma mark - UITableViewDelegate
-
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return 1;
-}
-
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TextFieldCell" forIndexPath:indexPath];
-    cell.selectionStyle = UITableViewCellSelectionStyleNone;
-    for (UIView *subview in cell.contentView.subviews) {
-        [subview removeFromSuperview];
-    }
-    UITextField *textField = [[UITextField alloc] init];
-    textField.delegate = self;
-    textField.placeholder = @"Enter amount";
-    textField.translatesAutoresizingMaskIntoConstraints = NO;
-    textField.clearButtonMode = UITextFieldViewModeWhileEditing;
-    [cell.contentView addSubview:textField];
-    
-    [NSLayoutConstraint activateConstraints:@[
-        [textField.topAnchor constraintEqualToAnchor:cell.contentView.topAnchor constant:8],
-        [textField.leadingAnchor constraintEqualToAnchor:cell.contentView.leadingAnchor constant:16],
-        [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
-        [textField.bottomAnchor constraintEqualToAnchor:cell.contentView.bottomAnchor constant:-8]
-    ]];
-    
-    return cell;
-}
-
-#pragma mark - UITableViewDataSource
-
-- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    return @"TRANSACTION DETAILS";
-    
-}
-
-
-
-#pragma mark - UITextFieldDelegate
-
-- (BOOL)textFieldShouldReturn:(UITextField *)textField{
-    [self.amountTextField resignFirstResponder];
-    return YES;
-}
-
-
-
-#pragma mark - UIPickerViewDataSource
-
-// Number of components (columns) in the picker view
-- (NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView {
-    return 1;
-}
-
-// Update the UIPickerView based on the selected segment index
-- (void)updatePickerViewForSegment:(NSInteger)segmentIndex {
-    // Reload the picker view to reflect changes in the data
-    [self.pickerView reloadAllComponents];
-    [self.pickerView selectRow:0 inComponent:0 animated:YES];
-}
-
-// Number of rows in the picker view for each component
-- (NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component {
-    if (self.segmentControl.selectedSegmentIndex == 0) {
-        // If the "Expenses" segment is selected, show the Expenses rows
-        return self.expenseAttributes.count;
-    } else {
-        // If the "Income" segment is selected, show the Income rows
-        return self.incomeAttributes.count;
-    }
-}
-
-// Handle row selection in the picker view
-- (void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component {
-    if (self.segmentControl.selectedSegmentIndex == 0) {
-        // If "Expenses" is selected, get the selected expense attribute
-        self.categoryValues = [self.expenseAttributes allKeys];
-    } else {
-        // If "Income" is selected, get the selected income attribute
-        self.categoryValues = [self.incomeAttributes allKeys];
-    }
-}
-
-
-
-#pragma mark - UIPickerViewDelegate
-
-// Title for each row in the picker view
-- (NSString *)pickerView:(UIPickerView *)pickerView titleForRow:(NSInteger)row forComponent:(NSInteger)component {
-    if (self.segmentControl.selectedSegmentIndex == 0) {
-        // If the "Expenses" segment is selected, fetch titles from expenseAttributes
-        NSArray *expenseKeys = [self.expenseAttributes allKeys];
-        return [expenseKeys[row] capitalizedString]; // Display expense name
-    } else {
-        // If the "Income" segment is selected, fetch titles from incomeAttributes
-        NSArray *incomeKeys = [self.incomeAttributes allKeys];
-        return [incomeKeys[row] capitalizedString]; // Display income name
-    }
-}
-
-
-
-#pragma mark - Save Button
-
-- (void)rightButtonTapped {
-    NSInteger row = [self.pickerView selectedRowInComponent:0];
-    NSString *category = self.categoryValues[row];
-    
-    //Parse amount using NSNumberFormatter for safety
-    NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
-    formatter.numberStyle = NSNumberFormatterDecimalStyle;
-    NSNumber *amountNumber = [formatter numberFromString:self.amountTextField.text];
-    NSInteger amount = amountNumber.integerValue;
-    
-    NSDate *date = self.datePickerOutlet.date;
-    
-    if (amount == 0 || !category.length || !date) {
-        NSLog(@"Invalid input: Amount=%ld, Category=%@, Date=%@",
-              (long)amount, category, date);
-        return;
-    }
-    
-    // Get Core Data Context
-    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = appDelegate.persistentContainer.viewContext;
-    
-    Transaction *transaction;
-    
-    //Assign transaction values
-    if (self.isEditMode && self.existingTransaction.transactionId) {
-        transaction = self.existingTransaction;
-        transaction.updatedAt = [NSDate date];
-    } else {
-        transaction = [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
-        transaction.createdAt = [NSDate date];
-        transaction.transactionId = [[NSUUID UUID] UUIDString];
-    }
-    
-    transaction.amount = (int32_t)amount;
-    transaction.category = category;
-    transaction.date = date;
-    transaction.type = (int32_t)self.segmentControl.selectedSegmentIndex;
-    
-    NSError *error = nil;
-    if (![context save:&error]) {
-        NSLog(@"Failed to save transaction: %@", error);
-    }
-    
-    [self dismissViewControllerAnimated:YES completion:nil];
-}
-
-- (void)datePicker:(UIDatePicker *)sender __attribute__((ibaction)) {
-}
-
-- (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
-    //    [self drawCircleIndicatorInView:self.view];
-}
-
-// In your UIView subclass or ViewController
-//- (void)drawCircleIndicatorInView:(UIView *)view {
-//    CGFloat lineWidth = 20.0;
-//    CGFloat radius = (MIN(view.bounds.size.width, view.bounds.size.height) - lineWidth) / 2.0;
-//    CGPoint center = CGPointMake(CGRectGetMidX(view.bounds), CGRectGetMidY(view.bounds));
-//
-//    // 1. Background Circle (opacity 0.3)
-//    UIBezierPath *bgCirclePath = [UIBezierPath bezierPathWithArcCenter:center
-//                                                                radius:radius
-//                                                            startAngle:0
-//                                                              endAngle:2*M_PI
-//                                                             clockwise:YES];
-//
-//    CAShapeLayer *bgCircleLayer = [CAShapeLayer layer];
-//    bgCircleLayer.path = bgCirclePath.CGPath;
-//    bgCircleLayer.strokeColor = [UIColor.redColor colorWithAlphaComponent:0.3].CGColor;
-//    bgCircleLayer.fillColor = UIColor.clearColor.CGColor;
-//    bgCircleLayer.lineWidth = lineWidth;
-//
-//    [view.layer addSublayer:bgCircleLayer];
-//
-//    // 2. Foreground Arc (trimmed, opacity 1.0)
-//    CGFloat startAngle = -M_PI_2; // Start at top
-//    CGFloat endAngle = startAngle + 2 * M_PI * 0.3; // 30% of the circle
-//
-//    UIBezierPath *fgCirclePath = [UIBezierPath bezierPathWithArcCenter:center
-//                                                                radius:radius
-//                                                            startAngle:startAngle
-//                                                              endAngle:endAngle
-//                                                             clockwise:YES];
-//
-//    CAShapeLayer *fgCircleLayer = [CAShapeLayer layer];
-//    fgCircleLayer.path = fgCirclePath.CGPath;
-//    fgCircleLayer.strokeColor = UIColor.redColor.CGColor;
-//    fgCircleLayer.fillColor = UIColor.blueColor.CGColor;
-//    fgCircleLayer.lineWidth = lineWidth;
-//    fgCircleLayer.lineCap = kCALineCapRound;
-//
-//    [view.layer addSublayer:fgCircleLayer];
-//}
 
 @end
