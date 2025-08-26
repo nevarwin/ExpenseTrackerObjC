@@ -6,6 +6,7 @@
 //
 
 #import "AppDelegate.h"
+#import "BudgetViewController.h"
 
 @interface AppDelegate ()
 
@@ -22,6 +23,12 @@
         [defaults setBool:YES forKey:@"isDefaultDataInserted"];
         [defaults synchronize];
     }
+    self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    BudgetViewController *budgetVC = [[BudgetViewController alloc] init];
+    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:budgetVC];
+    self.window.rootViewController = navController;
+    [self.window makeKeyAndVisible];
+    
     return YES;
 }
 
@@ -37,7 +44,7 @@
 - (NSDictionary<NSString *, NSDictionary<NSString *, NSAttributeDescription *> *> *)fetchAttributes {
     // 1. Get Core Data context
     NSManagedObjectContext *context = self.persistentContainer.viewContext;
-
+    
     // 2. Fetch attributes for the "Expenses" and "Income" entities
     NSDictionary *attributes = @{
         @"Expenses" : [self attributesForEntity:@"Expenses" inContext:context],
