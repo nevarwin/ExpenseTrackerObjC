@@ -10,6 +10,7 @@
 #import "Budget+CoreDataClass.h"
 #import "Expenses+CoreDataClass.h"
 #import "Income+CoreDataClass.h"
+#import "BudgetDisplayViewController.h"
 
 @interface BudgetViewController () <UITableViewDelegate, UITableViewDataSource>
 @property (nonatomic, strong) NSArray *budgets;
@@ -176,14 +177,14 @@
         totalExpense = [totalExpense decimalNumberByAdding:budget.expenses.grocery];
         totalExpense = [totalExpense decimalNumberByAdding:budget.expenses.electricity];
     }
-
+    
     // Calculate total income (using NSDecimalNumber)
     NSDecimalNumber *totalIncome = [NSDecimalNumber zero];
     if (budget.income) {
         totalIncome = [budget.income.salary decimalNumberByAdding:budget.income.savings];
         totalIncome = [totalIncome decimalNumberByAdding:budget.income.bonus];
     }
-
+    
     // Set detail text with totals
     NSString *detailText = [NSString stringWithFormat:@"Expenses: ₱%.2f | Income: ₱%.2f", totalExpense.doubleValue, totalIncome.doubleValue];
     cell.detailTextLabel.text = detailText;
@@ -196,7 +197,15 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    // Handle selection to show budget details
+    NSLog(@"Selected budget at row: %ld", (long)indexPath.row);
+    // Instantiate BudgetDisplayViewController
+    BudgetDisplayViewController *displayVC = [[BudgetDisplayViewController alloc] init];
+    
+    // Pass the selected budget
+    displayVC.budget = self.budgets[indexPath.row];
+    
+    // Push onto navigation stack
+    [self.navigationController pushViewController:displayVC animated:YES];
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
