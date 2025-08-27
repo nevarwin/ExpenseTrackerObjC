@@ -77,8 +77,6 @@
     NSPredicate *predicate = [NSCompoundPredicate andPredicateWithSubpredicates:subpredicates];
     self.fetchedResultsController.fetchRequest.predicate = predicate;
     
-    self.fetchedResultsController.fetchRequest.predicate = predicate;
-    
     NSError *error = nil;
     [self.fetchedResultsController performFetch:&error];
     if (error) {
