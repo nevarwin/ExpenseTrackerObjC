@@ -28,6 +28,7 @@
     </entity>
     <entity name="Transaction" representedClassName="Transaction" syncable="YES">
         <attribute name="amount" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="budget" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="category" optional="YES" attributeType="String"/>
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>

@@ -22,17 +22,23 @@
 @property (nonatomic, strong) UIBarButtonItem *leftButton;
 @property (nonatomic, strong) UIBarButtonItem *rightButton;
 @property (nonatomic, strong) UIDatePicker *datePicker;
-@property (nonatomic, strong) UIDatePicker *timePicker;
 @property (nonatomic, strong) UITextField *amountTextField;
-@property (nonatomic, strong) UIPickerView *categoryPicker;
-@property (nonatomic, strong) UIPickerView *budgetPicker;
-@property (nonatomic, strong) NSArray *categoryValues;
 @property (nonatomic, strong) NSDictionary *expenseAttributes;
 @property (nonatomic, strong) NSDictionary *incomeAttributes;
+
+@property (nonatomic, assign) NSInteger selectedBudgetIndex;
+@property (nonatomic, strong) NSArray *budgetValues;
+@property (nonatomic, strong) UIPickerView *budgetPicker;
+
+@property (nonatomic, assign) NSInteger selectedCategoryIndex;
+@property (nonatomic, strong) NSArray *categoryValues;
+@property (nonatomic, strong) UIPickerView *categoryPicker;
 
 @property (nonatomic, assign) NSInteger selectedTypeIndex;
 @property (nonatomic, strong) NSArray *typeValues;
 @property (nonatomic, strong) UIPickerView *typePicker;
+
+@property (nonatomic, assign) NSInteger currentPickerMode;
 
 @end
 

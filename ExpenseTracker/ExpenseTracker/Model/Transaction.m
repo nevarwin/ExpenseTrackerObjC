@@ -18,6 +18,7 @@
 @dynamic updatedAt;
 @dynamic isActive;
 @dynamic type;
+@dynamic budget;
 
 - (void)awakeFromInsert {
     [super awakeFromInsert];

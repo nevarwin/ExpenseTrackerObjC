@@ -18,7 +18,8 @@
 @property (nullable, nonatomic, copy) NSDate *createdAt;
 @property (nullable, nonatomic, copy) NSDate *updatedAt;
 @property (nonatomic, assign) BOOL isActive;
-@property (nonatomic) int32_t type;
+@property (nonatomic) NSInteger type;
+@property (nonatomic) NSInteger budget;
 
 @end
 
