@@ -19,7 +19,7 @@
 @property (nullable, nonatomic, copy) NSDate *updatedAt;
 @property (nonatomic, assign) BOOL isActive;
 @property (nonatomic) NSInteger type;
-@property (nonatomic) NSInteger budget;
+@property (nonatomic) int32_t budget;
 
 @end
 
