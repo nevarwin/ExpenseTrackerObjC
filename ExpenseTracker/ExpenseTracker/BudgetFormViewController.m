@@ -257,6 +257,28 @@
     return nil;
 }
 
+#pragma mark - UITextFieldDelegate
+- (BOOL)textField:(UITextField *)textField
+shouldChangeCharactersInRange:(NSRange)range
+replacementString:(NSString *)string {
+    if (textField.keyboardType == UIKeyboardTypeDecimalPad) {
+        NSString *newString = [textField.text stringByReplacingCharactersInRange:range withString:string];
+        NSString *digitsOnly = [[newString componentsSeparatedByCharactersInSet:
+                                 [[NSCharacterSet decimalDigitCharacterSet] invertedSet]]
+                                componentsJoinedByString:@""];
+        if (digitsOnly.length > 8) {
+            return NO;
+        }
+        NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
+        formatter.numberStyle = NSNumberFormatterDecimalStyle;
+        NSNumber *number = @(digitsOnly.integerValue);
+        NSString *formatted = [formatter stringFromNumber:number];
+        textField.text = [NSString stringWithFormat:@"₱%@", formatted ?: @""];
+        return NO;
+    }
+    return YES;
+}
+
 #pragma mark - UITableViewDelegate
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
