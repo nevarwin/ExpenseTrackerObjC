@@ -28,13 +28,16 @@
     [self setupTableView];
     [self setupPickers];
     [self setupTypePicker];
-    [self selectEmptyScreen];
-    [self configureViewForMode];
-    
+    [self selectEmptyScreen];    
     self.budgetValues = [NSMutableArray array];
     if(self.budgetValues.count == 0){
         self.budgetValues = @[@"None"];
     }
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    [self configureViewForMode];
 }
 
 - (void)setupTableView {
@@ -77,20 +80,45 @@
     [self.view addGestureRecognizer:tap];
 }
 
--(void)configureViewForMode{
-    if(self.isEditMode){
+- (void)configureViewForMode {
+    if (self.isEditMode && self.existingTransaction) {
+        // Amount
         self.amountTextField.text = [NSString stringWithFormat:@"%ld", (long)self.existingTransaction.amount];
-        
-        NSLog(@"self.segmentControl.selectedSegmentIndex: %ld", (long)self.existingTransaction.type);
-        
-        // TODO: bug when in edit mode
-        [self.datePicker setDate:self.existingTransaction.date];
-        [self.budgetPicker selectRow:self.existingTransaction.budget inComponent:0 animated:NO];
-        [self.categoryPicker selectRow:1 inComponent:0 animated:NO];
-        
-        NSString *typeTitle = _typeValues[self.existingTransaction.type];
 
+        // Date
+        [self.datePicker setDate:self.existingTransaction.date];
+
+        // Type
+        self.selectedTypeIndex = self.existingTransaction.type;
+        UIButton *typeButton = [self buttonForRow:3];
+        [typeButton setTitle:self.typeValues[self.selectedTypeIndex] forState:UIControlStateNormal];
+
+        // Budget
+        self.selectedBudgetIndex = self.existingTransaction.budget;
+        UIButton *budgetButton = [self buttonForRow:2];
+        if (self.selectedBudgetIndex < self.budgetValues.count) {
+            [budgetButton setTitle:self.budgetValues[self.selectedBudgetIndex] forState:UIControlStateNormal];
+        }
+
+        // Category
+        self.selectedCategoryIndex = [self.categoryValues indexOfObject:self.existingTransaction.category];
+        UIButton *categoryButton = [self buttonForRow:4];
+        if (self.selectedCategoryIndex != NSNotFound) {
+            [categoryButton setTitle:self.categoryValues[self.selectedCategoryIndex] forState:UIControlStateNormal];
+        }
     }
+}
+
+// Helper to get button from cell
+- (UIButton *)buttonForRow:(NSInteger)row {
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
+    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+    for (UIView *view in cell.contentView.subviews) {
+        if ([view isKindOfClass:[UIButton class]]) {
+            return (UIButton *)view;
+        }
+    }
+    return nil;
 }
 
 #pragma mark - UITableViewDataSource
