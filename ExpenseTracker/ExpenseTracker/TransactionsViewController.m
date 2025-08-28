@@ -29,6 +29,11 @@
     [self setupPickers];
     [self setupTypePicker];
     [self selectEmptyScreen];
+    
+    self.budgetValues = [NSMutableArray array];
+    if(self.budgetValues.count == 0){
+        self.budgetValues = @[@"None"];
+    }
 }
 
 - (void)setupTableView {
@@ -185,7 +190,7 @@
     NSError *error = nil;
     NSArray *results = [context executeFetchRequest:fetchRequest error:&error];
     
-    if (!error && self.budgetValues.count != 0) {
+    if (!error && results.count != 0) {
         NSMutableArray *names = [NSMutableArray array];
         for (NSDictionary *dict in results) {
             NSString *name = dict[@"name"];
@@ -194,10 +199,6 @@
             }
         }
         self.budgetValues = names;
-        NSLog(@"Budget names: %@", names);
-    } else {
-        self.budgetValues = @[@"None"];
-        NSLog(@"Fetch failed: %@", error);
     }
     
     
