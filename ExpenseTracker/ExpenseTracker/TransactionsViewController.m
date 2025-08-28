@@ -29,6 +29,7 @@
     [self setupPickers];
     [self setupTypePicker];
     [self selectEmptyScreen];
+    [self configureViewForMode];
     
     self.budgetValues = [NSMutableArray array];
     if(self.budgetValues.count == 0){
@@ -74,6 +75,22 @@
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissKeyboard)];
     tap.cancelsTouchesInView = NO;
     [self.view addGestureRecognizer:tap];
+}
+
+-(void)configureViewForMode{
+    if(self.isEditMode){
+        self.amountTextField.text = [NSString stringWithFormat:@"%ld", (long)self.existingTransaction.amount];
+        
+        NSLog(@"self.segmentControl.selectedSegmentIndex: %ld", (long)self.existingTransaction.type);
+        
+        // TODO: bug when in edit mode
+        [self.datePicker setDate:self.existingTransaction.date];
+        [self.budgetPicker selectRow:self.existingTransaction.budget inComponent:0 animated:NO];
+        [self.categoryPicker selectRow:1 inComponent:0 animated:NO];
+        
+        NSString *typeTitle = _typeValues[self.existingTransaction.type];
+
+    }
 }
 
 #pragma mark - UITableViewDataSource
