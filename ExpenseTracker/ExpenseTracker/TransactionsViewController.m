@@ -11,6 +11,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.amountTextField.delegate = self;
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
     
     self.title = @"Transaction";
@@ -58,6 +59,7 @@
 - (void)setupPickers {
     self.datePicker = [[UIDatePicker alloc] init];
     self.datePicker.datePickerMode = UIDatePickerModeDateAndTime;
+    self.datePicker.locale = [NSLocale localeWithLocaleIdentifier:@"en_US"];
     self.categoryPicker = [[UIPickerView alloc] init];
     self.categoryPicker.delegate = self;
     self.categoryPicker.dataSource = self;
@@ -80,10 +82,36 @@
     [self.view addGestureRecognizer:tap];
 }
 
+#pragma mark - UITextFieldDelegate
+- (BOOL)textField:(UITextField *)textField
+shouldChangeCharactersInRange:(NSRange)range
+replacementString:(NSString *)string {
+    if (textField == self.amountTextField) {
+        NSString *newString = [textField.text stringByReplacingCharactersInRange:range withString:string];
+        NSString *digitsOnly = [[newString componentsSeparatedByCharactersInSet:
+                                 [[NSCharacterSet decimalDigitCharacterSet] invertedSet]]
+                                componentsJoinedByString:@""];
+        if (digitsOnly.length > 8) {
+            return NO;
+        }
+        NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
+        formatter.numberStyle = NSNumberFormatterDecimalStyle;
+        NSNumber *number = @(digitsOnly.integerValue);
+        NSString *formatted = [formatter stringFromNumber:number];
+        textField.text = [NSString stringWithFormat:@"₱%@", formatted ?: @""];
+        return NO;
+    }
+    return YES;
+}
+
+#pragma mark - Configure View for Edit Mode
 - (void)configureViewForMode {
     if (self.isEditMode && self.existingTransaction) {
         // Amount
-        self.amountTextField.text = [NSString stringWithFormat:@"%ld", (long)self.existingTransaction.amount];
+        NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
+        formatter.numberStyle = NSNumberFormatterDecimalStyle;
+        NSString *formatted = [formatter stringFromNumber:@(self.existingTransaction.amount)];
+        self.amountTextField.text = [NSString stringWithFormat:@"₱%@", formatted ?: @""];
 
         // Date
         [self.datePicker setDate:self.existingTransaction.date];
@@ -140,13 +168,14 @@
             [NSLayoutConstraint activateConstraints:@[
                 [self.datePicker.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
                 [self.datePicker.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
-                [self.datePicker.widthAnchor constraintEqualToConstant:200]
             ]];
             break;
         case 1: // Amount
             cell.textLabel.text = @"Amount";
             [cell.contentView addSubview:self.amountTextField];
             self.amountTextField.translatesAutoresizingMaskIntoConstraints = NO;
+            self.amountTextField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
+            self.amountTextField.textAlignment = NSTextAlignmentRight;
             [NSLayoutConstraint activateConstraints:@[
                 [self.amountTextField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
                 [self.amountTextField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
