@@ -94,24 +94,20 @@ replacementString:(NSString *)string {
         if (digitsOnly.length > 8) {
             return NO;
         }
-        NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
-        formatter.numberStyle = NSNumberFormatterDecimalStyle;
-        NSNumber *number = @(digitsOnly.integerValue);
-        NSString *formatted = [formatter stringFromNumber:number];
-        textField.text = [NSString stringWithFormat:@"₱%@", formatted ?: @""];
-        return NO;
     }
     return YES;
 }
 
 #pragma mark - Configure View for Edit Mode
 - (void)configureViewForMode {
+    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+    NSManagedObjectContext *context = appDelegate.persistentContainer.viewContext;
+    NSDictionary *attributes = [appDelegate fetchAttributes];
+    NSError *error = nil;
+
     if (self.isEditMode && self.existingTransaction) {
         // Amount
-        NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
-        formatter.numberStyle = NSNumberFormatterDecimalStyle;
-        NSString *formatted = [formatter stringFromNumber:@(self.existingTransaction.amount)];
-        self.amountTextField.text = [NSString stringWithFormat:@"₱%@", formatted ?: @""];
+        self.amountTextField.text = [NSString stringWithFormat:@"%@", self.existingTransaction.amount];
 
         // Date
         [self.datePicker setDate:self.existingTransaction.date];
@@ -122,6 +118,7 @@ replacementString:(NSString *)string {
         [typeButton setTitle:self.typeValues[self.selectedTypeIndex] forState:UIControlStateNormal];
 
         // Budget
+        self.budgetValues = [self getBudgetValues:context error:&error];
         self.selectedBudgetIndex = self.existingTransaction.budget;
         UIButton *budgetButton = [self buttonForRow:2];
         if (self.selectedBudgetIndex < self.budgetValues.count) {
@@ -129,6 +126,7 @@ replacementString:(NSString *)string {
         }
 
         // Category
+        self.categoryValues = [self categoryValuesForTypeIndex:self.selectedTypeIndex attributes:attributes];
         self.selectedCategoryIndex = [self.categoryValues indexOfObject:self.existingTransaction.category];
         UIButton *categoryButton = [self buttonForRow:4];
         if (self.selectedCategoryIndex != NSNotFound) {
@@ -137,7 +135,7 @@ replacementString:(NSString *)string {
     }
 }
 
-// Helper to get button from cell
+#pragma mark - Helper
 - (UIButton *)buttonForRow:(NSInteger)row {
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
@@ -147,6 +145,34 @@ replacementString:(NSString *)string {
         }
     }
     return nil;
+}
+
+- (NSArray *)categoryValuesForTypeIndex:(NSInteger)typeIndex attributes:(NSDictionary *)attributes{
+    NSDictionary *expenseAttributes = attributes[@"Expenses"];
+    NSDictionary *incomeAttributes = attributes[@"Income"];
+    
+    if(typeIndex == 0){
+        return [expenseAttributes allKeys];
+    } else {
+        return [incomeAttributes allKeys];
+    }
+}
+
+- (NSArray *)getBudgetValues:(NSManagedObjectContext *)context error:(NSError **)error{
+    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Budget"];
+    fetchRequest.resultType = NSDictionaryResultType;
+    fetchRequest.propertiesToFetch = @[@"name"];
+    
+    NSArray *results = [context executeFetchRequest:fetchRequest error:error];
+    
+    NSMutableArray *names = [NSMutableArray array];
+    for (NSDictionary *dict in results) {
+        NSString *name = dict[@"name"];
+        if (name) {
+            [names addObject:name];
+        }
+    }
+    return [names copy];
 }
 
 #pragma mark - UITableViewDataSource
@@ -248,33 +274,10 @@ replacementString:(NSString *)string {
     AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
     NSManagedObjectContext *context = appDelegate.persistentContainer.viewContext;
     NSDictionary *attributes = [appDelegate fetchAttributes];
-    self.expenseAttributes = attributes[@"Expenses"];
-    self.incomeAttributes = attributes[@"Income"];
-    
-    if(self.selectedTypeIndex == 0){
-        self.categoryValues = [self.expenseAttributes allKeys];
-    } else {
-        self.categoryValues = [self.incomeAttributes allKeys];
-    }
-    
-    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Budget"];
-    fetchRequest.resultType = NSDictionaryResultType;
-    fetchRequest.propertiesToFetch = @[@"name"];
     
     NSError *error = nil;
-    NSArray *results = [context executeFetchRequest:fetchRequest error:&error];
-    
-    if (!error && results.count != 0) {
-        NSMutableArray *names = [NSMutableArray array];
-        for (NSDictionary *dict in results) {
-            NSString *name = dict[@"name"];
-            if (name) {
-                [names addObject:name];
-            }
-        }
-        self.budgetValues = names;
-    }
-    
+    self.budgetValues = [self getBudgetValues:context error:&error];
+    self.categoryValues = [self categoryValuesForTypeIndex:self.selectedTypeIndex attributes:attributes];
     
     UIAlertAction *done = [UIAlertAction actionWithTitle:@"Done" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         NSInteger selectedRow;
@@ -334,7 +337,7 @@ replacementString:(NSString *)string {
     return 0;
 }
 - (void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component {
-
+    
 }
 #pragma mark - Actions
 
@@ -344,15 +347,9 @@ replacementString:(NSString *)string {
     NSInteger type = self.selectedTypeIndex;
     NSString *category = self.categoryValues[self.selectedCategoryIndex];
     
-    //Parse amount using NSNumberFormatter for safety
-    NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
-    formatter.numberStyle = NSNumberFormatterDecimalStyle;
-    NSNumber *amountNumber = [formatter numberFromString:self.amountTextField.text];
-    NSInteger amount = amountNumber.integerValue;
-    
     NSDate *date = self.datePicker.date;
     
-    if (amount == 0 || !date) {
+    if ([self.amountTextField.text  isEqual: @"0"] || [self.amountTextField.text  isEqual: @""] || !date) {
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Invalid Input"
                                                                        message:@"Please fill all fields correctly."
                                                                 preferredStyle:UIAlertControllerStyleAlert];
@@ -366,6 +363,12 @@ replacementString:(NSString *)string {
         [self presentViewController:alert animated:YES completion:nil];
         return;
     }
+    
+    // Parse amount as NSDecimalNumber using NSNumberFormatter for safety
+    NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
+    formatter.numberStyle = NSNumberFormatterDecimalStyle;
+    NSNumber *amountNumber = [formatter numberFromString:self.amountTextField.text];
+    NSDecimalNumber *amount = [NSDecimalNumber decimalNumberWithDecimal:amountNumber.decimalValue];
     
     // Get Core Data Context
     AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
@@ -383,7 +386,7 @@ replacementString:(NSString *)string {
         transaction.transactionId = [[NSUUID UUID] UUIDString];
     }
     
-    transaction.amount = (int32_t)amount;
+    transaction.amount = amount;
     transaction.category = category;
     transaction.date = date;
     transaction.type = type;
