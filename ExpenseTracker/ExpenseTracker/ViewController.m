@@ -263,11 +263,6 @@
     // Type indicator emoji
     NSString *typeIndicator = transaction.type == 0 ? @"💸" : @"💰";
     
-    // Currency formatting
-    NSNumberFormatter *currencyFormatter = [[NSNumberFormatter alloc] init];
-    currencyFormatter.numberStyle = NSNumberFormatterCurrencyStyle;
-    NSString *formattedAmount = [currencyFormatter stringFromNumber:@(transaction.amount)];
-    
     // Create a label for the date
     UILabel *dateLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 80, 20)];
     dateLabel.text = formattedDate;
@@ -276,7 +271,7 @@
     dateLabel.textAlignment = NSTextAlignmentRight;
     
     cell.imageView.image = [self emojiToImage:typeIndicator];
-    cell.textLabel.text = formattedAmount;
+    cell.textLabel.text = [transaction.amount stringValue];
     cell.detailTextLabel.text = transaction.category;
     cell.accessoryView = dateLabel;
     

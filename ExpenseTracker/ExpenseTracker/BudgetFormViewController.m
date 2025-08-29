@@ -260,7 +260,7 @@
 #pragma mark - UITextFieldDelegate
 - (BOOL)textField:(UITextField *)textField
 shouldChangeCharactersInRange:(NSRange)range
-replacementString:(NSString *)string {
+replacementString:(NSString *)string{
     if (textField.keyboardType == UIKeyboardTypeDecimalPad) {
         NSString *newString = [textField.text stringByReplacingCharactersInRange:range withString:string];
         NSString *digitsOnly = [[newString componentsSeparatedByCharactersInSet:
@@ -269,12 +269,6 @@ replacementString:(NSString *)string {
         if (digitsOnly.length > 8) {
             return NO;
         }
-        NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
-        formatter.numberStyle = NSNumberFormatterDecimalStyle;
-        NSNumber *number = @(digitsOnly.integerValue);
-        NSString *formatted = [formatter stringFromNumber:number];
-        textField.text = [NSString stringWithFormat:@"₱%@", formatted ?: @""];
-        return NO;
     }
     return YES;
 }
@@ -356,29 +350,29 @@ replacementString:(NSString *)string {
     if (self.isEditMode) {
         [budget setValue:[NSDate date] forKey:@"updatedAt"];
     }
-
+    
     // Create Expenses object
     NSManagedObject *expenses = [NSEntityDescription insertNewObjectForEntityForName:@"Expenses" inManagedObjectContext:self.managedObjectContext];
     for (NSString *key in self.expenseValues) {
         [expenses setValue:self.expenseValues[key] forKey:key];
     }
-
+    
     // Create Income object
     NSManagedObject *income = [NSEntityDescription insertNewObjectForEntityForName:@"Income" inManagedObjectContext:self.managedObjectContext];
     for (NSString *key in self.incomeValues) {
         [income setValue:self.incomeValues[key] forKey:key];
     }
-
+    
     // Set relationships
     [budget setValue:expenses forKey:@"expenses"];
     [budget setValue:income forKey:@"income"];
-
+    
     // Save context
     NSError *error = nil;
     if (![self.managedObjectContext save:&error]) {
         NSLog(@"Failed to save budget: %@", error);
     }
-
+    
     // Notify delegate or dismiss
     if ([self.delegate respondsToSelector:@selector(budgetFormViewController:didSaveBudget:)]) {
         [self.delegate budgetFormViewController:self didSaveBudget:budgetData];
@@ -391,7 +385,7 @@ replacementString:(NSString *)string {
     }
     
     NSLog(@"Budget Data: %@", budgetData);
-
+    
 }
 
 - (void)leftButtonTapped {
