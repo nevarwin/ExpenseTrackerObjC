@@ -39,7 +39,11 @@
                                                           tag:1];
     
     UITabBarController *tabBarController = [[UITabBarController alloc] init];
-    tabBarController.viewControllers = @[transactionVC, budgetVC];
+    // Wrap in UINavigationController
+    UINavigationController *budgetNav = [[UINavigationController alloc] initWithRootViewController:budgetVC];
+
+    // Add to tab bar controller
+    tabBarController.viewControllers = @[transactionVC, budgetNav];
     
     // Customize tab bar appearance
     UITabBarAppearance *appearance = [[UITabBarAppearance alloc] init];
