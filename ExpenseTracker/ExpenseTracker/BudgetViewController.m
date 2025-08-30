@@ -197,7 +197,6 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    NSLog(@"Selected budget at row: %ld", (long)indexPath.row);
     // Instantiate BudgetDisplayViewController
     BudgetDisplayViewController *displayVC = [[BudgetDisplayViewController alloc] init];
     

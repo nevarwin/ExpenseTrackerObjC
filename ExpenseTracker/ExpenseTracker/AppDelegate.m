@@ -24,11 +24,6 @@
         [defaults synchronize];
     }
     self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-    BudgetViewController *budgetVC = [[BudgetViewController alloc] init];
-    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:budgetVC];
-    self.window.rootViewController = navController;
-    [self.window makeKeyAndVisible];
-    
     return YES;
 }
 
