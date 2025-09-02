@@ -77,6 +77,9 @@
     @synchronized (self) {
         if (_persistentContainer == nil) {
             _persistentContainer = [[NSPersistentContainer alloc] initWithName:@"Transaction"];
+            NSPersistentStoreDescription *storeDescription = _persistentContainer.persistentStoreDescriptions.firstObject;
+            storeDescription.shouldMigrateStoreAutomatically = YES;
+            storeDescription.shouldInferMappingModelAutomatically = YES;
             [_persistentContainer loadPersistentStoresWithCompletionHandler:^(NSPersistentStoreDescription *storeDescription, NSError *error) {
                 if (error != nil) {
                     // Replace this implementation with code to handle the error appropriately.
