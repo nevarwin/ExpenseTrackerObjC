@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface BudgetDisplayViewController : UIViewController
 
-@property (nonatomic, strong) UIView *headerContainer;
+//@property (nonatomic, strong) UIView *headerContainer;
 @property (nonatomic, strong) Budget *budget;
 @property (nonatomic, strong) UITextField *headerLabelTextField;
 @property (nonatomic, strong) UIButton *addButton;
@@ -25,6 +25,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong) NSDictionary<NSString *, NSAttributeDescription *> *incomeAttributes;
 @property (nonatomic, strong) NSMutableDictionary<NSString *, NSDecimalNumber *> *incomeValues;
+
+@property (nonatomic, strong) NSArray *expenseObjects;
+@property (nonatomic, strong) NSArray *incomeObjects;
+
+@property (nonatomic, assign) NSEntityDescription *expenseEntity;
+@property (nonatomic, assign) NSEntityDescription *incomeEntity;
+
 @end
 
 NS_ASSUME_NONNULL_END
