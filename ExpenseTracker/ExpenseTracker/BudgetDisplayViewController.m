@@ -17,11 +17,11 @@
     
     self.headerLabelTextField.delegate = self;
     
-    NSEntityDescription *expenseEntity = [NSEntityDescription entityForName:@"Expenses" inManagedObjectContext:self.managedObjectContext];
-    NSEntityDescription *incomeEntity = [NSEntityDescription entityForName:@"Income" inManagedObjectContext:self.managedObjectContext];
+    self.expenseEntity = [NSEntityDescription entityForName:@"Expenses" inManagedObjectContext:self.managedObjectContext];
+    self.incomeEntity = [NSEntityDescription entityForName:@"Income" inManagedObjectContext:self.managedObjectContext];
     
-    self.expenseAttributes = expenseEntity.attributesByName;
-    self.incomeAttributes = incomeEntity.attributesByName;
+    self.expenseAttributes = self.expenseEntity.attributesByName;
+    self.incomeAttributes = self.incomeEntity.attributesByName;
     
     self.expenseValues = [NSMutableDictionary dictionary];
     for (NSString *key in self.expenseAttributes) {
@@ -31,10 +31,9 @@
     for (NSString *key in self.incomeAttributes) {
         self.incomeValues[key] = [NSDecimalNumber zero];
     }
-    NSLog(@"incomeValues: %@", self.incomeValues);
-    NSLog(@"expenseValues: %@", self.expenseValues);
-    NSLog(@"expenseAttributes: %@", self.expenseAttributes);
-    NSLog(@"incomeAttributes: %@", self.incomeAttributes);
+    
+    NSFetchRequest *expenseFetch = [NSFetchRequest fetchRequestWithEntityName:@"Expenses"];
+    self.expenseObjects = [self.managedObjectContext executeFetchRequest:expenseFetch error:nil];
     
     [self setupHeaderView];
     [self setupTableView];
@@ -47,8 +46,9 @@
 
 - (void)setupHeaderView {
     // Create header container
-    self.headerContainer.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:_headerContainer];
+    UIView *headerContainer = [[UIView alloc] init];
+    headerContainer.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:headerContainer];
     
     // Setup header label text field (left side)
     self.headerLabelTextField = [[UITextField alloc] init];
@@ -56,7 +56,7 @@
     self.headerLabelTextField.text = self.budget.name;
     self.headerLabelTextField.font = [UIFont systemFontOfSize:34 weight:UIFontWeightBold];
     self.headerLabelTextField.textColor = [UIColor labelColor];
-    [_headerContainer addSubview:self.headerLabelTextField];
+    [headerContainer addSubview:self.headerLabelTextField];
 
     
     // Setup add button (right side)
@@ -67,27 +67,27 @@
     self.addButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     // Increase button size to match Health app
     [self.addButton.imageView setContentMode:UIViewContentModeScaleAspectFit];
-    [_headerContainer addSubview:self.addButton];
+    [headerContainer addSubview:self.addButton];
     
     // Setup constraints for header container
     [NSLayoutConstraint activateConstraints:@[
-        [_headerContainer.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
-        [_headerContainer.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
-        [_headerContainer.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
-        [_headerContainer.heightAnchor constraintEqualToConstant:60]
+        [headerContainer.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
+        [headerContainer.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
+        [headerContainer.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
+        [headerContainer.heightAnchor constraintEqualToConstant:60]
     ]];
     
     // Setup constraints for header label text field
     [NSLayoutConstraint activateConstraints:@[
-        [self.headerLabelTextField.leadingAnchor constraintEqualToAnchor:_headerContainer.leadingAnchor],
-        [self.headerLabelTextField.centerYAnchor constraintEqualToAnchor:_headerContainer.centerYAnchor],
+        [self.headerLabelTextField.leadingAnchor constraintEqualToAnchor:headerContainer.leadingAnchor],
+        [self.headerLabelTextField.centerYAnchor constraintEqualToAnchor:headerContainer.centerYAnchor],
         [self.headerLabelTextField.trailingAnchor constraintEqualToAnchor:self.addButton.leadingAnchor constant:-10]
     ]];
     
     // Setup constraints for add button
     [NSLayoutConstraint activateConstraints:@[
-        [self.addButton.trailingAnchor constraintEqualToAnchor:_headerContainer.trailingAnchor],
-        [self.addButton.centerYAnchor constraintEqualToAnchor:_headerContainer.centerYAnchor],
+        [self.addButton.trailingAnchor constraintEqualToAnchor:headerContainer.trailingAnchor],
+        [self.addButton.centerYAnchor constraintEqualToAnchor:headerContainer.centerYAnchor],
         [self.addButton.widthAnchor constraintEqualToConstant:44],
         [self.addButton.heightAnchor constraintEqualToConstant:44]
     ]];
@@ -100,8 +100,10 @@
     self.budgetDisplayTableView.dataSource = self;
     [self.view addSubview:self.budgetDisplayTableView];
     
+    [self.budgetDisplayTableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"TextFieldCell"];
+    
     [NSLayoutConstraint activateConstraints:@[
-        [self.budgetDisplayTableView.topAnchor constraintEqualToAnchor:self.headerContainer.bottomAnchor],
+        [self.budgetDisplayTableView.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
         [self.budgetDisplayTableView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
         [self.budgetDisplayTableView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
         [self.budgetDisplayTableView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
@@ -142,8 +144,13 @@
         // Expense attributes
         NSArray *expenseKeys = [self.expenseAttributes allKeys];
         NSString *attributeName = expenseKeys[indexPath.row];
-        NSLog(@"expenseKeys: %@", attributeName);
-        NSDecimalNumber *value = self.expenseValues[attributeName];
+        NSDecimalNumber *value;
+        
+        for (NSManagedObject *expense in self.expenseObjects) {
+            for (NSString *key in self.expenseEntity.attributesByName) {
+                value = [expense valueForKey:key];
+            }
+        }
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
                                              placeholder:[attributeName capitalizedString]
@@ -154,8 +161,13 @@
         // Income attributes
         NSArray *incomeKeys = [self.incomeAttributes allKeys];
         NSString *attributeName = incomeKeys[indexPath.row];
-        NSLog(@"incomeKeys: %@", attributeName);
-        NSDecimalNumber *value = self.incomeValues[attributeName];
+        NSDecimalNumber *value;
+        
+        for (NSManagedObject *income in self.incomeObjects) {
+            for (NSString *key in self.incomeEntity.attributesByName) {
+                value = [income valueForKey:key];
+            }
+        }
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
                                              placeholder:[attributeName capitalizedString]
@@ -175,6 +187,7 @@
                                            attributeName:(NSString *)attributeName {
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TextFieldCell" forIndexPath:indexPath];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    cell.textLabel.text = placeholder;
     
     // Remove old views
     for (UIView *subview in cell.contentView.subviews) {
@@ -183,30 +196,48 @@
     
     UITextField *textField = [[UITextField alloc] init];
     textField.delegate = self;
+    textField.text = value.stringValue;
     textField.translatesAutoresizingMaskIntoConstraints = NO;
-    textField.clearButtonMode = UITextFieldViewModeWhileEditing;
     textField.tag = 100 + indexPath.row;
-    textField.placeholder = placeholder;
     textField.keyboardType = keyboardType;
     textField.accessibilityIdentifier = attributeName; // store key for later use
     [textField addTarget:self action:@selector(textFieldChanged:) forControlEvents:UIControlEventEditingChanged];
-    textField.translatesAutoresizingMaskIntoConstraints = NO;
     textField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
     textField.textAlignment = NSTextAlignmentRight;
     
-    
     [cell.contentView addSubview:textField];
     
+    [textField setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     [NSLayoutConstraint activateConstraints:@[
-        [textField.topAnchor constraintEqualToAnchor:cell.contentView.topAnchor],
-        [textField.leadingAnchor constraintEqualToAnchor:cell.contentView.leadingAnchor constant:16],
-        [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
-        [textField.bottomAnchor constraintEqualToAnchor:cell.contentView.bottomAnchor],
+        [textField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+        [textField.centerXAnchor constraintEqualToAnchor:cell.contentView.centerXAnchor],
         [textField.widthAnchor constraintEqualToConstant:120],
         [textField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+        [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
     ]];
+
+
     
     return cell;
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    switch (section) {
+        case 0:
+            return @"EXPENSES";
+        case 1:
+            return @"INCOME";
+        default:
+            return nil;
+    }
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
+    return nil;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return 44;
 }
 
 
@@ -231,6 +262,29 @@
         // Budget name field
         self.budget.name = textField.text ?: @"";
     }
+}
+
+#pragma mark - Keyboard Notifications
+// Keyboard handlers
+- (void)keyboardWillShow:(NSNotification *)notification {
+    CGRect kbFrame = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    CGFloat kbHeight = kbFrame.size.height;
+    self.budgetDisplayTableView.contentInset = UIEdgeInsetsMake(0, 0, kbHeight, 0);
+    self.budgetDisplayTableView.scrollIndicatorInsets = self.budgetDisplayTableView.contentInset;
+}
+
+- (void)keyboardWillHide:(NSNotification *)notification {
+    self.budgetDisplayTableView.contentInset = UIEdgeInsetsZero;
+    self.budgetDisplayTableView.scrollIndicatorInsets = UIEdgeInsetsZero;
+}
+
+// UITextFieldDelegate
+- (void)textFieldDidBeginEditing:(UITextField *)textField {
+    UITableViewCell *cell = (UITableViewCell *)textField.superview.superview;
+    NSIndexPath *indexPath = [self.budgetDisplayTableView indexPathForCell:cell];
+    [self.budgetDisplayTableView scrollToRowAtIndexPath:indexPath
+                          atScrollPosition:UITableViewScrollPositionMiddle
+                                  animated:YES];
 }
 
 

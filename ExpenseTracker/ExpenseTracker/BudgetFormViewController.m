@@ -99,8 +99,6 @@
     
     // Register cell classes
     [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"TextFieldCell"];
-    [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"DateCell"];
-    [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"TimeCell"];
     
     // Setup constraints
     [NSLayoutConstraint activateConstraints:@[
