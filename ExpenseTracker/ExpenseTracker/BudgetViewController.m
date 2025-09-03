@@ -20,8 +20,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.title = @"Budgets";
-    
     // Set background color to match Health app
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
     
@@ -30,6 +28,12 @@
     [self setupTableView];
     [self fetchBudgets];
 }
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [self.navigationController setNavigationBarHidden:YES animated:NO];
+}
+
 
 - (void)fetchBudgets {
     if (!self.managedObjectContext) {
@@ -201,9 +205,15 @@
     // Instantiate BudgetDisplayViewController
     BudgetDisplayViewController *displayVC = [[BudgetDisplayViewController alloc] init];
     
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Budgets"
+                                                                             style:UIBarButtonItemStylePlain
+                                                                            target:nil
+                                                                            action:nil];
+    
     // Pass the selected budget
     displayVC.budget = self.budgets[indexPath.row];
-    
+    displayVC.managedObjectContext = self.managedObjectContext;
+
     // Push onto navigation stack
     [self.navigationController pushViewController:displayVC animated:YES];
 }

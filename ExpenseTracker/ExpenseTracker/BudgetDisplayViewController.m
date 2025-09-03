@@ -2,78 +2,236 @@
 #import "Budget+CoreDataClass.h"
 #import <HealthKit/HealthKit.h>
 
-@interface BudgetDisplayViewController ()
-@property (nonatomic, strong) UILabel *budgetLabel;
-@property (nonatomic, strong) UIButton *healthPermissionButton;
-@property (nonatomic, strong) HKHealthStore *healthStore;
+#define MAX_HEADER_TEXT_LENGTH 16
+
+@interface BudgetDisplayViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate>
+
 @end
 
 @implementation BudgetDisplayViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    // Set background color to match Health app
+    self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
     
-    self.budgetLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 100, 300, 40)];
-    self.budgetLabel.textColor = [UIColor blackColor];
-    [self.view addSubview:self.budgetLabel];
+    self.headerLabelTextField.delegate = self;
     
-    self.healthPermissionButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    self.healthPermissionButton.frame = CGRectMake(20, 160, 300, 40);
-    [self.healthPermissionButton setTitle:@"Request Heart Rate Permission" forState:UIControlStateNormal];
-    [self.healthPermissionButton addTarget:self action:@selector(requestHeartRatePermission) forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:self.healthPermissionButton];
+    NSEntityDescription *expenseEntity = [NSEntityDescription entityForName:@"Expenses" inManagedObjectContext:self.managedObjectContext];
+    NSEntityDescription *incomeEntity = [NSEntityDescription entityForName:@"Income" inManagedObjectContext:self.managedObjectContext];
+    
+    self.expenseAttributes = expenseEntity.attributesByName;
+    self.incomeAttributes = incomeEntity.attributesByName;
+    
+    self.expenseValues = [NSMutableDictionary dictionary];
+    for (NSString *key in self.expenseAttributes) {
+        self.expenseValues[key] = [NSDecimalNumber zero];
+    }
+    self.incomeValues = [NSMutableDictionary dictionary];
+    for (NSString *key in self.incomeAttributes) {
+        self.incomeValues[key] = [NSDecimalNumber zero];
+    }
+    NSLog(@"incomeValues: %@", self.incomeValues);
+    NSLog(@"expenseValues: %@", self.expenseValues);
+    NSLog(@"expenseAttributes: %@", self.expenseAttributes);
+    NSLog(@"incomeAttributes: %@", self.incomeAttributes);
+    
+    [self setupHeaderView];
+    [self setupTableView];
 }
 
-- (void)requestHeartRatePermission {
-    if ([HKHealthStore isHealthDataAvailable]) {
-        self.healthStore = [[HKHealthStore alloc] init];
-        
-        NSSet *readTypes = [NSSet setWithObject:[HKObjectType quantityTypeForIdentifier:HKQuantityTypeIdentifierHeartRate]];
-        
-        [self.healthStore requestAuthorizationToShareTypes:nil
-                                                 readTypes:readTypes
-                                                completion:^(BOOL success, NSError * _Nullable error) {
-            NSLog(@"Health permission granted: %d, error: %@", success, error);
-            NSLog(@"ReadTypes: %@", readTypes);
-        }];
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [self.navigationController setNavigationBarHidden:NO animated:NO];
+}
+
+- (void)setupHeaderView {
+    // Create header container
+    self.headerContainer.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:_headerContainer];
     
-    // Update the completion block in requestHeartRatePermission:
-    [self.healthStore requestAuthorizationToShareTypes:nil
-                                             readTypes:readTypes
-                                            completion:^(BOOL success, NSError * _Nullable error) {
-        if (success) {
-            [self fetchAllHeartRates];
+    // Setup header label text field (left side)
+    self.headerLabelTextField = [[UITextField alloc] init];
+    self.headerLabelTextField.translatesAutoresizingMaskIntoConstraints = NO;
+    self.headerLabelTextField.text = self.budget.name;
+    self.headerLabelTextField.font = [UIFont systemFontOfSize:34 weight:UIFontWeightBold];
+    self.headerLabelTextField.textColor = [UIColor labelColor];
+    [_headerContainer addSubview:self.headerLabelTextField];
+
+    
+    // Setup add button (right side)
+    self.addButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    self.addButton.translatesAutoresizingMaskIntoConstraints = NO;
+    self.addButton.tintColor = [UIColor systemBlueColor];
+    [self.addButton addTarget:self action:@selector(addButtonTapped) forControlEvents:UIControlEventTouchUpInside];
+    self.addButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    // Increase button size to match Health app
+    [self.addButton.imageView setContentMode:UIViewContentModeScaleAspectFit];
+    [_headerContainer addSubview:self.addButton];
+    
+    // Setup constraints for header container
+    [NSLayoutConstraint activateConstraints:@[
+        [_headerContainer.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
+        [_headerContainer.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
+        [_headerContainer.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
+        [_headerContainer.heightAnchor constraintEqualToConstant:60]
+    ]];
+    
+    // Setup constraints for header label text field
+    [NSLayoutConstraint activateConstraints:@[
+        [self.headerLabelTextField.leadingAnchor constraintEqualToAnchor:_headerContainer.leadingAnchor],
+        [self.headerLabelTextField.centerYAnchor constraintEqualToAnchor:_headerContainer.centerYAnchor],
+        [self.headerLabelTextField.trailingAnchor constraintEqualToAnchor:self.addButton.leadingAnchor constant:-10]
+    ]];
+    
+    // Setup constraints for add button
+    [NSLayoutConstraint activateConstraints:@[
+        [self.addButton.trailingAnchor constraintEqualToAnchor:_headerContainer.trailingAnchor],
+        [self.addButton.centerYAnchor constraintEqualToAnchor:_headerContainer.centerYAnchor],
+        [self.addButton.widthAnchor constraintEqualToConstant:44],
+        [self.addButton.heightAnchor constraintEqualToConstant:44]
+    ]];
+}
+
+- (void)setupTableView {
+    self.budgetDisplayTableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStyleInsetGrouped];
+    self.budgetDisplayTableView.translatesAutoresizingMaskIntoConstraints = NO;
+    self.budgetDisplayTableView.delegate = self;
+    self.budgetDisplayTableView.dataSource = self;
+    [self.view addSubview:self.budgetDisplayTableView];
+    
+    [NSLayoutConstraint activateConstraints:@[
+        [self.budgetDisplayTableView.topAnchor constraintEqualToAnchor:self.headerContainer.bottomAnchor],
+        [self.budgetDisplayTableView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [self.budgetDisplayTableView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [self.budgetDisplayTableView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
+    ]];
+}
+
+#pragma mark - UITextFieldDelegate
+
+// TODO: Add limit to text fields
+#define MAXLENGTH 10
+- (BOOL)textField:(UITextField *) textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+{
+    NSUInteger oldLength = [textField.text length];
+    NSUInteger replacementLength = [string length];
+    NSUInteger rangeLength = range.length;
+    NSUInteger newLength = oldLength - rangeLength + replacementLength;
+    BOOL returnKey = [string rangeOfString: @"\n"].location != NSNotFound;
+    return newLength <= MAXLENGTH || returnKey;
+}
+
+
+#pragma mark - UITableViewDelegate
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    return 2;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    if (section == 0) return self.expenseAttributes.allKeys.count;
+    if (section == 1) return self.incomeAttributes.allKeys.count;
+    return 0;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    
+    // cellForRowAtIndexPath
+    if (indexPath.section == 0) {
+        // Expense attributes
+        NSArray *expenseKeys = [self.expenseAttributes allKeys];
+        NSString *attributeName = expenseKeys[indexPath.row];
+        NSLog(@"expenseKeys: %@", attributeName);
+        NSDecimalNumber *value = self.expenseValues[attributeName];
+        return [self configuredTextFieldCellForTableView:tableView
+                                               indexPath:indexPath
+                                             placeholder:[attributeName capitalizedString]
+                                            keyboardType:UIKeyboardTypeDecimalPad
+                                                   value:value
+                                           attributeName:attributeName];
+    } else if (indexPath.section == 1) {
+        // Income attributes
+        NSArray *incomeKeys = [self.incomeAttributes allKeys];
+        NSString *attributeName = incomeKeys[indexPath.row];
+        NSLog(@"incomeKeys: %@", attributeName);
+        NSDecimalNumber *value = self.incomeValues[attributeName];
+        return [self configuredTextFieldCellForTableView:tableView
+                                               indexPath:indexPath
+                                             placeholder:[attributeName capitalizedString]
+                                            keyboardType:UIKeyboardTypeDecimalPad
+                                                   value:value
+                                           attributeName:attributeName];
+        
+    }
+    return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"DefaultCell"];
+}
+
+- (UITableViewCell *)configuredTextFieldCellForTableView:(UITableView *)tableView
+                                               indexPath:(NSIndexPath *)indexPath
+                                             placeholder:(NSString *)placeholder
+                                            keyboardType:(UIKeyboardType)keyboardType
+                                                   value:(NSDecimalNumber *)value
+                                           attributeName:(NSString *)attributeName {
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TextFieldCell" forIndexPath:indexPath];
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    
+    // Remove old views
+    for (UIView *subview in cell.contentView.subviews) {
+        [subview removeFromSuperview];
+    }
+    
+    UITextField *textField = [[UITextField alloc] init];
+    textField.delegate = self;
+    textField.translatesAutoresizingMaskIntoConstraints = NO;
+    textField.clearButtonMode = UITextFieldViewModeWhileEditing;
+    textField.tag = 100 + indexPath.row;
+    textField.placeholder = placeholder;
+    textField.keyboardType = keyboardType;
+    textField.accessibilityIdentifier = attributeName; // store key for later use
+    [textField addTarget:self action:@selector(textFieldChanged:) forControlEvents:UIControlEventEditingChanged];
+    textField.translatesAutoresizingMaskIntoConstraints = NO;
+    textField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
+    textField.textAlignment = NSTextAlignmentRight;
+    
+    
+    [cell.contentView addSubview:textField];
+    
+    [NSLayoutConstraint activateConstraints:@[
+        [textField.topAnchor constraintEqualToAnchor:cell.contentView.topAnchor],
+        [textField.leadingAnchor constraintEqualToAnchor:cell.contentView.leadingAnchor constant:16],
+        [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
+        [textField.bottomAnchor constraintEqualToAnchor:cell.contentView.bottomAnchor],
+        [textField.widthAnchor constraintEqualToConstant:120],
+        [textField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+    ]];
+    
+    return cell;
+}
+
+
+#pragma mark - Actions
+
+- (void)addButtonTapped {
+}
+
+- (void)textFieldChanged:(UITextField *)textField {
+    NSString *attributeKey = textField.accessibilityIdentifier;
+    if (attributeKey) {
+        // Expense or income field
+        NSDecimalNumber *decimalValue = [NSDecimalNumber decimalNumberWithString:textField.text];
+        
+        if ([self.expenseAttributes objectForKey:attributeKey]) {
+            self.expenseValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
+            
+        } else if ([self.incomeAttributes objectForKey:attributeKey]) {
+            self.incomeValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
         }
-        NSLog(@"Health permission granted: %d, error: %@", success, error);
-    }];
+    } else {
+        // Budget name field
+        self.budget.name = textField.text ?: @"";
     }
 }
 
-// Fetch all heart rate samples
-- (void)fetchAllHeartRates {
-    HKSampleType *sampleType = [HKObjectType quantityTypeForIdentifier:HKQuantityTypeIdentifierHeartRate];
-    NSSortDescriptor *sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:HKSampleSortIdentifierEndDate ascending:NO];
-    
-    HKSampleQuery *query = [[HKSampleQuery alloc] initWithSampleType:sampleType
-                                                           predicate:nil
-                                                               limit:HKObjectQueryNoLimit
-                                                     sortDescriptors:@[sortDescriptor]
-                                                      resultsHandler:^(HKSampleQuery *query, NSArray *results, NSError *error) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSLog(@"Fetched heart rate samples: %@ ", results);
-            if (results.count > 0) {
-                NSMutableString *heartRates = [NSMutableString string];
-                for (HKQuantitySample *sample in results) {
-                    double heartRate = [sample.quantity doubleValueForUnit:[HKUnit unitFromString:@"count/min"]];
-                    [heartRates appendFormat:@"%.0f bpm\n", heartRate];
-                }
-                self.budgetLabel.text = heartRates;
-            } else {
-                self.budgetLabel.text = @"No heart rate data";
-            }
-        });
-    }];
-    [self.healthStore executeQuery:query];
-}
 
 @end
