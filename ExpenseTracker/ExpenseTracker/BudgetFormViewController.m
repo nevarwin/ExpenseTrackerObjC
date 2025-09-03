@@ -270,6 +270,17 @@ replacementString:(NSString *)string{
             return NO;
         }
     }
+    
+    if (textField.keyboardType == UIKeyboardTypeAlphabet){
+        // Define the maximum character limit
+        NSInteger maxLength = 10; // Change this to your desired limit
+        
+        // Calculate the new length of the text
+        NSString *newString = [textField.text stringByReplacingCharactersInRange:range withString:string];
+        
+        // Check if the new length exceeds the limit
+        return newString.length <= maxLength;
+    }
     return YES;
 }
 
