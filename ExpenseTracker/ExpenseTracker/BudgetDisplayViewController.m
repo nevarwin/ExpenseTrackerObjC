@@ -1,6 +1,8 @@
 #import "BudgetDisplayViewController.h"
 #import "Budget+CoreDataClass.h"
 #import <HealthKit/HealthKit.h>
+#import "Expenses+CoreDataClass.h"
+#import "Income+CoreDataClass.h"
 
 #define MAX_HEADER_TEXT_LENGTH 16
 
@@ -31,9 +33,6 @@
     for (NSString *key in self.incomeAttributes) {
         self.incomeValues[key] = [NSDecimalNumber zero];
     }
-    
-    NSFetchRequest *expenseFetch = [NSFetchRequest fetchRequestWithEntityName:@"Expenses"];
-    self.expenseObjects = [self.managedObjectContext executeFetchRequest:expenseFetch error:nil];
     
     [self setupHeaderView];
     [self setupTableView];
@@ -144,13 +143,8 @@
         // Expense attributes
         NSArray *expenseKeys = [self.expenseAttributes allKeys];
         NSString *attributeName = expenseKeys[indexPath.row];
-        NSDecimalNumber *value;
+        NSDecimalNumber *value = [self.budget.expenses valueForKey:attributeName];
         
-        for (NSManagedObject *expense in self.expenseObjects) {
-            for (NSString *key in self.expenseEntity.attributesByName) {
-                value = [expense valueForKey:key];
-            }
-        }
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
                                              placeholder:[attributeName capitalizedString]
@@ -161,13 +155,8 @@
         // Income attributes
         NSArray *incomeKeys = [self.incomeAttributes allKeys];
         NSString *attributeName = incomeKeys[indexPath.row];
-        NSDecimalNumber *value;
+        NSDecimalNumber *value = [self.budget.income valueForKey:attributeName];
         
-        for (NSManagedObject *income in self.incomeObjects) {
-            for (NSString *key in self.incomeEntity.attributesByName) {
-                value = [income valueForKey:key];
-            }
-        }
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
                                              placeholder:[attributeName capitalizedString]
@@ -210,14 +199,10 @@
     [textField setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     [NSLayoutConstraint activateConstraints:@[
         [textField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
-        [textField.centerXAnchor constraintEqualToAnchor:cell.contentView.centerXAnchor],
-        [textField.widthAnchor constraintEqualToConstant:120],
-        [textField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
         [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
+        [textField.widthAnchor constraintEqualToConstant:120],
     ]];
 
-
-    
     return cell;
 }
 
