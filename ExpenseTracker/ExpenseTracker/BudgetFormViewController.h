@@ -28,7 +28,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak) id delegate;
 
 @property (strong, nonatomic) UIBarButtonItem *rightButton;
-@property (strong, nonatomic) UIBarButtonItem *leftButton;
 
 @end
 
