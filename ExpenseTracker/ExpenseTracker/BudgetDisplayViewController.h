@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) UITextField *headerLabelTextField;
 @property (nonatomic, strong) UIButton *addButton;
 @property (nonatomic, strong) UITableView *budgetDisplayTableView;
+@property (nonatomic, strong) UIView *headerContainer;
 
 @property (nonatomic, strong) NSManagedObjectContext *managedObjectContext;
 
