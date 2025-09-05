@@ -45,9 +45,9 @@
 
 - (void)setupHeaderView {
     // Create header container
-    UIView *headerContainer = [[UIView alloc] init];
-    headerContainer.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:headerContainer];
+    self.headerContainer = [[UIView alloc] init];
+    _headerContainer.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:_headerContainer];
     
     // Setup header label text field (left side)
     self.headerLabelTextField = [[UITextField alloc] init];
@@ -55,7 +55,7 @@
     self.headerLabelTextField.text = self.budget.name;
     self.headerLabelTextField.font = [UIFont systemFontOfSize:34 weight:UIFontWeightBold];
     self.headerLabelTextField.textColor = [UIColor labelColor];
-    [headerContainer addSubview:self.headerLabelTextField];
+    [_headerContainer addSubview:self.headerLabelTextField];
 
     
     // Setup add button (right side)
@@ -66,27 +66,27 @@
     self.addButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     // Increase button size to match Health app
     [self.addButton.imageView setContentMode:UIViewContentModeScaleAspectFit];
-    [headerContainer addSubview:self.addButton];
+    [_headerContainer addSubview:self.addButton];
     
     // Setup constraints for header container
     [NSLayoutConstraint activateConstraints:@[
-        [headerContainer.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
-        [headerContainer.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
-        [headerContainer.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
-        [headerContainer.heightAnchor constraintEqualToConstant:60]
+        [_headerContainer.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
+        [_headerContainer.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
+        [_headerContainer.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
+        [_headerContainer.heightAnchor constraintEqualToConstant:60]
     ]];
     
     // Setup constraints for header label text field
     [NSLayoutConstraint activateConstraints:@[
-        [self.headerLabelTextField.leadingAnchor constraintEqualToAnchor:headerContainer.leadingAnchor],
-        [self.headerLabelTextField.centerYAnchor constraintEqualToAnchor:headerContainer.centerYAnchor],
+        [self.headerLabelTextField.leadingAnchor constraintEqualToAnchor:_headerContainer.leadingAnchor],
+        [self.headerLabelTextField.centerYAnchor constraintEqualToAnchor:_headerContainer.centerYAnchor],
         [self.headerLabelTextField.trailingAnchor constraintEqualToAnchor:self.addButton.leadingAnchor constant:-10]
     ]];
     
     // Setup constraints for add button
     [NSLayoutConstraint activateConstraints:@[
-        [self.addButton.trailingAnchor constraintEqualToAnchor:headerContainer.trailingAnchor],
-        [self.addButton.centerYAnchor constraintEqualToAnchor:headerContainer.centerYAnchor],
+        [self.addButton.trailingAnchor constraintEqualToAnchor:_headerContainer.trailingAnchor],
+        [self.addButton.centerYAnchor constraintEqualToAnchor:_headerContainer.centerYAnchor],
         [self.addButton.widthAnchor constraintEqualToConstant:44],
         [self.addButton.heightAnchor constraintEqualToConstant:44]
     ]];
@@ -102,7 +102,7 @@
     [self.budgetDisplayTableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"TextFieldCell"];
     
     [NSLayoutConstraint activateConstraints:@[
-        [self.budgetDisplayTableView.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
+        [self.budgetDisplayTableView.topAnchor constraintEqualToAnchor:_headerContainer.bottomAnchor],
         [self.budgetDisplayTableView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
         [self.budgetDisplayTableView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
         [self.budgetDisplayTableView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
