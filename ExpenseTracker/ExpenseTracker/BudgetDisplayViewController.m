@@ -58,15 +58,13 @@
     [_headerContainer addSubview:self.headerLabelTextField];
 
     
-    // Setup add button (right side)
-    self.addButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    self.addButton.translatesAutoresizingMaskIntoConstraints = NO;
-    self.addButton.tintColor = [UIColor systemBlueColor];
-    [self.addButton addTarget:self action:@selector(addButtonTapped) forControlEvents:UIControlEventTouchUpInside];
-    self.addButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
-    // Increase button size to match Health app
-    [self.addButton.imageView setContentMode:UIViewContentModeScaleAspectFit];
-    [_headerContainer addSubview:self.addButton];
+    // Navigation bar buttons
+    self.rightButton = [[UIBarButtonItem alloc]
+                        initWithTitle:@"Save"
+                        style:UIBarButtonItemStyleDone
+                        target:self
+                        action:@selector(addButtonTapped)];
+    self.navigationItem.rightBarButtonItem = self.rightButton;
     
     // Setup constraints for header container
     [NSLayoutConstraint activateConstraints:@[
@@ -80,15 +78,6 @@
     [NSLayoutConstraint activateConstraints:@[
         [self.headerLabelTextField.leadingAnchor constraintEqualToAnchor:_headerContainer.leadingAnchor],
         [self.headerLabelTextField.centerYAnchor constraintEqualToAnchor:_headerContainer.centerYAnchor],
-        [self.headerLabelTextField.trailingAnchor constraintEqualToAnchor:self.addButton.leadingAnchor constant:-10]
-    ]];
-    
-    // Setup constraints for add button
-    [NSLayoutConstraint activateConstraints:@[
-        [self.addButton.trailingAnchor constraintEqualToAnchor:_headerContainer.trailingAnchor],
-        [self.addButton.centerYAnchor constraintEqualToAnchor:_headerContainer.centerYAnchor],
-        [self.addButton.widthAnchor constraintEqualToConstant:44],
-        [self.addButton.heightAnchor constraintEqualToConstant:44]
     ]];
 }
 
