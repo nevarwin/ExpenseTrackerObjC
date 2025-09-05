@@ -137,10 +137,10 @@
     budgetFormVC.isEditMode = NO; // Since we're adding a new budget, not editing
     
     // Wrap in a navigation controller
-    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:budgetFormVC];
+//    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:budgetFormVC];
     
     // Present modally
-    [self presentViewController:navController animated:YES completion:nil];
+    [self.navigationController pushViewController:budgetFormVC animated:YES];
 }
 
 #pragma mark - UITableViewDataSource

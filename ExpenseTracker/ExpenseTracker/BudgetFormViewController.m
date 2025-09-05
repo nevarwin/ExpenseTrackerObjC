@@ -49,13 +49,6 @@
     self.title = self.isEditMode ? @"Edit Budget" : @"Add Budget";
     
     // Navigation bar buttons
-    self.leftButton = [[UIBarButtonItem alloc]
-                       initWithTitle:@"Cancel"
-                       style:UIBarButtonItemStylePlain
-                       target:self
-                       action:@selector(leftButtonTapped)];
-    self.navigationItem.leftBarButtonItem = self.leftButton;
-    
     self.rightButton = [[UIBarButtonItem alloc]
                         initWithTitle:@"Save"
                         style:UIBarButtonItemStyleDone
@@ -85,6 +78,11 @@
                                              selector:@selector(keyboardWillHide:)
                                                  name:UIKeyboardWillHideNotification
                                                object:nil];
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [self.navigationController setNavigationBarHidden:NO animated:NO];
 }
 
 - (void)setupTableView {
@@ -385,24 +383,16 @@ replacementString:(NSString *)string{
     // Notify delegate or dismiss
     if ([self.delegate respondsToSelector:@selector(budgetFormViewController:didSaveBudget:)]) {
         [self.delegate budgetFormViewController:self didSaveBudget:budgetData];
-    } else {
-        [self dismissViewControllerAnimated:YES completion:nil];
     }
     
     if ([self.delegate respondsToSelector:@selector(didAddOrEditBudget)]) {
         [self.delegate didAddOrEditBudget];
     }
     
+    [self.navigationController popViewControllerAnimated:YES];
+    
     NSLog(@"Budget Data: %@", budgetData);
     
-}
-
-- (void)leftButtonTapped {
-    if ([self.delegate respondsToSelector:@selector(budgetFormViewControllerDidCancel:)]) {
-        [self.delegate budgetFormViewControllerDidCancel:self];
-    } else {
-        [self dismissViewControllerAnimated:YES completion:nil];
-    }
 }
 
 - (void)dismissKeyboard {
