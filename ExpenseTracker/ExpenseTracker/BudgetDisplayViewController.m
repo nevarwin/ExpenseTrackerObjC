@@ -26,12 +26,20 @@
     self.incomeAttributes = self.incomeEntity.attributesByName;
     
     self.expenseValues = [NSMutableDictionary dictionary];
-    for (NSString *key in self.expenseAttributes) {
-        self.expenseValues[key] = [NSDecimalNumber zero];
-    }
     self.incomeValues = [NSMutableDictionary dictionary];
+    
+    for (NSString *key in self.expenseAttributes) {
+        id expensesValues = [self.budget.expenses valueForKey:key];
+        if (expensesValues) {
+            [self.expenseValues setValue:expensesValues forKey:key];
+        }
+    }
+    
     for (NSString *key in self.incomeAttributes) {
-        self.incomeValues[key] = [NSDecimalNumber zero];
+        id incomeValues = [self.budget.income valueForKey:key];
+        if (incomeValues) {
+            [self.incomeValues setValue:incomeValues forKey:key];
+        }
     }
     
     [self setupHeaderView];
@@ -56,7 +64,7 @@
     self.headerLabelTextField.font = [UIFont systemFontOfSize:34 weight:UIFontWeightBold];
     self.headerLabelTextField.textColor = [UIColor labelColor];
     [_headerContainer addSubview:self.headerLabelTextField];
-
+    
     
     // Navigation bar buttons
     self.rightButton = [[UIBarButtonItem alloc]
@@ -102,14 +110,31 @@
 
 // TODO: Add limit to text fields
 #define MAXLENGTH 10
-- (BOOL)textField:(UITextField *) textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
-{
+- (BOOL)textField:(UITextField *) textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
     NSUInteger oldLength = [textField.text length];
     NSUInteger replacementLength = [string length];
     NSUInteger rangeLength = range.length;
     NSUInteger newLength = oldLength - rangeLength + replacementLength;
     BOOL returnKey = [string rangeOfString: @"\n"].location != NSNotFound;
     return newLength <= MAXLENGTH || returnKey;
+}
+
+- (void)textFieldChanged:(UITextField *)textField {
+    NSString *attributeKey = textField.accessibilityIdentifier;
+    if (attributeKey) {
+        // Expense or income field
+        NSDecimalNumber *decimalValue = [NSDecimalNumber decimalNumberWithString:textField.text];
+        
+        if ([self.expenseAttributes objectForKey:attributeKey]) {
+            self.expenseValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
+            
+        } else if ([self.incomeAttributes objectForKey:attributeKey]) {
+            self.incomeValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
+        }
+    } else {
+        // Budget name field
+        self.budget.name = textField.text ?: @"";
+    }
 }
 
 
@@ -191,7 +216,7 @@
         [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
         [textField.widthAnchor constraintEqualToConstant:120],
     ]];
-
+    
     return cell;
 }
 
@@ -218,24 +243,57 @@
 #pragma mark - Actions
 
 - (void)addButtonTapped {
-}
-
-- (void)textFieldChanged:(UITextField *)textField {
-    NSString *attributeKey = textField.accessibilityIdentifier;
-    if (attributeKey) {
-        // Expense or income field
-        NSDecimalNumber *decimalValue = [NSDecimalNumber decimalNumberWithString:textField.text];
+    if (![self.budget.objectID isEqual:self.budget.expenses.budget.objectID] && ![self.budget.objectID isEqual:self.budget.income.budget.objectID]) {
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Invalid"
+                                                                       message:@"An error occured."
+                                                                preferredStyle:UIAlertControllerStyleAlert];
         
-        if ([self.expenseAttributes objectForKey:attributeKey]) {
-            self.expenseValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
-            
-        } else if ([self.incomeAttributes objectForKey:attributeKey]) {
-            self.incomeValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
-        }
-    } else {
-        // Budget name field
-        self.budget.name = textField.text ?: @"";
+        UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
+                                                     style:UIAlertActionStyleDefault
+                                                   handler:nil];
+        
+        [alert addAction:ok];
+        
+        [self presentViewController:alert animated:YES completion:nil];
     }
+    
+    Expenses *expenses = self.budget.expenses;
+    Income *income = self.budget.income;
+
+    // Update expense attributes
+    for (NSString *key in self.expenseAttributes) {
+        if (self.expenseValues) {
+            id value = self.expenseValues[key];
+            [expenses setValue:value forKey:key];
+        }
+    }
+
+    // Update income attributes
+    for (NSString *key in self.incomeAttributes) {
+        if (self.incomeValues) {
+            id value = self.incomeValues[key];
+            [income setValue:value forKey:key];
+        }
+    }
+
+    // Save context
+    NSError *error = nil;
+    if (![self.managedObjectContext save:&error]) {
+        NSLog(@"Failed to save context: %@", error.localizedDescription);
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"An error occured!"
+                                                                       message:@"Failed to save data."
+                                                                preferredStyle:UIAlertControllerStyleAlert];
+        
+        UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
+                                                     style:UIAlertActionStyleDefault
+                                                   handler:nil];
+        
+        [alert addAction:ok];
+        
+        [self presentViewController:alert animated:YES completion:nil];
+    }
+    
+    [self.navigationController popViewControllerAnimated:YES];
 }
 
 #pragma mark - Keyboard Notifications
@@ -257,8 +315,8 @@
     UITableViewCell *cell = (UITableViewCell *)textField.superview.superview;
     NSIndexPath *indexPath = [self.budgetDisplayTableView indexPathForCell:cell];
     [self.budgetDisplayTableView scrollToRowAtIndexPath:indexPath
-                          atScrollPosition:UITableViewScrollPositionMiddle
-                                  animated:YES];
+                                       atScrollPosition:UITableViewScrollPositionMiddle
+                                               animated:YES];
 }
 
 

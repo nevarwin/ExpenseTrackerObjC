@@ -27,9 +27,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSDictionary<NSString *, NSAttributeDescription *> *incomeAttributes;
 @property (nonatomic, strong) NSMutableDictionary<NSString *, NSDecimalNumber *> *incomeValues;
 
-@property (nonatomic, strong) NSArray *expenseObjects;
-@property (nonatomic, strong) NSArray *incomeObjects;
-
 @property (nonatomic, assign) NSEntityDescription *expenseEntity;
 @property (nonatomic, assign) NSEntityDescription *incomeEntity;
 
