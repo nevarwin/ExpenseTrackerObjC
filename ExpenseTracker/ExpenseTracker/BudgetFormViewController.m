@@ -349,6 +349,7 @@ replacementString:(NSString *)string{
     budgetData[@"createdAt"] = [NSDate date];
     budgetData[@"expenses"] = [self.expenseValues copy];
     budgetData[@"income"] = [self.incomeValues copy];
+    budgetData[@"isActive"] = @YES;
     
     // Create Budget object
     NSManagedObject *budget = [NSEntityDescription insertNewObjectForEntityForName:@"Budget" inManagedObjectContext:self.managedObjectContext];

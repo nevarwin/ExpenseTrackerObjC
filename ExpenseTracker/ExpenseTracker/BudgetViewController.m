@@ -41,6 +41,12 @@
         self.managedObjectContext = delegate.persistentContainer.viewContext;
     }
     NSFetchRequest *request = [Budget fetchRequest];
+    NSPredicate *activePredicate = [NSPredicate predicateWithFormat:@"isActive == YES"];
+    NSSortDescriptor *sort = [NSSortDescriptor sortDescriptorWithKey:@"createdAt" ascending:NO];
+    
+    request.predicate = activePredicate;
+    request.sortDescriptors = @[sort];
+    
     NSError *error = nil;
     self.budgets = [self.managedObjectContext executeFetchRequest:request error:&error];
     if (error) {
@@ -158,7 +164,7 @@
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"BudgetCell"];
     
     Budget *budget = self.budgets[indexPath.row];
-    cell.textLabel.text = budget.name ?: @"No Name";
+    cell.textLabel.text = budget.name;
     
     // Date formatter
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
@@ -216,6 +222,31 @@
 
     // Push onto navigation stack
     [self.navigationController pushViewController:displayVC animated:YES];
+}
+
+// Deleting via swipe gesture
+- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (editingStyle != UITableViewCellEditingStyleDelete) {
+        NSLog(@"editingStyle: %ld", (long)editingStyle);
+        return;
+    }
+    
+    if (indexPath.row >= self.budgets.count){
+        NSLog(@"Attempted to delete budget at invalid index: %ld", (long)indexPath.row);
+        return;
+    }
+    
+    Budget *budgetToDelete = self.budgets[indexPath.row];
+    
+    budgetToDelete.isActive = NO;
+    
+    NSError *saveError = nil;
+    if(![self.managedObjectContext save:&saveError]){
+        NSLog(@"Failed to save context after budget deletion: %@, %@", saveError, saveError.userInfo);
+        return;
+    }
+    
+    [self fetchBudgets];
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {

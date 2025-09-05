@@ -113,7 +113,8 @@
 - (void)setupHeaderView {
     // Create header container
     self.headerContainer = [[UIView alloc] init];
-    UIView *headerContainer = self.headerContainer;    headerContainer.translatesAutoresizingMaskIntoConstraints = NO;
+    UIView *headerContainer = self.headerContainer;
+    headerContainer.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:headerContainer];
     
     // Setup header label (left side)
