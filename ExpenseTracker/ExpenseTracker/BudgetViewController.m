@@ -140,7 +140,6 @@
     
     // Configure the view controller
     budgetFormVC.delegate = self;
-    budgetFormVC.isEditMode = NO; // Since we're adding a new budget, not editing
     
     // Wrap in a navigation controller
 //    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:budgetFormVC];
@@ -180,6 +179,7 @@
     
     cell.accessoryView = dateLabel;
     
+    // TODO: Refactor the UI of Totals
     // Calculate total expense (using NSDecimalNumber)
     NSDecimalNumber *totalExpense = [NSDecimalNumber zero];
     if (budget.expenses) {

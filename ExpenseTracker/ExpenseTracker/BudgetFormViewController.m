@@ -46,7 +46,7 @@
     
     // Setup UI
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
-    self.title = self.isEditMode ? @"Edit Budget" : @"Add Budget";
+    self.title = @"Add Budget";
     
     // Navigation bar buttons
     self.rightButton = [[UIBarButtonItem alloc]
@@ -355,9 +355,6 @@ replacementString:(NSString *)string{
     NSManagedObject *budget = [NSEntityDescription insertNewObjectForEntityForName:@"Budget" inManagedObjectContext:self.managedObjectContext];
     [budget setValue:self.budgetName forKey:@"name"];
     [budget setValue:[NSDate date] forKey:@"createdAt"];
-    if (self.isEditMode) {
-        [budget setValue:[NSDate date] forKey:@"updatedAt"];
-    }
     
     // Create Expenses object
     NSManagedObject *expenses = [NSEntityDescription insertNewObjectForEntityForName:@"Expenses" inManagedObjectContext:self.managedObjectContext];

@@ -24,7 +24,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSDictionary<NSString *, NSAttributeDescription *> *incomeAttributes;
 @property (nonatomic, strong) NSMutableDictionary<NSString *, NSDecimalNumber *> *incomeValues;
 
-@property (nonatomic, assign) BOOL isEditMode;
 @property (nonatomic, weak) id delegate;
 
 @property (strong, nonatomic) UIBarButtonItem *rightButton;
