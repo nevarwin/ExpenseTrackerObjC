@@ -20,9 +20,4 @@
 @dynamic type;
 @dynamic budget;
 
-- (void)awakeFromInsert {
-    [super awakeFromInsert];
-    self.isActive = YES;
-}
-
 @end
