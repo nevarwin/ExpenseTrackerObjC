@@ -8,8 +8,6 @@
 #import "BudgetFormViewController.h"
 #import "AppDelegate.h"
 #import "Budget+CoreDataClass.h"
-#import "Expenses+CoreDataClass.h"
-#import "Income+CoreDataClass.h"
 #import "BudgetDisplayViewController.h"
 
 @interface BudgetViewController () <UITableViewDelegate, UITableViewDataSource>
@@ -141,9 +139,6 @@
     // Configure the view controller
     budgetFormVC.delegate = self;
     
-    // Wrap in a navigation controller
-//    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:budgetFormVC];
-    
     // Present modally
     [self.navigationController pushViewController:budgetFormVC animated:YES];
 }
@@ -156,7 +151,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     // Return your budget items count here
-    return self.budgets.count;
+    return 1;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -182,19 +177,19 @@
     // TODO: Refactor the UI of Totals
     // Calculate total expense (using NSDecimalNumber)
     NSDecimalNumber *totalExpense = [NSDecimalNumber zero];
-    if (budget.expenses) {
-        totalExpense = [budget.expenses.travel decimalNumberByAdding:budget.expenses.save];
-        totalExpense = [totalExpense decimalNumberByAdding:budget.expenses.housing];
-        totalExpense = [totalExpense decimalNumberByAdding:budget.expenses.grocery];
-        totalExpense = [totalExpense decimalNumberByAdding:budget.expenses.electricity];
-    }
+//    if (budget.expenses) {
+//        totalExpense = [budget.expenses.travel decimalNumberByAdding:budget.expenses.save];
+//        totalExpense = [totalExpense decimalNumberByAdding:budget.expenses.housing];
+//        totalExpense = [totalExpense decimalNumberByAdding:budget.expenses.grocery];
+//        totalExpense = [totalExpense decimalNumberByAdding:budget.expenses.electricity];
+//    }
     
     // Calculate total income (using NSDecimalNumber)
     NSDecimalNumber *totalIncome = [NSDecimalNumber zero];
-    if (budget.income) {
-        totalIncome = [budget.income.salary decimalNumberByAdding:budget.income.savings];
-        totalIncome = [totalIncome decimalNumberByAdding:budget.income.bonus];
-    }
+//    if (budget.income) {
+//        totalIncome = [budget.income.salary decimalNumberByAdding:budget.income.savings];
+//        totalIncome = [totalIncome decimalNumberByAdding:budget.income.bonus];
+//    }
     
     // Set detail text with totals
     NSString *detailText = [NSString stringWithFormat:@"Expenses: ₱%.2f | Income: ₱%.2f", totalExpense.doubleValue, totalIncome.doubleValue];
@@ -231,10 +226,10 @@
         return;
     }
     
-    if (indexPath.row >= self.budgets.count){
-        NSLog(@"Attempted to delete budget at invalid index: %ld", (long)indexPath.row);
-        return;
-    }
+//    if (indexPath.row >= self.budgets.count){
+//        NSLog(@"Attempted to delete budget at invalid index: %ld", (long)indexPath.row);
+//        return;
+//    }
     
     Budget *budgetToDelete = self.budgets[indexPath.row];
     

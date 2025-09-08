@@ -7,6 +7,7 @@
 
 #import "AppDelegate.h"
 #import "BudgetViewController.h"
+#import "CoreDataManager.h"
 
 @interface AppDelegate ()
 
@@ -19,34 +20,12 @@
     // Override point for customization after application launch.
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     if (![defaults boolForKey:@"isDefaultDataInserted"]) {
-        [self fetchAttributes];
         [defaults setBool:YES forKey:@"isDefaultDataInserted"];
         [defaults synchronize];
     }
     self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    [CoreDataManager.sharedManager viewContext];
     return YES;
-}
-
-#pragma mark - User Default
-
-// Method to fetch attributes for a specific entity
-- (NSDictionary<NSString *, NSAttributeDescription *> *)attributesForEntity:(NSString *)entityName inContext:(NSManagedObjectContext *)context {
-    NSEntityDescription *entity = [NSEntityDescription entityForName:entityName inManagedObjectContext:context];
-    return entity.attributesByName;
-}
-
-// Method to fetch attributes for specific entities and return them as a dictionary
-- (NSDictionary<NSString *, NSDictionary<NSString *, NSAttributeDescription *> *> *)fetchAttributes {
-    // 1. Get Core Data context
-    NSManagedObjectContext *context = self.persistentContainer.viewContext;
-    
-    // 2. Fetch attributes for the "Expenses" and "Income" entities
-    NSDictionary *attributes = @{
-        @"Expenses" : [self attributesForEntity:@"Expenses" inContext:context],
-        @"Income" : [self attributesForEntity:@"Income" inContext:context]
-    };
-    
-    return attributes;
 }
 
 

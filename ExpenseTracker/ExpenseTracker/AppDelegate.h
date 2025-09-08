@@ -13,12 +13,8 @@
 
 @property (readonly, strong) NSPersistentContainer *persistentContainer;
 @property (strong, nonatomic) UIWindow *window;
-@property (nonatomic, strong) NSDictionary<NSString *, NSAttributeDescription *> *incomeAttributes;
-@property (nonatomic, strong) NSDictionary<NSString *, NSAttributeDescription *> *expenseAttributes;
 
 - (void)saveContext;
-
-- (NSDictionary<NSString *, NSDictionary<NSString *, NSAttributeDescription *> *> *)fetchAttributes;
 
 
 @end

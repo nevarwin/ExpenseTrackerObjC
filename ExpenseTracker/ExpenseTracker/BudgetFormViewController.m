@@ -5,15 +5,9 @@
 //  Created by raven on 8/6/25.
 //
 
+#import "CoreDataManager.h"
 #import "BudgetFormViewController.h"
 #import <CoreData/CoreData.h>
-
-
-@protocol BudgetFormViewControllerDelegate <NSObject>
-- (void)budgetFormViewController:(BudgetFormViewController *)controller didSaveBudget:(id)budget;
-- (void)budgetFormViewControllerDidCancel:(BudgetFormViewController *)controller;
-- (void)didAddOrEditBudget;
-@end
 
 @interface BudgetFormViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate>
 
@@ -26,19 +20,29 @@
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
     
-    NSEntityDescription *expenseEntity = [NSEntityDescription entityForName:@"Expenses" inManagedObjectContext:self.managedObjectContext];
-    NSEntityDescription *incomeEntity = [NSEntityDescription entityForName:@"Income" inManagedObjectContext:self.managedObjectContext];
+    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+    NSError *error = nil;
     
-    self.expenseAttributes = expenseEntity.attributesByName;
-    self.incomeAttributes = incomeEntity.attributesByName;
-    
-    self.expenseValues = [NSMutableDictionary dictionary];
-    for (NSString *key in self.expenseAttributes) {
-        self.expenseValues[key] = [NSDecimalNumber zero];
+    // Income Fetch Request
+    NSFetchRequest *incomeFetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Category"];
+    incomeFetchRequest.resultType = NSManagedObjectResultType;
+    incomeFetchRequest.propertiesToFetch = nil;
+    incomeFetchRequest.predicate = [NSPredicate predicateWithFormat:@"isIncome == YES"];
+
+    self.income = [context executeFetchRequest:incomeFetchRequest error:&error];
+    if (error) {
+        NSLog(@"Error fetching income categories: %@", error.localizedDescription);
     }
-    self.incomeValues = [NSMutableDictionary dictionary];
-    for (NSString *key in self.incomeAttributes) {
-        self.incomeValues[key] = [NSDecimalNumber zero];
+    
+    // Expense Fetch Request
+    NSFetchRequest *expenseFetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Category"];
+    expenseFetchRequest.resultType = NSManagedObjectResultType;
+    expenseFetchRequest.propertiesToFetch = nil;
+    expenseFetchRequest.predicate = [NSPredicate predicateWithFormat:@"isIncome == NO"];
+
+    self.expenses = [context executeFetchRequest:expenseFetchRequest error:&error];
+    if (error) {
+        NSLog(@"Error fetching expense categories: %@", error.localizedDescription);
     }
     
     // Initialize properties
@@ -61,13 +65,7 @@
     
     // Setup table view
     [self setupTableView];
-    
-    // Add tap gesture to dismiss keyboard
-    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc]
-                                          initWithTarget:self
-                                          action:@selector(dismissKeyboard)];
-    tapGesture.cancelsTouchesInView = NO;
-    [self.view addGestureRecognizer:tapGesture];
+    [self selectEmptyScreen];
     
     // Add observer for keyboard notifications
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -131,6 +129,12 @@
                                   animated:YES];
 }
 
+- (void)selectEmptyScreen {
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissKeyboard)];
+    tap.cancelsTouchesInView = NO;
+    [self.view addGestureRecognizer:tap];
+}
+
 
 #pragma mark - UITableViewDataSource
 
@@ -140,8 +144,8 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == 0) return 1;
-    if (section == 1) return self.expenseAttributes.allKeys.count;
-    if (section == 2) return self.incomeAttributes.allKeys.count;
+    if (section == 1) return 1;
+    if (section == 2) return 1;
     return 0;
 }
 
@@ -172,25 +176,19 @@
         return cell;
     } else if (indexPath.section == 1) {
         // Expense attributes
-        NSArray *expenseKeys = [self.expenseAttributes allKeys];
-        NSString *attributeName = expenseKeys[indexPath.row];
-        NSDecimalNumber *value = self.expenseValues[attributeName];
+        NSString *attributeName = self.expenses[indexPath.row];
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
                                              placeholder:[attributeName capitalizedString]
                                             keyboardType:UIKeyboardTypeDecimalPad
-                                                   value:value
                                            attributeName:attributeName];
     } else if (indexPath.section == 2) {
         // Income attributes
-        NSArray *incomeKeys = [self.incomeAttributes allKeys];
-        NSString *attributeName = incomeKeys[indexPath.row];
-        NSDecimalNumber *value = self.incomeValues[attributeName];
+        NSString *attributeName = self.income[indexPath.row];
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
                                              placeholder:[attributeName capitalizedString]
                                             keyboardType:UIKeyboardTypeDecimalPad
-                                                   value:value
                                            attributeName:attributeName];
     }
     return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"DefaultCell"];
@@ -200,7 +198,6 @@
                                                indexPath:(NSIndexPath *)indexPath
                                              placeholder:(NSString *)placeholder
                                             keyboardType:(UIKeyboardType)keyboardType
-                                                   value:(NSDecimalNumber *)value
                                            attributeName:(NSString *)attributeName {
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TextFieldCell" forIndexPath:indexPath];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -294,13 +291,6 @@ replacementString:(NSString *)string{
     if (attributeKey) {
         // Expense or income field
         NSDecimalNumber *decimalValue = [NSDecimalNumber decimalNumberWithString:textField.text];
-        
-        if ([self.expenseAttributes objectForKey:attributeKey]) {
-            self.expenseValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
-            
-        } else if ([self.incomeAttributes objectForKey:attributeKey]) {
-            self.incomeValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
-        }
     } else {
         // Budget name field
         self.budgetName = textField.text ?: @"";
@@ -315,8 +305,8 @@ replacementString:(NSString *)string{
     
     // Check at least one valid income value
     BOOL hasValidIncome = NO;
-    for (NSString *key in self.incomeAttributes) {
-        NSDecimalNumber *value = self.incomeValues[key];
+    for (NSString *key in self.income) {
+        NSDecimalNumber *value = 0;
         if (value && [value isKindOfClass:[NSDecimalNumber class]] &&
             ![value isEqualToNumber:[NSDecimalNumber notANumber]] &&
             [value compare:[NSDecimalNumber zero]] == NSOrderedDescending) {
@@ -327,8 +317,8 @@ replacementString:(NSString *)string{
     
     // Check at least one valid expense value
     BOOL hasValidExpense = NO;
-    for (NSString *key in self.expenseAttributes) {
-        NSDecimalNumber *value = self.expenseValues[key];
+    for (NSString *key in self.expenses) {
+        NSDecimalNumber *value = 0;
         if (value && [value isKindOfClass:[NSDecimalNumber class]] &&
             ![value isEqualToNumber:[NSDecimalNumber notANumber]] &&
             [value compare:[NSDecimalNumber zero]] == NSOrderedDescending) {
@@ -343,34 +333,16 @@ replacementString:(NSString *)string{
 #pragma mark - Actions
 
 - (void)rightButtonTapped {
-    // Gather all budget data
-    NSMutableDictionary *budgetData = [NSMutableDictionary dictionary];
-    budgetData[@"name"] = self.budgetName ?: @"";
-    budgetData[@"createdAt"] = [NSDate date];
-    budgetData[@"expenses"] = [self.expenseValues copy];
-    budgetData[@"income"] = [self.incomeValues copy];
-    budgetData[@"isActive"] = @YES;
-    
     // Create Budget object
     NSManagedObject *budget = [NSEntityDescription insertNewObjectForEntityForName:@"Budget" inManagedObjectContext:self.managedObjectContext];
     [budget setValue:self.budgetName forKey:@"name"];
     [budget setValue:[NSDate date] forKey:@"createdAt"];
     
     // Create Expenses object
-    NSManagedObject *expenses = [NSEntityDescription insertNewObjectForEntityForName:@"Expenses" inManagedObjectContext:self.managedObjectContext];
-    for (NSString *key in self.expenseValues) {
-        [expenses setValue:self.expenseValues[key] forKey:key];
+    NSManagedObject *expenses = [NSEntityDescription insertNewObjectForEntityForName:@"Category" inManagedObjectContext:self.managedObjectContext];
+    for (NSString *key in self.expenses) {
+        [expenses setValue:self.expenses forKey:key];
     }
-    
-    // Create Income object
-    NSManagedObject *income = [NSEntityDescription insertNewObjectForEntityForName:@"Income" inManagedObjectContext:self.managedObjectContext];
-    for (NSString *key in self.incomeValues) {
-        [income setValue:self.incomeValues[key] forKey:key];
-    }
-    
-    // Set relationships
-    [budget setValue:expenses forKey:@"expenses"];
-    [budget setValue:income forKey:@"income"];
     
     // Save context
     NSError *error = nil;
@@ -378,19 +350,7 @@ replacementString:(NSString *)string{
         NSLog(@"Failed to save budget: %@", error);
     }
     
-    // Notify delegate or dismiss
-    if ([self.delegate respondsToSelector:@selector(budgetFormViewController:didSaveBudget:)]) {
-        [self.delegate budgetFormViewController:self didSaveBudget:budgetData];
-    }
-    
-    if ([self.delegate respondsToSelector:@selector(didAddOrEditBudget)]) {
-        [self.delegate didAddOrEditBudget];
-    }
-    
     [self.navigationController popViewControllerAnimated:YES];
-    
-    NSLog(@"Budget Data: %@", budgetData);
-    
 }
 
 - (void)dismissKeyboard {
