@@ -21,14 +21,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong) NSManagedObjectContext *managedObjectContext;
 
-@property (nonatomic, strong) NSDictionary<NSString *, NSAttributeDescription *> *expenseAttributes;
-@property (nonatomic, strong) NSMutableDictionary<NSString *, NSDecimalNumber *> *expenseValues;
+@property (nonatomic, strong) NSMutableArray* income;
+@property (nonatomic, strong) NSMutableArray* expenses;
 
-@property (nonatomic, strong) NSDictionary<NSString *, NSAttributeDescription *> *incomeAttributes;
-@property (nonatomic, strong) NSMutableDictionary<NSString *, NSDecimalNumber *> *incomeValues;
-
-@property (nonatomic, assign) NSEntityDescription *expenseEntity;
-@property (nonatomic, assign) NSEntityDescription *incomeEntity;
+@property (nonatomic) NSInteger incomeCount;
+@property (nonatomic) NSInteger expenseCount;
 
 @end
 

@@ -1,8 +1,15 @@
+//
+//  BudgetDisplayViewController.m
+//  ExpenseTracker
+//
+//  Created by raven on 8/26/25.
+//
+
 #import "BudgetDisplayViewController.h"
 #import "Budget+CoreDataClass.h"
 #import <HealthKit/HealthKit.h>
-#import "Expenses+CoreDataClass.h"
-#import "Income+CoreDataClass.h"
+#import "Category+CoreDataClass.h"
+#import "CoreDataManager.h"
 
 #define MAX_HEADER_TEXT_LENGTH 16
 
@@ -17,31 +24,20 @@
     // Set background color to match Health app
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
     
+    NSLog(@"self.budget: %@", self.budget);
+    NSSet<Category *> *categories = self.budget.category;
+
+    for (Category *category in categories) {
+        if(category.isIncome == 1){
+            self.incomeCount++;
+            [self.income addObject:category.name];
+        } else {
+            self.expenseCount++;
+            [self.expenses addObject:category.name];
+        }
+    }
+    
     self.headerLabelTextField.delegate = self;
-    
-    self.expenseEntity = [NSEntityDescription entityForName:@"Expenses" inManagedObjectContext:self.managedObjectContext];
-    self.incomeEntity = [NSEntityDescription entityForName:@"Income" inManagedObjectContext:self.managedObjectContext];
-    
-    self.expenseAttributes = self.expenseEntity.attributesByName;
-    self.incomeAttributes = self.incomeEntity.attributesByName;
-    
-    self.expenseValues = [NSMutableDictionary dictionary];
-    self.incomeValues = [NSMutableDictionary dictionary];
-    
-    for (NSString *key in self.expenseAttributes) {
-        id expensesValues = [self.budget.expenses valueForKey:key];
-        if (expensesValues) {
-            [self.expenseValues setValue:expensesValues forKey:key];
-        }
-    }
-    
-    for (NSString *key in self.incomeAttributes) {
-        id incomeValues = [self.budget.income valueForKey:key];
-        if (incomeValues) {
-            [self.incomeValues setValue:incomeValues forKey:key];
-        }
-    }
-    
     [self setupHeaderView];
     [self setupTableView];
 }
@@ -125,12 +121,12 @@
         // Expense or income field
         NSDecimalNumber *decimalValue = [NSDecimalNumber decimalNumberWithString:textField.text];
         
-        if ([self.expenseAttributes objectForKey:attributeKey]) {
-            self.expenseValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
-            
-        } else if ([self.incomeAttributes objectForKey:attributeKey]) {
-            self.incomeValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
-        }
+//        if ([self.expenseAttributes objectForKey:attributeKey]) {
+//            self.expenseValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
+//            
+//        } else if ([self.incomeAttributes objectForKey:attributeKey]) {
+//            self.incomeValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
+//        }
     } else {
         // Budget name field
         self.budget.name = textField.text ?: @"";
@@ -145,8 +141,8 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (section == 0) return self.expenseAttributes.allKeys.count;
-    if (section == 1) return self.incomeAttributes.allKeys.count;
+    if (section == 0) return self.expenseCount;
+    if (section == 1) return self.incomeCount;
     return 0;
 }
 
@@ -155,27 +151,27 @@
     // cellForRowAtIndexPath
     if (indexPath.section == 0) {
         // Expense attributes
-        NSArray *expenseKeys = [self.expenseAttributes allKeys];
-        NSString *attributeName = expenseKeys[indexPath.row];
-        NSDecimalNumber *value = [self.budget.expenses valueForKey:attributeName];
+//        NSArray *expenseKeys = [self.expenseAttributes allKeys];
+        NSString *attributeName = @"test";
+//        NSDecimalNumber *value = [self.budget.category.isIncome == NO valueForKey:attributeName];
         
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
                                              placeholder:[attributeName capitalizedString]
                                             keyboardType:UIKeyboardTypeDecimalPad
-                                                   value:value
+//                                                   value:value
                                            attributeName:attributeName];
     } else if (indexPath.section == 1) {
         // Income attributes
-        NSArray *incomeKeys = [self.incomeAttributes allKeys];
-        NSString *attributeName = incomeKeys[indexPath.row];
-        NSDecimalNumber *value = [self.budget.income valueForKey:attributeName];
+//        NSArray *incomeKeys = [self.incomeAttributes allKeys];
+        NSString *attributeName = @"test";
+//        NSDecimalNumber *value = [self.budget.category.isIncome == YES valueForKey:attributeName];
         
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
                                              placeholder:[attributeName capitalizedString]
                                             keyboardType:UIKeyboardTypeDecimalPad
-                                                   value:value
+//                                                   value:value
                                            attributeName:attributeName];
         
     }
@@ -186,7 +182,7 @@
                                                indexPath:(NSIndexPath *)indexPath
                                              placeholder:(NSString *)placeholder
                                             keyboardType:(UIKeyboardType)keyboardType
-                                                   value:(NSDecimalNumber *)value
+//                                                   value:(NSDecimalNumber *)value
                                            attributeName:(NSString *)attributeName {
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TextFieldCell" forIndexPath:indexPath];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -199,7 +195,7 @@
     
     UITextField *textField = [[UITextField alloc] init];
     textField.delegate = self;
-    textField.text = value.stringValue;
+//    textField.text = value.stringValue;
     textField.translatesAutoresizingMaskIntoConstraints = NO;
     textField.tag = 100 + indexPath.row;
     textField.keyboardType = keyboardType;
@@ -243,7 +239,7 @@
 #pragma mark - Actions
 
 - (void)addButtonTapped {
-    if (![self.budget.objectID isEqual:self.budget.expenses.budget.objectID] && ![self.budget.objectID isEqual:self.budget.income.budget.objectID]) {
+    if (![self.budget.objectID isEqual:self.budget.objectID]) {
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Invalid"
                                                                        message:@"An error occured."
                                                                 preferredStyle:UIAlertControllerStyleAlert];
@@ -255,25 +251,6 @@
         [alert addAction:ok];
         
         [self presentViewController:alert animated:YES completion:nil];
-    }
-    
-    Expenses *expenses = self.budget.expenses;
-    Income *income = self.budget.income;
-
-    // Update expense attributes
-    for (NSString *key in self.expenseAttributes) {
-        if (self.expenseValues) {
-            id value = self.expenseValues[key];
-            [expenses setValue:value forKey:key];
-        }
-    }
-
-    // Update income attributes
-    for (NSString *key in self.incomeAttributes) {
-        if (self.incomeValues) {
-            id value = self.incomeValues[key];
-            [income setValue:value forKey:key];
-        }
     }
 
     // Save context

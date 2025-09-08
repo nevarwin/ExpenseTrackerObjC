@@ -2,9 +2,14 @@
 
 #import "TransactionsViewController.h"
 #import "AppDelegate.h"
+#import "CoreDataManager.h"
+#import "Budget+CoreDataClass.h"
+#import "Category+CoreDataClass.h"
 
 @interface TransactionsViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate, UIPickerViewDelegate, UIPickerViewDataSource>
 @property (nonatomic, assign) BOOL isDatePickerVisible;
+@property (nonatomic, strong) NSDictionary *selectedBudget;
+@property (nonatomic, strong) NSDictionary *selectedCategory;
 @end
 
 @implementation TransactionsViewController
@@ -20,20 +25,10 @@
     self.navigationItem.leftBarButtonItem = self.leftButton;
     self.navigationItem.rightBarButtonItem = self.rightButton;
     
-    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSDictionary *attributes = [appDelegate fetchAttributes];
-    self.expenseAttributes = attributes[@"Expenses"];
-    self.incomeAttributes = attributes[@"Income"];
-    self.categoryValues = [self.expenseAttributes allKeys];
-    
     [self setupTableView];
     [self setupPickers];
     [self setupTypePicker];
-    [self selectEmptyScreen];    
-    self.budgetValues = [NSMutableArray array];
-    if(self.budgetValues.count == 0){
-        self.budgetValues = @[@"None"];
-    }
+    [self selectEmptyScreen];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -100,37 +95,38 @@ replacementString:(NSString *)string {
 
 #pragma mark - Configure View for Edit Mode
 - (void)configureViewForMode {
-    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = appDelegate.persistentContainer.viewContext;
-    NSDictionary *attributes = [appDelegate fetchAttributes];
+    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     NSError *error = nil;
-
+    
     if (self.isEditMode && self.existingTransaction) {
         // Amount
         self.amountTextField.text = [NSString stringWithFormat:@"%@", self.existingTransaction.amount];
-
+        
         // Date
         [self.datePicker setDate:self.existingTransaction.date];
-
+        
         // Type
-        self.selectedTypeIndex = self.existingTransaction.type;
+        self.selectedTypeIndex = self.existingTransaction.category.isIncome;
         UIButton *typeButton = [self buttonForRow:3];
         [typeButton setTitle:self.typeValues[self.selectedTypeIndex] forState:UIControlStateNormal];
-
+        
         // Budget
         self.budgetValues = [self getBudgetValues:context error:&error];
-        self.selectedBudgetIndex = self.existingTransaction.budget;
+        self.selectedBudgetIndex = self.existingTransaction.budget.objectID;
         UIButton *budgetButton = [self buttonForRow:2];
-        if (self.selectedBudgetIndex < self.budgetValues.count) {
-            [budgetButton setTitle:self.budgetValues[self.selectedBudgetIndex] forState:UIControlStateNormal];
+        if (self.existingTransaction.budget.objectID) {
+            [budgetButton setTitle:self.existingTransaction.budget.name forState:UIControlStateNormal];
         }
-
+        
         // Category
-        self.categoryValues = [self categoryValuesForTypeIndex:self.selectedTypeIndex attributes:attributes];
-        self.selectedCategoryIndex = [self.categoryValues indexOfObject:self.existingTransaction.category];
+        NSArray *category = [self getCategoryValues:context error:&error isIncome:self.existingTransaction.category.isIncome];
+        self.categoryValues = [category valueForKey:@"name"];
+        
+        self.selectedCategoryIndex = self.existingTransaction.category.objectID;
+        
         UIButton *categoryButton = [self buttonForRow:4];
-        if (self.selectedCategoryIndex != NSNotFound) {
-            [categoryButton setTitle:self.categoryValues[self.selectedCategoryIndex] forState:UIControlStateNormal];
+        if (self.existingTransaction.category.objectID) {
+            [categoryButton setTitle:self.existingTransaction.category.name forState:UIControlStateNormal];
         }
     }
 }
@@ -147,33 +143,49 @@ replacementString:(NSString *)string {
     return nil;
 }
 
-- (NSArray *)categoryValuesForTypeIndex:(NSInteger)typeIndex attributes:(NSDictionary *)attributes{
-    NSDictionary *expenseAttributes = attributes[@"Expenses"];
-    NSDictionary *incomeAttributes = attributes[@"Income"];
-    
-    if(typeIndex == 0){
-        return [expenseAttributes allKeys];
-    } else {
-        return [incomeAttributes allKeys];
-    }
-}
-
-- (NSArray *)getBudgetValues:(NSManagedObjectContext *)context error:(NSError **)error{
+- (NSArray<NSDictionary *> *)getBudgetValues:(NSManagedObjectContext *)context error:(NSError **)error {
     NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Budget"];
-    fetchRequest.resultType = NSDictionaryResultType;
-    fetchRequest.propertiesToFetch = @[@"name"];
+    fetchRequest.resultType = NSManagedObjectResultType;
+    fetchRequest.propertiesToFetch = nil;
+    fetchRequest.predicate = [NSPredicate predicateWithFormat:@"isActive == YES"];
     
-    NSArray *results = [context executeFetchRequest:fetchRequest error:error];
-    
-    NSMutableArray *names = [NSMutableArray array];
-    for (NSDictionary *dict in results) {
-        NSString *name = dict[@"name"];
-        if (name) {
-            [names addObject:name];
+    NSArray<Budget *> *results = [context executeFetchRequest:fetchRequest error:error];
+    if (!results) return nil;
+
+    NSMutableArray *budgetsArray = [NSMutableArray array];
+    for (Budget *budget in results) {
+        if (budget.name) {
+            [budgetsArray addObject:@{
+                @"name": budget.name,
+                @"objectID": budget.objectID
+            }];
         }
     }
-    return [names copy];
+    return [budgetsArray copy];
 }
+
+- (NSArray<NSDictionary *> *)getCategoryValues:(NSManagedObjectContext *)context error:(NSError **)error isIncome:(NSInteger)isIncome {
+    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Category"];
+    fetchRequest.resultType = NSManagedObjectResultType;
+    fetchRequest.propertiesToFetch = nil;
+    fetchRequest.predicate = [NSPredicate predicateWithFormat:@"isIncome == %@", @(isIncome)];
+    
+    NSArray<Category *> *results = [context executeFetchRequest:fetchRequest error:error];
+    if (!results) return nil;
+
+    NSMutableArray *categoryArray = [NSMutableArray array];
+    for (Category *category in results) {
+        if (category.name) {
+            [categoryArray addObject:@{
+                @"name": category.name,
+                @"objectID": category.objectID,
+                @"isIncome": @(category.isIncome)
+            }];
+        }
+    }
+    return [categoryArray copy];
+}
+
 
 #pragma mark - UITableViewDataSource
 
@@ -271,23 +283,39 @@ replacementString:(NSString *)string {
     [alert.view addSubview:picker];
     self.currentPickerMode = sender.tag;
     
-    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = appDelegate.persistentContainer.viewContext;
-    NSDictionary *attributes = [appDelegate fetchAttributes];
+    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     
     NSError *error = nil;
-    self.budgetValues = [self getBudgetValues:context error:&error];
-    self.categoryValues = [self categoryValuesForTypeIndex:self.selectedTypeIndex attributes:attributes];
+    NSArray *budgets = [self getBudgetValues:context error:&error];
+    NSArray *category = [self getCategoryValues:context error:&error isIncome: self.selectedTypeIndex];
+    self.budgetValues = [budgets valueForKey:@"name"];
+    self.categoryValues = [category valueForKey:@"name"];
+    
+    if(self.currentPickerMode == 0 && self.budgetValues.count == 0){
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"An error occured."
+                                                                       message:@"There is no existing budget. Please a budget to proceed."
+                                                                preferredStyle:UIAlertControllerStyleAlert];
+        
+        UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
+                                                     style:UIAlertActionStyleDefault
+                                                   handler:nil];
+        
+        [alert addAction:ok];
+        
+        [self presentViewController:alert animated:YES completion:nil];
+    }
     
     UIAlertAction *done = [UIAlertAction actionWithTitle:@"Done" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         NSInteger selectedRow;
         switch (sender.tag) {
             case 0:
+            {
                 selectedRow = [picker selectedRowInComponent:0];
-                self.selectedBudgetIndex = selectedRow;
+                NSDictionary *selectedBudget = budgets[selectedRow];
+                self.selectedBudgetIndex = selectedBudget[@"objectID"];
                 [sender setTitle:self.budgetValues[selectedRow] forState:UIControlStateNormal];
                 break;
-                
+            }
             case 1:
                 selectedRow = [picker selectedRowInComponent:0];
                 self.selectedTypeIndex = selectedRow;
@@ -295,11 +323,13 @@ replacementString:(NSString *)string {
                 break;
                 
             case 2:
+            {
                 selectedRow = [picker selectedRowInComponent:0];
-                self.selectedCategoryIndex = selectedRow;
+                NSDictionary *selectedCategory = category[selectedRow];
+                self.selectedCategoryIndex = selectedCategory[@"objectID"];
                 [sender setTitle:self.categoryValues[selectedRow] forState:UIControlStateNormal];
                 break;
-                
+            }
             default:
                 break;
         }
@@ -343,9 +373,14 @@ replacementString:(NSString *)string {
 
 - (void)leftButtonTapped { [self dismissViewControllerAnimated:YES completion:nil]; }
 - (void)rightButtonTapped {
-    NSInteger budget = self.selectedBudgetIndex;
+    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+    NSError *error = nil;
+    
     NSInteger type = self.selectedTypeIndex;
-    NSString *category = self.categoryValues[self.selectedCategoryIndex];
+    NSManagedObjectID *budgetID = self.selectedBudgetIndex;
+    NSManagedObjectID *categoryID = self.selectedCategoryIndex;
+    Budget *budget = (Budget *)[context existingObjectWithID:budgetID error:&error];
+    Category *category = (Category *)[context existingObjectWithID:categoryID error:&error];
     
     NSDate *date = self.datePicker.date;
     
@@ -369,32 +404,26 @@ replacementString:(NSString *)string {
     formatter.numberStyle = NSNumberFormatterDecimalStyle;
     NSNumber *amountNumber = [formatter numberFromString:self.amountTextField.text];
     NSDecimalNumber *amount = [NSDecimalNumber decimalNumberWithDecimal:amountNumber.decimalValue];
+        
+    Transaction *transaction = self.isEditMode ? self.existingTransaction : [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
     
-    // Get Core Data Context
-    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = appDelegate.persistentContainer.viewContext;
-    
-    Transaction *transaction;
-    
-    //Assign transaction values
-    if (self.isEditMode && self.existingTransaction.transactionId) {
-        transaction = self.existingTransaction;
-        transaction.updatedAt = [NSDate date];
+    NSDate *now = [NSDate date];
+    if (self.isEditMode) {
+        transaction.updatedAt = now;
     } else {
-        transaction = [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
-        transaction.createdAt = [NSDate date];
-        transaction.transactionId = [[NSUUID UUID] UUIDString];
+        transaction.createdAt = now;
     }
-    
+
     transaction.amount = amount;
-    transaction.category = category;
     transaction.date = date;
-    transaction.type = type;
     transaction.budget = budget;
-    
-    NSError *error = nil;
+    transaction.category = category;
+    transaction.category.isIncome = type;
+
     if (![context save:&error]) {
         NSLog(@"Failed to save transaction: %@", error);
+    } else {
+        NSLog(@"Transaction saved: %@", transaction);
     }
     
     [self dismissViewControllerAnimated:YES completion:nil];

@@ -6,9 +6,11 @@
 //
 
 #import "ViewController.h"
-#import "Transaction.h"
+#import "Transaction+CoreDataClass.h"
+#import "Category+CoreDataClass.h"
 #import "TransactionsViewController.h"
 #import "AppDelegate.h"
+#import "CoreDataManager.h"
 
 @interface ViewController () <UITableViewDataSource, UITableViewDelegate, NSFetchedResultsControllerDelegate>
 
@@ -71,7 +73,7 @@
     }
     
     if (typeIndex != nil && [typeIndex integerValue] != 2) {
-        [subpredicates addObject:[NSPredicate predicateWithFormat:@"type == %@", typeIndex]];
+        [subpredicates addObject:[NSPredicate predicateWithFormat:@"category.isIncome == %@", typeIndex]];
     }
     
     NSPredicate *predicate = [NSCompoundPredicate andPredicateWithSubpredicates:subpredicates];
@@ -104,7 +106,6 @@
     TransactionsViewController *transactionVC = (TransactionsViewController *)navController.topViewController;
     
     transactionVC.delegate = self;
-    transactionVC.isEditMode = YES;
     [self presentViewController:navController animated:YES completion:nil];
 }
 
@@ -263,7 +264,7 @@
     NSString *formattedDate = [dateFormatter stringFromDate:transaction.date];
     
     // Type indicator emoji
-    NSString *typeIndicator = transaction.type == 0 ? @"💸" : @"💰";
+    NSString *typeIndicator = transaction.category.isIncome == 0 ? @"💸" : @"💰";
     
     // Create a label for the date
     UILabel *dateLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 80, 20)];
@@ -274,7 +275,7 @@
     
     cell.imageView.image = [self emojiToImage:typeIndicator];
     cell.textLabel.text = [transaction.amount stringValue];
-    cell.detailTextLabel.text = transaction.category;
+    cell.detailTextLabel.text = transaction.category.isIncome == 0 ? @"Expenses" : @"Income";
     cell.accessoryView = dateLabel;
     
     return cell;
@@ -318,17 +319,17 @@
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
     if (editingStyle == UITableViewCellEditingStyleDelete) {
         // Fetch the Transaction object directly from NSFetchedResultsController
-        Transaction *transactionToDelete = [self.fetchedResultsController objectAtIndexPath:indexPath ];
+        Transaction *transactionToDelete = [self.fetchedResultsController objectAtIndexPath:indexPath];
         
-        AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-        NSManagedObjectContext *context = appDelegate.persistentContainer.viewContext;
+        NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+
         //[context deleteObject:transactionToDelete]; // Actual Deletion
         transactionToDelete.isActive = NO;
         
         NSError *error = nil;
         if (![context save:&error]) {
+            transactionToDelete.isActive = YES;
             NSLog(@"Error deleting transaction: %@, %@", error, error.userInfo);
-            // Optionally: present an alert or error to user
         }
     }
 }
@@ -348,10 +349,9 @@
     if (_fetchedResultsController) {
         return _fetchedResultsController;
     }
-    
-    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = appDelegate.persistentContainer.viewContext;
-    
+
+    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+
     NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Transaction"];
     
     // Add predicate to only fetch active transactions

@@ -1,42 +1,40 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23788.4" systemVersion="24G84" minimumToolsVersion="Automatic" sourceLanguage="Objective-C" userDefinedModelVersionIdentifier="">
-    <entity name="Budget" representedClassName="Budget" isAbstract="YES" syncable="YES" codeGenerationType="class">
+    <entity name="Budget" representedClassName="Budget" syncable="YES" codeGenerationType="class">
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="isActive" optional="YES" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
         <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="remainingAmount" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="totalAmount" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <relationship name="expenses" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Expenses" inverseName="budget" inverseEntity="Expenses"/>
-        <relationship name="income" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Income" inverseName="budget" inverseEntity="Income"/>
+        <relationship name="allocations" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="BudgetAllocation" inverseName="budget" inverseEntity="BudgetAllocation"/>
+        <relationship name="category" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Category" inverseName="budget" inverseEntity="Category"/>
+        <relationship name="transactions" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Transaction" inverseName="budget" inverseEntity="Transaction"/>
+    </entity>
+    <entity name="BudgetAllocation" representedClassName="BudgetAllocation" syncable="YES" codeGenerationType="class">
+        <attribute name="allocatedAmount" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="usedAmount" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <relationship name="budget" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Budget" inverseName="allocations" inverseEntity="Budget"/>
+        <relationship name="category" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Category" inverseName="allocations" inverseEntity="Category"/>
     </entity>
     <entity name="Category" representedClassName="Category" syncable="YES" codeGenerationType="class">
-        <attribute name="id" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="isIncome" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="name" optional="YES" attributeType="String"/>
-        <relationship name="categorytotransaction" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Transaction" inverseName="transactiontocategory" inverseEntity="Transaction"/>
+        <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="allocations" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="BudgetAllocation" inverseName="category" inverseEntity="BudgetAllocation"/>
+        <relationship name="budget" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Budget" inverseName="category" inverseEntity="Budget"/>
+        <relationship name="transactions" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Transaction" inverseName="category" inverseEntity="Transaction"/>
     </entity>
-    <entity name="Expenses" representedClassName="Expenses" syncable="YES" codeGenerationType="class">
-        <attribute name="electricity" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="grocery" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="housing" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="save" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <attribute name="travel" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <relationship name="budget" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Budget" inverseName="expenses" inverseEntity="Budget"/>
-    </entity>
-    <entity name="Income" representedClassName="Income" syncable="YES" codeGenerationType="class">
-        <attribute name="bonus" optional="YES" attributeType="Decimal" defaultValueString="0"/>
-        <attribute name="salary" optional="YES" attributeType="Decimal" defaultValueString="0"/>
-        <attribute name="savings" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
-        <relationship name="budget" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Budget" inverseName="income" inverseEntity="Budget"/>
-    </entity>
-    <entity name="Transaction" representedClassName="Transaction" syncable="YES">
+    <entity name="Transaction" representedClassName="Transaction" syncable="YES" codeGenerationType="class">
         <attribute name="amount" optional="YES" attributeType="Decimal" defaultValueString="0"/>
-        <attribute name="budget" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
-        <attribute name="category" optional="YES" attributeType="String"/>
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="isActive" optional="YES" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
-        <attribute name="transactionId" optional="YES" attributeType="String"/>
-        <attribute name="type" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <relationship name="transactiontocategory" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Category" inverseName="categorytotransaction" inverseEntity="Category"/>
+        <relationship name="budget" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Budget" inverseName="transactions" inverseEntity="Budget"/>
+        <relationship name="category" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Category" inverseName="transactions" inverseEntity="Category"/>
     </entity>
 </model>

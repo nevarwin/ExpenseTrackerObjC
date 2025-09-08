@@ -6,7 +6,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "Transaction.h"
+#import "Transaction+CoreDataClass.h"
 
 @interface ViewController : UIViewController
 

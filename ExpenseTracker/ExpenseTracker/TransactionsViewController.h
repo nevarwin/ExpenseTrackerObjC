@@ -9,8 +9,7 @@
 #define TransactionsViewController_h
 
 #import <UIKit/UIKit.h>
-#import "Transaction.h"
-
+#import "Transaction+CoreDataClass.h"
 
 @interface TransactionsViewController : UIViewController
 
@@ -23,14 +22,12 @@
 @property (nonatomic, strong) UIBarButtonItem *rightButton;
 @property (nonatomic, strong) UIDatePicker *datePicker;
 @property (nonatomic, strong) UITextField *amountTextField;
-@property (nonatomic, strong) NSDictionary *expenseAttributes;
-@property (nonatomic, strong) NSDictionary *incomeAttributes;
 
-@property (nonatomic, assign) NSInteger selectedBudgetIndex;
+@property (nonatomic, assign) NSManagedObjectID* selectedBudgetIndex;
 @property (nonatomic, strong) NSArray *budgetValues;
 @property (nonatomic, strong) UIPickerView *budgetPicker;
 
-@property (nonatomic, assign) NSInteger selectedCategoryIndex;
+@property (nonatomic, assign) NSManagedObjectID* selectedCategoryIndex;
 @property (nonatomic, strong) NSArray *categoryValues;
 @property (nonatomic, strong) UIPickerView *categoryPicker;
 
