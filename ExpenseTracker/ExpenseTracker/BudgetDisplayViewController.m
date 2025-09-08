@@ -9,6 +9,7 @@
 #import "Budget+CoreDataClass.h"
 #import <HealthKit/HealthKit.h>
 #import "Category+CoreDataClass.h"
+#import "BudgetAllocation+CoreDataClass.h"
 #import "CoreDataManager.h"
 
 #define MAX_HEADER_TEXT_LENGTH 16
@@ -24,18 +25,40 @@
     // Set background color to match Health app
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
     
-    NSLog(@"self.budget: %@", self.budget);
-    NSSet<Category *> *categories = self.budget.category;
+    // Build a lookup dictionary for allocations by category objectID
+    NSMutableDictionary *allocationByCategoryID = [NSMutableDictionary dictionary];
+    for (BudgetAllocation *allocation in self.budget.allocations) {
+        allocationByCategoryID[allocation.category] = allocation;
+        NSLog(@"allocationByCategoryID: %@", allocationByCategoryID);
+    }
+    NSLog(@"allocation: %@", self.budget.allocations);
 
-    for (Category *category in categories) {
-        if(category.isIncome == 1){
+    self.income = [NSMutableArray array];
+    self.expenses = [NSMutableArray array];
+    self.incomeAmounts = [NSMutableArray array];
+    self.expensesAmounts = [NSMutableArray array];
+
+    for (Category *category in self.budget.category) {
+        if (category.isIncome == 1) {
             self.incomeCount++;
             [self.income addObject:category.name];
+            BudgetAllocation *allocation = allocationByCategoryID[category.objectID];
+            if (allocation) {
+                [self.incomeAmounts addObject:allocation.allocatedAmount];
+            }
         } else {
             self.expenseCount++;
             [self.expenses addObject:category.name];
+            BudgetAllocation *allocation = allocationByCategoryID[category.objectID];
+            if (allocation) {
+                [self.expensesAmounts addObject:allocation.allocatedAmount];
+            }
         }
     }
+    
+    NSLog(@"incomeAmounts: %@", self.incomeAmounts);
+    NSLog(@"expensesAmounts: %@", self.expensesAmounts);
+    
     
     self.headerLabelTextField.delegate = self;
     [self setupHeaderView];
@@ -121,12 +144,12 @@
         // Expense or income field
         NSDecimalNumber *decimalValue = [NSDecimalNumber decimalNumberWithString:textField.text];
         
-//        if ([self.expenseAttributes objectForKey:attributeKey]) {
-//            self.expenseValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
-//            
-//        } else if ([self.incomeAttributes objectForKey:attributeKey]) {
-//            self.incomeValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
-//        }
+        //        if ([self.expenseAttributes objectForKey:attributeKey]) {
+        //            self.expenseValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
+        //
+        //        } else if ([self.incomeAttributes objectForKey:attributeKey]) {
+        //            self.incomeValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
+        //        }
     } else {
         // Budget name field
         self.budget.name = textField.text ?: @"";
@@ -151,28 +174,26 @@
     // cellForRowAtIndexPath
     if (indexPath.section == 0) {
         // Expense attributes
-//        NSArray *expenseKeys = [self.expenseAttributes allKeys];
-        NSString *attributeName = @"test";
-//        NSDecimalNumber *value = [self.budget.category.isIncome == NO valueForKey:attributeName];
+        NSString *expenseName = self.expenses[indexPath.row];
+        NSDecimalNumber *expenseAmount = self.expensesAmounts[indexPath.row];
         
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
-                                             placeholder:[attributeName capitalizedString]
+                                             placeholder:[expenseName capitalizedString]
                                             keyboardType:UIKeyboardTypeDecimalPad
-//                                                   value:value
-                                           attributeName:attributeName];
+//                                                   value:expenseAmount
+        ];
     } else if (indexPath.section == 1) {
         // Income attributes
-//        NSArray *incomeKeys = [self.incomeAttributes allKeys];
-        NSString *attributeName = @"test";
-//        NSDecimalNumber *value = [self.budget.category.isIncome == YES valueForKey:attributeName];
+        NSString *incomeName = self.income[indexPath.row];
+        NSDecimalNumber *incomeAmount = self.incomeAmounts[indexPath.row];
         
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
-                                             placeholder:[attributeName capitalizedString]
+                                             placeholder:[incomeName capitalizedString]
                                             keyboardType:UIKeyboardTypeDecimalPad
-//                                                   value:value
-                                           attributeName:attributeName];
+//                                                   value:incomeAmount
+        ];
         
     }
     return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"DefaultCell"];
@@ -183,7 +204,7 @@
                                              placeholder:(NSString *)placeholder
                                             keyboardType:(UIKeyboardType)keyboardType
 //                                                   value:(NSDecimalNumber *)value
-                                           attributeName:(NSString *)attributeName {
+{
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TextFieldCell" forIndexPath:indexPath];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     cell.textLabel.text = placeholder;
@@ -195,11 +216,10 @@
     
     UITextField *textField = [[UITextField alloc] init];
     textField.delegate = self;
-//    textField.text = value.stringValue;
+    //    textField.text = value.stringValue;
     textField.translatesAutoresizingMaskIntoConstraints = NO;
     textField.tag = 100 + indexPath.row;
     textField.keyboardType = keyboardType;
-    textField.accessibilityIdentifier = attributeName; // store key for later use
     [textField addTarget:self action:@selector(textFieldChanged:) forControlEvents:UIControlEventEditingChanged];
     textField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
     textField.textAlignment = NSTextAlignmentRight;
@@ -252,7 +272,7 @@
         
         [self presentViewController:alert animated:YES completion:nil];
     }
-
+    
     // Save context
     NSError *error = nil;
     if (![self.managedObjectContext save:&error]) {
