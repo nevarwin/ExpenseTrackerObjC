@@ -24,6 +24,7 @@
     [super viewDidLoad];
     // Set background color to match Health app
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
+    self.title = self.isEditMode ? @"Edit Budget" : @"Add Budget";
     
     // Build a lookup dictionary for allocations by category objectID
     NSMutableDictionary *allocationByCategoryID = [NSMutableDictionary dictionary];
@@ -32,12 +33,12 @@
         NSLog(@"allocationByCategoryID: %@", allocationByCategoryID);
     }
     NSLog(@"allocation: %@", self.budget.allocations);
-
+    
     self.income = [NSMutableArray array];
     self.expenses = [NSMutableArray array];
     self.incomeAmounts = [NSMutableArray array];
     self.expensesAmounts = [NSMutableArray array];
-
+    
     for (Category *category in self.budget.category) {
         if (category.isIncome == 1) {
             self.incomeCount++;
@@ -56,13 +57,24 @@
         }
     }
     
-    NSLog(@"incomeAmounts: %@", self.incomeAmounts);
-    NSLog(@"expensesAmounts: %@", self.expensesAmounts);
+    NSLog(@"income: %@", self.income);
+    NSLog(@"expenses: %@", self.expenses);
     
     
     self.headerLabelTextField.delegate = self;
     [self setupHeaderView];
     [self setupTableView];
+    [self selectEmptyScreen];
+    
+    // Add observer for keyboard notifications
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardWillShow:)
+                                                 name:UIKeyboardWillShowNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardWillHide:)
+                                                 name:UIKeyboardWillHideNotification
+                                               object:nil];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -82,6 +94,7 @@
     self.headerLabelTextField.text = self.budget.name;
     self.headerLabelTextField.font = [UIFont systemFontOfSize:34 weight:UIFontWeightBold];
     self.headerLabelTextField.textColor = [UIColor labelColor];
+    self.headerLabelTextField.placeholder = @"Budget Name";
     [_headerContainer addSubview:self.headerLabelTextField];
     
     
@@ -169,8 +182,14 @@
     return 0;
 }
 
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    NSLog(@"tableView indexPath: %@", indexPath);
     
+    [self plusButtonTapped:nil indexPath:indexPath];
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     // cellForRowAtIndexPath
     if (indexPath.section == 0) {
         // Expense attributes
@@ -179,9 +198,9 @@
         
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
-                                             placeholder:[expenseName capitalizedString]
+                                             placeholder:expenseName
                                             keyboardType:UIKeyboardTypeDecimalPad
-//                                                   value:expenseAmount
+                                                   value:expenseAmount
         ];
     } else if (indexPath.section == 1) {
         // Income attributes
@@ -190,9 +209,9 @@
         
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
-                                             placeholder:[incomeName capitalizedString]
+                                             placeholder:incomeName
                                             keyboardType:UIKeyboardTypeDecimalPad
-//                                                   value:incomeAmount
+                                                   value:incomeAmount
         ];
         
     }
@@ -203,7 +222,7 @@
                                                indexPath:(NSIndexPath *)indexPath
                                              placeholder:(NSString *)placeholder
                                             keyboardType:(UIKeyboardType)keyboardType
-//                                                   value:(NSDecimalNumber *)value
+                                                   value:(NSDecimalNumber *)value
 {
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TextFieldCell" forIndexPath:indexPath];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -216,34 +235,99 @@
     
     UITextField *textField = [[UITextField alloc] init];
     textField.delegate = self;
-    //    textField.text = value.stringValue;
+    textField.text = value.stringValue;
     textField.translatesAutoresizingMaskIntoConstraints = NO;
+    textField.clearButtonMode = UITextFieldViewModeWhileEditing;
+    textField.placeholder = placeholder;
     textField.tag = 100 + indexPath.row;
     textField.keyboardType = keyboardType;
+    textField.textColor = [UIColor systemBlueColor];
     [textField addTarget:self action:@selector(textFieldChanged:) forControlEvents:UIControlEventEditingChanged];
     textField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
     textField.textAlignment = NSTextAlignmentRight;
     
+    UILabel *pesoLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 16, 20)];
+    pesoLabel.text = @"₱";
+    pesoLabel.font = textField.font;
+    pesoLabel.textAlignment = NSTextAlignmentLeft;
+    pesoLabel.textColor = [UIColor systemBlueColor];
+
+    textField.leftView = pesoLabel;
+    textField.leftViewMode = UITextFieldViewModeAlways;
+
     [cell.contentView addSubview:textField];
     
     [textField setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     [NSLayoutConstraint activateConstraints:@[
         [textField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
         [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
-        [textField.widthAnchor constraintEqualToConstant:120],
+        [textField.widthAnchor constraintEqualToConstant:80]
     ]];
     
     return cell;
 }
 
-- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
+    UIView *headerView = [[UIView alloc] init];
+    headerView.backgroundColor = [UIColor clearColor];
+    
+    UILabel *titleLabel = [[UILabel alloc] init];
+    titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];
+    titleLabel.textColor = [UIColor secondaryLabelColor];
+    titleLabel.textAlignment = NSTextAlignmentLeft;
+    
+    [titleLabel setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+    [titleLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+    
     switch (section) {
         case 0:
-            return @"EXPENSES";
+            titleLabel.text = @"EXPENSES";
+            break;
         case 1:
-            return @"INCOME";
+            titleLabel.text = @"INCOME";
+            break;
         default:
-            return nil;
+            titleLabel.text = @"";
+    }
+    
+    [headerView addSubview:titleLabel];
+    
+    NSMutableArray<NSLayoutConstraint *> *constraints = [NSMutableArray array];
+    
+    [constraints addObjectsFromArray:@[
+        [titleLabel.leadingAnchor constraintEqualToAnchor:headerView.leadingAnchor constant:16],
+        [titleLabel.centerYAnchor constraintEqualToAnchor:headerView.centerYAnchor]
+    ]];
+    
+    if (section == 0 || section == 1) {
+        UIButton *plusButton = [UIButton buttonWithType:UIButtonTypeContactAdd];
+        plusButton.translatesAutoresizingMaskIntoConstraints = NO;
+        plusButton.tag = section;
+        [plusButton addTarget:self action:@selector(plusButtonTapped:indexPath:) forControlEvents:UIControlEventTouchUpInside];
+        [headerView addSubview:plusButton];
+        
+        [constraints addObjectsFromArray:@[
+            [plusButton.trailingAnchor constraintEqualToAnchor:headerView.trailingAnchor constant:-16],
+            [plusButton.centerYAnchor constraintEqualToAnchor:headerView.centerYAnchor],
+            [titleLabel.trailingAnchor constraintLessThanOrEqualToAnchor:plusButton.leadingAnchor constant:-8]
+        ]];
+    } else {
+        [constraints addObject:[titleLabel.trailingAnchor constraintLessThanOrEqualToAnchor:headerView.trailingAnchor constant:-16]];
+    }
+    
+    // Fixed height
+    [constraints addObject:[headerView.heightAnchor constraintEqualToConstant:44]];
+    [NSLayoutConstraint activateConstraints:constraints];
+    
+    return headerView;
+}
+
+// Deleting via swipe gesture
+- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (editingStyle != UITableViewCellEditingStyleDelete) {
+        NSLog(@"editingStyle: %ld", (long)editingStyle);
+        return;
     }
 }
 
@@ -257,6 +341,112 @@
 
 
 #pragma mark - Actions
+
+- (void)plusButtonTapped:(UIButton *)sender indexPath:(NSIndexPath *)indexPath {
+    NSInteger section = sender.tag;
+    NSInteger row;
+    NSString *actionTitle = @"";
+    NSLog(@"section: %ld", (long)section);
+    
+    if ([indexPath isKindOfClass:[NSIndexPath class]]) {
+        NSIndexPath *correctIndexPath = (NSIndexPath *)indexPath;
+        row = correctIndexPath.row;
+        section = correctIndexPath.section;
+        actionTitle = @"Update";
+    } else {
+        actionTitle = @"Add";
+        NSLog(@"Error: indexPath is not an NSIndexPath. It is: %@", [indexPath class]);
+    }
+    
+    
+    NSString *title = (section == 0) ? @"Expense" : @"Income";
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
+                                                                   message:@"Enter details"
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        textField.placeholder = @"Enter name";
+        if (section == 0) {
+            if (row < self.expenses.count) {
+                textField.text = self.expenses[row];
+            }
+        } else if (section == 1) {
+            if (row < self.income.count) {
+                textField.text = self.income[row];
+            }
+        }
+        
+    }];
+    
+    [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        UILabel *pesoLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 16, 20)];
+        pesoLabel.text = @"₱";
+        pesoLabel.font = textField.font;
+        pesoLabel.textAlignment = NSTextAlignmentLeft;
+        pesoLabel.textColor = [UIColor systemBlueColor];
+
+        textField.leftView = pesoLabel;
+        textField.leftViewMode = UITextFieldViewModeAlways;
+        textField.placeholder = @"Enter amount";
+        textField.keyboardType = UIKeyboardTypeDecimalPad;
+        if (section == 0) {
+            if (row < self.expensesAmounts.count) {
+                textField.text = self.expensesAmounts[row];
+            }
+        } else if (section == 1) {
+            if (row < self.incomeAmounts.count) {
+                textField.text = self.incomeAmounts[row];
+            }
+        }
+    }];
+    
+    UIAlertAction *ok = [UIAlertAction actionWithTitle:actionTitle
+                                                 style:UIAlertActionStyleDefault
+                                               handler:^(UIAlertAction * _Nonnull action) {
+        UITextField *nameField = alert.textFields.firstObject;
+        UITextField *amountField = alert.textFields[1];
+        
+        NSString *name = nameField.text;
+        NSString *amount = amountField.text;
+        
+        if (name.length < 0 && amount.length < 0) {
+            return;
+        }
+        
+        if ([actionTitle isEqual:@"Update"]) {
+            if (section == 0) {
+                self.expenses[row] = name;
+                self.expensesAmounts[row] = amount;
+            } else {
+                self.income[row] = name;
+                self.incomeAmounts[row] = amount;
+            }
+        } else {
+            if (section == 0) {
+                self.expenseCount++;
+                [self.expenses addObject:name];
+                [self.expensesAmounts addObject:amount];
+            } else {
+                self.incomeCount++;
+                [self.income addObject:name];
+                [self.incomeAmounts addObject:amount];
+            }
+        }
+        
+        NSIndexSet *indexSet = [NSIndexSet indexSetWithIndex:section];
+        [self.budgetDisplayTableView reloadSections:indexSet withRowAnimation:UITableViewRowAnimationAutomatic];
+    }];
+    
+    UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel"
+                                                     style:UIAlertActionStyleCancel
+                                                   handler:nil];
+    
+    [alert addAction:cancel];
+    [alert addAction:ok];
+    
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
 
 - (void)addButtonTapped {
     if (![self.budget.objectID isEqual:self.budget.objectID]) {
@@ -316,5 +506,14 @@
                                                animated:YES];
 }
 
+- (void)selectEmptyScreen {
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissKeyboard)];
+    tap.cancelsTouchesInView = NO;
+    [self.view addGestureRecognizer:tap];
+}
+
+- (void)dismissKeyboard {
+    [self.view endEditing:YES];
+}
 
 @end

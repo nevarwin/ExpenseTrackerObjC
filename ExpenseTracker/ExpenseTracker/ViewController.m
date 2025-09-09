@@ -300,6 +300,8 @@
 #pragma mark - UITableViewDelegate
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(nonnull NSIndexPath *)indexPath{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
     // Instantiate the navigation controller
     UINavigationController *navController = [self.storyboard instantiateViewControllerWithIdentifier:@"TransactionNavController"];
     
