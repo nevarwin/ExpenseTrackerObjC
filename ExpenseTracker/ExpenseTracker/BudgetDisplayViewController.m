@@ -152,19 +152,18 @@
 }
 
 - (void)textFieldChanged:(UITextField *)textField {
+    UITableViewCell *cell = (UITableViewCell *)textField.superview.superview;
+    NSIndexPath *indexPath = [self.budgetDisplayTableView indexPathForCell:cell];
     NSString *attributeKey = textField.accessibilityIdentifier;
+    
     if (attributeKey) {
-        // Expense or income field
-        NSDecimalNumber *decimalValue = [NSDecimalNumber decimalNumberWithString:textField.text];
-        
-        //        if ([self.expenseAttributes objectForKey:attributeKey]) {
-        //            self.expenseValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
-        //
-        //        } else if ([self.incomeAttributes objectForKey:attributeKey]) {
-        //            self.incomeValues[attributeKey] = (decimalValue && ![decimalValue isEqualToNumber:[NSDecimalNumber notANumber]]) ? decimalValue : [NSDecimalNumber zero];
-        //        }
+        // Handle expense/income value update here
+        if (indexPath.section == 0) {
+            self.expensesAmounts[indexPath.row] = textField.text;
+        } else {
+            self.incomeAmounts[indexPath.row] = textField.text;
+        }
     } else {
-        // Budget name field
         self.budget.name = textField.text ?: @"";
     }
 }
@@ -235,12 +234,13 @@
     
     UITextField *textField = [[UITextField alloc] init];
     textField.delegate = self;
-    textField.text = value.stringValue;
+    textField.text = (NSString *)value;
     textField.translatesAutoresizingMaskIntoConstraints = NO;
     textField.clearButtonMode = UITextFieldViewModeWhileEditing;
     textField.placeholder = placeholder;
     textField.tag = 100 + indexPath.row;
     textField.keyboardType = keyboardType;
+    textField.accessibilityIdentifier = (indexPath.section == 0) ? @"expenseAmount" : @"incomeAmount";
     textField.textColor = [UIColor systemBlueColor];
     [textField addTarget:self action:@selector(textFieldChanged:) forControlEvents:UIControlEventEditingChanged];
     textField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
