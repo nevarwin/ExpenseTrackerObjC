@@ -241,7 +241,7 @@
     textField.tag = 100 + indexPath.row;
     textField.keyboardType = keyboardType;
     textField.accessibilityIdentifier = (indexPath.section == 0) ? @"expenseAmount" : @"incomeAmount";
-    textField.textColor = [UIColor systemBlueColor];
+    textField.textColor = [UIColor systemTealColor];
     [textField addTarget:self action:@selector(textFieldChanged:) forControlEvents:UIControlEventEditingChanged];
     textField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
     textField.textAlignment = NSTextAlignmentRight;
@@ -250,7 +250,7 @@
     pesoLabel.text = @"₱";
     pesoLabel.font = textField.font;
     pesoLabel.textAlignment = NSTextAlignmentLeft;
-    pesoLabel.textColor = [UIColor systemBlueColor];
+    pesoLabel.textColor = [UIColor systemTealColor];
 
     textField.leftView = pesoLabel;
     textField.leftViewMode = UITextFieldViewModeAlways;
@@ -383,7 +383,7 @@
         pesoLabel.text = @"₱";
         pesoLabel.font = textField.font;
         pesoLabel.textAlignment = NSTextAlignmentLeft;
-        pesoLabel.textColor = [UIColor systemBlueColor];
+        pesoLabel.textColor = [UIColor systemTealColor];
 
         textField.leftView = pesoLabel;
         textField.leftViewMode = UITextFieldViewModeAlways;
