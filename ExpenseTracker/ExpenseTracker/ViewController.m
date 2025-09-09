@@ -129,7 +129,7 @@
     // Setup add button (right side)
     self.addButton = [UIButton buttonWithType:UIButtonTypeSystem];
     self.addButton.translatesAutoresizingMaskIntoConstraints = NO;
-    self.addButton.tintColor = [UIColor systemBlueColor];
+    self.addButton.tintColor = [UIColor systemTealColor];
     self.addButton.titleLabel.font = [UIFont boldSystemFontOfSize:17];
     [self.addButton setTitle:@"Add Data" forState:UIControlStateNormal];
     [self.addButton addTarget:self action:@selector(addButtonTapped) forControlEvents:UIControlEventTouchUpInside];

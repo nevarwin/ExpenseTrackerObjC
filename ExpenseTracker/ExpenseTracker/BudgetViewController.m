@@ -71,7 +71,7 @@
     self.addButton = [UIButton buttonWithType:UIButtonTypeSystem];
     self.addButton.translatesAutoresizingMaskIntoConstraints = NO;
     [self.addButton setImage:[UIImage systemImageNamed:@"plus.circle.fill"] forState:UIControlStateNormal];
-    self.addButton.tintColor = [UIColor systemBlueColor];
+    self.addButton.tintColor = [UIColor systemTealColor];
     [self.addButton addTarget:self action:@selector(addButtonTapped) forControlEvents:UIControlEventTouchUpInside];
     self.addButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     // Increase button size to match Health app
