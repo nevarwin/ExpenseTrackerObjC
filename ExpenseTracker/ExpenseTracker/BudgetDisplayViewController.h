@@ -12,7 +12,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface BudgetDisplayViewController : UIViewController
 
-//@property (nonatomic, strong) UIView *headerContainer;
+@property (nonatomic, assign) BOOL isEditMode;
+@property (nonatomic, weak) id delegate;
+
 @property (nonatomic, strong) Budget *budget;
 @property (nonatomic, strong) UITextField *headerLabelTextField;
 @property (nonatomic, strong) UITableView *budgetDisplayTableView;

@@ -31,7 +31,7 @@
                 NSLog(@"Unresolved error %@, %@", error, error.userInfo);
                 abort();
             }
-            [self insertDefaultBudget];
+//            [self insertDefaultBudget];
         }];
     }
     return _persistentContainer;

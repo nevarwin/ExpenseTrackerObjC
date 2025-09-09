@@ -209,17 +209,29 @@ replacementString:(NSString *)string {
             ]];
             break;
         case 1: // Amount
-            cell.textLabel.text = @"Amount";
-            [cell.contentView addSubview:self.amountTextField];
-            self.amountTextField.translatesAutoresizingMaskIntoConstraints = NO;
-            self.amountTextField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
-            self.amountTextField.textAlignment = NSTextAlignmentRight;
-            [NSLayoutConstraint activateConstraints:@[
-                [self.amountTextField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
-                [self.amountTextField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
-                [self.amountTextField.widthAnchor constraintEqualToConstant:120]
-            ]];
-            break;
+            {
+                UILabel *pesoLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 16, 20)];
+                pesoLabel.text = @"₱";
+                pesoLabel.font = self.amountTextField.font;
+                pesoLabel.textAlignment = NSTextAlignmentLeft;
+                pesoLabel.textColor = [UIColor systemBlueColor];
+                cell.textLabel.text = @"Amount";
+                [cell.contentView addSubview:self.amountTextField];
+                
+                self.amountTextField.leftView = pesoLabel;
+                self.amountTextField.leftViewMode = UITextFieldViewModeAlways;
+                self.amountTextField.textColor = [UIColor systemBlueColor];
+                self.amountTextField.translatesAutoresizingMaskIntoConstraints = NO;
+                self.amountTextField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
+                self.amountTextField.textAlignment = NSTextAlignmentRight;
+                self.amountTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
+                [NSLayoutConstraint activateConstraints:@[
+                    [self.amountTextField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
+                    [self.amountTextField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+                    [self.amountTextField.widthAnchor constraintEqualToConstant:120]
+                ]];
+                break;
+            }
         case 2: // Budget
         {
             cell.textLabel.text = @"Budget";

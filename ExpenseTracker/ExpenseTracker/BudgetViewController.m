@@ -5,7 +5,6 @@
 //
 
 #import "BudgetViewController.h"
-#import "BudgetFormViewController.h"
 #import "AppDelegate.h"
 #import "Budget+CoreDataClass.h"
 #import "BudgetDisplayViewController.h"
@@ -125,21 +124,12 @@
 #pragma mark - Actions
 
 - (void)addButtonTapped {
-    // Create BudgetFormViewController programmatically
-    
-    if (!self.managedObjectContext) {
-        AppDelegate *delegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
-        self.managedObjectContext = delegate.persistentContainer.viewContext;
-    }
     // Initialize BudgetFormViewController
-    BudgetFormViewController *budgetFormVC = [[BudgetFormViewController alloc] init];
-    
+    BudgetDisplayViewController *budgetFormVC = [[BudgetDisplayViewController alloc] init];
+    budgetFormVC.isEditMode = NO;
     budgetFormVC.managedObjectContext = self.managedObjectContext;
-    
-    // Configure the view controller
     budgetFormVC.delegate = self;
     
-    // Present modally
     [self.navigationController pushViewController:budgetFormVC animated:YES];
 }
 
@@ -150,12 +140,15 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    // Return your budget items count here
-    return 1;
+    return self.budgets.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"BudgetCell"];
+    
+    if (indexPath.row >= self.budgets.count) {
+        return [[UITableViewCell alloc] init];
+    }
     
     Budget *budget = self.budgets[indexPath.row];
     cell.textLabel.text = budget.name;
@@ -213,6 +206,7 @@
     
     // Pass the selected budget
     displayVC.budget = self.budgets[indexPath.row];
+    displayVC.isEditMode = YES;
     displayVC.managedObjectContext = self.managedObjectContext;
 
     // Push onto navigation stack
