@@ -449,7 +449,22 @@
 
 
 - (void)addButtonTapped {
-    if (![self.budget.objectID isEqual:self.budget.objectID]) {
+    
+    NSLog(@"expenses: %@", self.expenses);
+    NSLog(@"expenseamounts: %@", self.expensesAmounts);
+    NSLog(@"income: %@", self.income);
+    NSLog(@"incomeamounts: %@", self.incomeAmounts);
+    NSLog(@"headerLabelTextField: %@", self.headerLabelTextField.text);
+    
+    NSString *budgetName = self.headerLabelTextField.text;
+    NSDecimalNumber *totalAmount = [NSDecimalNumber decimalNumberWithString:@"0"];
+    
+    for (NSDecimalNumber *amount in self.incomeAmounts){
+        totalAmount = [totalAmount decimalNumberByAdding:amount];
+    }
+        
+    
+    if (budgetName.length == 0) {
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Invalid"
                                                                        message:@"An error occured."
                                                                 preferredStyle:UIAlertControllerStyleAlert];
@@ -462,6 +477,46 @@
         
         [self presentViewController:alert animated:YES completion:nil];
     }
+    
+//    Budget *budget = self.isEditMode ? self.existingTransaction : [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
+    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+    Budget *budget = [NSEntityDescription insertNewObjectForEntityForName:@"Budget" inManagedObjectContext:context];
+    
+    budget.name = budgetName;
+    budget.createdAt = [NSDate date];
+    budget.totalAmount = totalAmount;
+    
+    NSMutableSet *categoriesSet = [NSMutableSet set];
+
+    for (NSInteger i = 0; i < self.expenses.count; i++) {
+        Category *expenseCategory = [NSEntityDescription insertNewObjectForEntityForName:@"Category" inManagedObjectContext:context];
+        expenseCategory.name = self.expenses[i];
+        expenseCategory.isIncome = NO;
+        expenseCategory.createdAt = [NSDate date];
+
+        BudgetAllocation *expenseAllocation = [NSEntityDescription insertNewObjectForEntityForName:@"BudgetAllocation" inManagedObjectContext:context];
+        expenseAllocation.allocatedAmount = [NSDecimalNumber decimalNumberWithString:self.expensesAmounts[i]];
+        expenseAllocation.createdAt = [NSDate date];
+
+        expenseCategory.allocations = [NSSet setWithObject:expenseAllocation];
+        [categoriesSet addObject:expenseCategory];
+    }
+
+    for (NSInteger i = 0; i < self.income.count; i++) {
+        Category *incomeCategory = [NSEntityDescription insertNewObjectForEntityForName:@"Category" inManagedObjectContext:context];
+        incomeCategory.name = self.income[i];
+        incomeCategory.isIncome = YES;
+        incomeCategory.createdAt = [NSDate date];
+
+        BudgetAllocation *incomeAllocation = [NSEntityDescription insertNewObjectForEntityForName:@"BudgetAllocation" inManagedObjectContext:context];
+        incomeAllocation.allocatedAmount = [NSDecimalNumber decimalNumberWithString:self.incomeAmounts[i]];
+        incomeAllocation.createdAt = [NSDate date];
+
+        incomeCategory.allocations = [NSSet setWithObject:incomeAllocation];
+        [categoriesSet addObject:incomeCategory];
+    }
+
+    budget.category = categoriesSet;
     
     // Save context
     NSError *error = nil;
