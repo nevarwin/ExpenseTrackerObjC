@@ -43,15 +43,15 @@
         if (category.isIncome == 1) {
             self.incomeCount++;
             [self.income addObject:category.name];
-            BudgetAllocation *allocation = allocationByCategoryID[category.objectID];
-            if (allocation) {
+            
+            for (BudgetAllocation *allocation in category.allocations) {
                 [self.incomeAmounts addObject:allocation.allocatedAmount];
             }
         } else {
             self.expenseCount++;
             [self.expenses addObject:category.name];
-            BudgetAllocation *allocation = allocationByCategoryID[category.objectID];
-            if (allocation) {
+            
+            for (BudgetAllocation *allocation in category.allocations) {
                 [self.expensesAmounts addObject:allocation.allocatedAmount];
             }
         }
@@ -234,7 +234,15 @@
     
     UITextField *textField = [[UITextField alloc] init];
     textField.delegate = self;
-    textField.text = (NSString *)value;
+    
+    if ([value isKindOfClass:[NSDecimalNumber class]]) {
+        textField.text = [(NSDecimalNumber *)value stringValue];
+    } else if ([value isKindOfClass:[NSString class]]) {
+        textField.text = (NSString *)value;
+    } else {
+        textField.text = @"";
+    }
+    
     textField.translatesAutoresizingMaskIntoConstraints = NO;
     textField.clearButtonMode = UITextFieldViewModeWhileEditing;
     textField.placeholder = placeholder;
@@ -251,10 +259,10 @@
     pesoLabel.font = textField.font;
     pesoLabel.textAlignment = NSTextAlignmentLeft;
     pesoLabel.textColor = [UIColor systemTealColor];
-
+    
     textField.leftView = pesoLabel;
     textField.leftViewMode = UITextFieldViewModeAlways;
-
+    
     [cell.contentView addSubview:textField];
     
     [textField setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
@@ -384,7 +392,7 @@
         pesoLabel.font = textField.font;
         pesoLabel.textAlignment = NSTextAlignmentLeft;
         pesoLabel.textColor = [UIColor systemTealColor];
-
+        
         textField.leftView = pesoLabel;
         textField.leftViewMode = UITextFieldViewModeAlways;
         textField.placeholder = @"Enter amount";
@@ -449,20 +457,13 @@
 
 
 - (void)addButtonTapped {
-    
-    NSLog(@"expenses: %@", self.expenses);
-    NSLog(@"expenseamounts: %@", self.expensesAmounts);
-    NSLog(@"income: %@", self.income);
-    NSLog(@"incomeamounts: %@", self.incomeAmounts);
-    NSLog(@"headerLabelTextField: %@", self.headerLabelTextField.text);
-    
     NSString *budgetName = self.headerLabelTextField.text;
     NSDecimalNumber *totalAmount = [NSDecimalNumber decimalNumberWithString:@"0"];
     
     for (NSDecimalNumber *amount in self.incomeAmounts){
         totalAmount = [totalAmount decimalNumberByAdding:amount];
     }
-        
+    
     
     if (budgetName.length == 0) {
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Invalid"
@@ -478,7 +479,7 @@
         [self presentViewController:alert animated:YES completion:nil];
     }
     
-//    Budget *budget = self.isEditMode ? self.existingTransaction : [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
+    //    Budget *budget = self.isEditMode ? self.existingTransaction : [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     Budget *budget = [NSEntityDescription insertNewObjectForEntityForName:@"Budget" inManagedObjectContext:context];
     
@@ -487,40 +488,40 @@
     budget.totalAmount = totalAmount;
     
     NSMutableSet *categoriesSet = [NSMutableSet set];
-
+    
     for (NSInteger i = 0; i < self.expenses.count; i++) {
         Category *expenseCategory = [NSEntityDescription insertNewObjectForEntityForName:@"Category" inManagedObjectContext:context];
         expenseCategory.name = self.expenses[i];
         expenseCategory.isIncome = NO;
         expenseCategory.createdAt = [NSDate date];
-
+        
         BudgetAllocation *expenseAllocation = [NSEntityDescription insertNewObjectForEntityForName:@"BudgetAllocation" inManagedObjectContext:context];
         expenseAllocation.allocatedAmount = [NSDecimalNumber decimalNumberWithString:self.expensesAmounts[i]];
         expenseAllocation.createdAt = [NSDate date];
-
+        
         expenseCategory.allocations = [NSSet setWithObject:expenseAllocation];
         [categoriesSet addObject:expenseCategory];
     }
-
+    
     for (NSInteger i = 0; i < self.income.count; i++) {
         Category *incomeCategory = [NSEntityDescription insertNewObjectForEntityForName:@"Category" inManagedObjectContext:context];
         incomeCategory.name = self.income[i];
         incomeCategory.isIncome = YES;
         incomeCategory.createdAt = [NSDate date];
-
+        
         BudgetAllocation *incomeAllocation = [NSEntityDescription insertNewObjectForEntityForName:@"BudgetAllocation" inManagedObjectContext:context];
         incomeAllocation.allocatedAmount = [NSDecimalNumber decimalNumberWithString:self.incomeAmounts[i]];
         incomeAllocation.createdAt = [NSDate date];
-
+        
         incomeCategory.allocations = [NSSet setWithObject:incomeAllocation];
         [categoriesSet addObject:incomeCategory];
     }
-
+    
     budget.category = categoriesSet;
     
     // Save context
     NSError *error = nil;
-    if (![self.managedObjectContext save:&error]) {
+    if (![context save:&error]) {
         NSLog(@"Failed to save context: %@", error.localizedDescription);
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"An error occured!"
                                                                        message:@"Failed to save data."
