@@ -8,9 +8,10 @@
 #import "AppDelegate.h"
 #import "Budget+CoreDataClass.h"
 #import "BudgetDisplayViewController.h"
+#import "CoreDataManager.h"
 
 @interface BudgetViewController () <UITableViewDelegate, UITableViewDataSource>
-@property (nonatomic, strong) NSArray *budgets;
+@property (nonatomic, strong) NSArray<Budget *> *budgets;
 @end
 
 @implementation BudgetViewController
@@ -33,23 +34,17 @@
 
 
 - (void)fetchBudgets {
-    if (!self.managedObjectContext) {
-        AppDelegate *delegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
-        self.managedObjectContext = delegate.persistentContainer.viewContext;
-    }
-    NSFetchRequest *request = [Budget fetchRequest];
+    NSError *error = nil;
+    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+    NSFetchRequest *request = [NSFetchRequest fetchRequestWithEntityName:@"Budget"];
     NSPredicate *activePredicate = [NSPredicate predicateWithFormat:@"isActive == YES"];
     NSSortDescriptor *sort = [NSSortDescriptor sortDescriptorWithKey:@"createdAt" ascending:NO];
-    
+
     request.predicate = activePredicate;
     request.sortDescriptors = @[sort];
     
-    NSError *error = nil;
-    self.budgets = [self.managedObjectContext executeFetchRequest:request error:&error];
-    if (error) {
-        NSLog(@"Error fetching budgets: %@", error);
-        self.budgets = @[];
-    }
+    self.budgets = [context executeFetchRequest:request error:&error];
+
     [self.budgetTableView reloadData];
 }
 
