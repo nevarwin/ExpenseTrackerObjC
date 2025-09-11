@@ -14,6 +14,12 @@
 
 #define MAX_HEADER_TEXT_LENGTH 16
 
+@protocol BudgetDisplayViewControllerDelegate <NSObject>
+@property (nonatomic, weak) id<BudgetDisplayViewControllerDelegate> delegate;
+
+-(void)budgetDisplayViewControllerDidUpdateBudget:(BudgetDisplayViewController *)controller;
+@end
+
 @interface BudgetDisplayViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate>
 
 @end
@@ -32,7 +38,6 @@
         allocationByCategoryID[allocation.category] = allocation;
         NSLog(@"allocationByCategoryID: %@", allocationByCategoryID);
     }
-    NSLog(@"allocation: %@", self.budget.allocations);
     
     self.income = [NSMutableArray array];
     self.expenses = [NSMutableArray array];
@@ -56,10 +61,6 @@
             }
         }
     }
-    
-    NSLog(@"income: %@", self.income);
-    NSLog(@"expenses: %@", self.expenses);
-    
     
     self.headerLabelTextField.delegate = self;
     [self setupHeaderView];
@@ -399,11 +400,25 @@
         textField.keyboardType = UIKeyboardTypeDecimalPad;
         if (section == 0) {
             if (row < self.expensesAmounts.count) {
-                textField.text = self.expensesAmounts[row];
+                id value = self.expensesAmounts[row];
+                if ([value isKindOfClass:[NSDecimalNumber class]]) {
+                    textField.text = [(NSDecimalNumber *)value stringValue];
+                } else if ([value isKindOfClass:[NSString class]]) {
+                    textField.text = (NSString *)value;
+                } else {
+                    textField.text = @"";
+                }
             }
         } else if (section == 1) {
             if (row < self.incomeAmounts.count) {
-                textField.text = self.incomeAmounts[row];
+                id value = self.incomeAmounts[row];
+                if ([value isKindOfClass:[NSDecimalNumber class]]) {
+                    textField.text = [(NSDecimalNumber *)value stringValue];
+                } else if ([value isKindOfClass:[NSString class]]) {
+                    textField.text = (NSString *)value;
+                } else {
+                    textField.text = @"";
+                }
             }
         }
     }];
@@ -479,9 +494,8 @@
         [self presentViewController:alert animated:YES completion:nil];
     }
     
-    //    Budget *budget = self.isEditMode ? self.existingTransaction : [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
-    Budget *budget = [NSEntityDescription insertNewObjectForEntityForName:@"Budget" inManagedObjectContext:context];
+    Budget *budget = self.isEditMode ? self.budget : [NSEntityDescription insertNewObjectForEntityForName:@"Budget" inManagedObjectContext:context];
     
     budget.name = budgetName;
     budget.createdAt = [NSDate date];
@@ -496,7 +510,16 @@
         expenseCategory.createdAt = [NSDate date];
         
         BudgetAllocation *expenseAllocation = [NSEntityDescription insertNewObjectForEntityForName:@"BudgetAllocation" inManagedObjectContext:context];
-        expenseAllocation.allocatedAmount = [NSDecimalNumber decimalNumberWithString:self.expensesAmounts[i]];
+        
+        id value = self.expensesAmounts[i];
+        if ([value isKindOfClass:[NSDecimalNumber class]]) {
+            expenseAllocation.allocatedAmount = value;
+        } else if ([value isKindOfClass:[NSString class]]) {
+            expenseAllocation.allocatedAmount = [NSDecimalNumber decimalNumberWithString:(NSString *)value];
+        } else {
+            expenseAllocation.allocatedAmount = [NSDecimalNumber zero];
+        }
+        
         expenseAllocation.createdAt = [NSDate date];
         
         expenseCategory.allocations = [NSSet setWithObject:expenseAllocation];
@@ -510,7 +533,16 @@
         incomeCategory.createdAt = [NSDate date];
         
         BudgetAllocation *incomeAllocation = [NSEntityDescription insertNewObjectForEntityForName:@"BudgetAllocation" inManagedObjectContext:context];
-        incomeAllocation.allocatedAmount = [NSDecimalNumber decimalNumberWithString:self.incomeAmounts[i]];
+        
+        id value = self.incomeAmounts[i];
+        if ([value isKindOfClass:[NSDecimalNumber class]]) {
+            incomeAllocation.allocatedAmount = value;
+        } else if ([value isKindOfClass:[NSString class]]) {
+            incomeAllocation.allocatedAmount = [NSDecimalNumber decimalNumberWithString:(NSString *)value];
+        } else {
+            incomeAllocation.allocatedAmount = [NSDecimalNumber zero];
+        }
+
         incomeAllocation.createdAt = [NSDate date];
         
         incomeCategory.allocations = [NSSet setWithObject:incomeAllocation];
@@ -536,6 +568,9 @@
         [self presentViewController:alert animated:YES completion:nil];
     }
     
+    if ([self.delegate respondsToSelector:@selector(budgetDisplayViewControllerDidUpdateBudget:)]) {
+        [self.delegate budgetDisplayViewControllerDidUpdateBudget:self];
+    }
     [self.navigationController popViewControllerAnimated:YES];
 }
 

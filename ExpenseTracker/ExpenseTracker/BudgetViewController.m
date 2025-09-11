@@ -247,4 +247,10 @@
     [self fetchBudgets];
 }
 
+// TODO: reload table view when returning from detail view after editing
+#pragma mark - BudgetDisplayViewControllerDelegate
+-(void)budgetDisplayViewControllerDidUpdateBudget:(BudgetDisplayViewController *)controller {
+    [self.budgetTableView reloadData];
+}
+
 @end
