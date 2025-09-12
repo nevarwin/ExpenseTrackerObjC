@@ -9,8 +9,9 @@
 #import "Budget+CoreDataClass.h"
 #import "BudgetDisplayViewController.h"
 #import "CoreDataManager.h"
+#import "BudgetDisplayViewController.h"
 
-@interface BudgetViewController () <UITableViewDelegate, UITableViewDataSource>
+@interface BudgetViewController () <UITableViewDelegate, UITableViewDataSource, BudgetDisplayViewControllerDelegate>
 @property (nonatomic, strong) NSArray<Budget *> *budgets;
 @end
 
@@ -242,15 +243,9 @@
     return @"Tap + to add a new budget category";
 }
 
-#pragma mark - BudgetFormViewControllerDelegate
-- (void)didAddOrEditBudget {
-    [self fetchBudgets];
-}
-
-// TODO: reload table view when returning from detail view after editing
 #pragma mark - BudgetDisplayViewControllerDelegate
--(void)budgetDisplayViewControllerDidUpdateBudget:(BudgetDisplayViewController *)controller {
-    [self.budgetTableView reloadData];
+- (void)didUpdateData {
+    [self fetchBudgets];
 }
 
 @end
