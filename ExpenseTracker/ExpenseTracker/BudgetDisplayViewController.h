@@ -10,6 +10,10 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol BudgetDisplayViewControllerDelegate <NSObject>
+- (void)didUpdateData;
+@end
+
 @interface BudgetDisplayViewController : UIViewController
 
 @property (nonatomic, assign) BOOL isEditMode;

@@ -14,12 +14,6 @@
 
 #define MAX_HEADER_TEXT_LENGTH 16
 
-@protocol BudgetDisplayViewControllerDelegate <NSObject>
-@property (nonatomic, weak) id<BudgetDisplayViewControllerDelegate> delegate;
-
--(void)budgetDisplayViewControllerDidUpdateBudget:(BudgetDisplayViewController *)controller;
-@end
-
 @interface BudgetDisplayViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate>
 
 @end
@@ -355,7 +349,6 @@
     NSInteger section = sender.tag;
     NSInteger row;
     NSString *actionTitle = @"";
-    NSLog(@"section: %ld", (long)section);
     
     if ([indexPath isKindOfClass:[NSIndexPath class]]) {
         NSIndexPath *correctIndexPath = (NSIndexPath *)indexPath;
@@ -364,7 +357,6 @@
         actionTitle = @"Update";
     } else {
         actionTitle = @"Add";
-        NSLog(@"Error: indexPath is not an NSIndexPath. It is: %@", [indexPath class]);
     }
     
     
@@ -550,7 +542,12 @@
     }
     
     budget.category = categoriesSet;
-    
+    if ([self.delegate respondsToSelector:@selector(didUpdateData)]) {
+        [self.delegate didUpdateData];
+        NSLog(@"did update");
+    } else {
+        NSLog(@"did not update");
+    }
     // Save context
     NSError *error = nil;
     if (![context save:&error]) {
@@ -568,9 +565,6 @@
         [self presentViewController:alert animated:YES completion:nil];
     }
     
-    if ([self.delegate respondsToSelector:@selector(budgetDisplayViewControllerDidUpdateBudget:)]) {
-        [self.delegate budgetDisplayViewControllerDidUpdateBudget:self];
-    }
     [self.navigationController popViewControllerAnimated:YES];
 }
 
