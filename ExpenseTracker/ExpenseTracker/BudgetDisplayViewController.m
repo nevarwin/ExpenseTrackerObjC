@@ -40,14 +40,12 @@
     
     for (Category *category in self.budget.category) {
         if (category.isIncome == 1) {
-            self.incomeCount++;
             [self.income addObject:category.name];
             
             for (BudgetAllocation *allocation in category.allocations) {
                 [self.incomeAmounts addObject:allocation.allocatedAmount];
             }
         } else {
-            self.expenseCount++;
             [self.expenses addObject:category.name];
             
             for (BudgetAllocation *allocation in category.allocations) {
@@ -171,8 +169,8 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (section == 0) return self.expenseCount;
-    if (section == 1) return self.incomeCount;
+    if (section == 0) return self.expenses.count;
+    if (section == 1) return self.income.count;
     return 0;
 }
 
@@ -334,11 +332,9 @@
     if(indexPath.section == 0){
         [self.expenses removeObjectAtIndex:indexPath.row];
         [self.expensesAmounts removeObjectAtIndex:indexPath.row];
-        self.expenseCount = 0;
     } else {
         [self.income removeObjectAtIndex:indexPath.row];
         [self.incomeAmounts removeObjectAtIndex:indexPath.row];
-        self.incomeCount = 0;
     }
     [self.budgetDisplayTableView reloadData];
 }
@@ -447,11 +443,9 @@
             }
         } else {
             if (section == 0) {
-                self.expenseCount++;
                 [self.expenses addObject:name];
                 [self.expensesAmounts addObject:amount];
             } else {
-                self.incomeCount++;
                 [self.income addObject:name];
                 [self.incomeAmounts addObject:amount];
             }
