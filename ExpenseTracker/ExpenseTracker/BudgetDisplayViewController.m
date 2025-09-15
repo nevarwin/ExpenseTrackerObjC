@@ -334,9 +334,11 @@
     if(indexPath.section == 0){
         [self.expenses removeObjectAtIndex:indexPath.row];
         [self.expensesAmounts removeObjectAtIndex:indexPath.row];
+        self.expenseCount = 0;
     } else {
         [self.income removeObjectAtIndex:indexPath.row];
         [self.incomeAmounts removeObjectAtIndex:indexPath.row];
+        self.incomeCount = 0;
     }
     [self.budgetDisplayTableView reloadData];
 }
