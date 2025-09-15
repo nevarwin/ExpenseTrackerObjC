@@ -1,0 +1,25 @@
+//
+//  Transaction+CoreDataProperties.m
+//  ExpenseTracker
+//
+//  Created by XOO_Raven on 9/15/25.
+//
+//
+
+#import "Transaction+CoreDataProperties.h"
+
+@implementation Transaction (CoreDataProperties)
+
++ (NSFetchRequest<Transaction *> *)fetchRequest {
+	return [NSFetchRequest fetchRequestWithEntityName:@"Transaction"];
+}
+
+@dynamic amount;
+@dynamic createdAt;
+@dynamic date;
+@dynamic isActive;
+@dynamic updatedAt;
+@dynamic budget;
+@dynamic category;
+
+@end
