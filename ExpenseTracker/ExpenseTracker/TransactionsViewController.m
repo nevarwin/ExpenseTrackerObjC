@@ -20,8 +20,9 @@
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
     
     self.title = @"Transaction";
+    NSString *rightButtonTitle = self.isEditMode ? @"Update" : @"Add";
     self.leftButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(leftButtonTapped)];
-    self.rightButton = [[UIBarButtonItem alloc] initWithTitle:@"Add" style:UIBarButtonItemStyleDone target:self action:@selector(rightButtonTapped)];
+    self.rightButton = [[UIBarButtonItem alloc] initWithTitle:rightButtonTitle style:UIBarButtonItemStyleDone target:self action:@selector(rightButtonTapped)];
     self.navigationItem.leftBarButtonItem = self.leftButton;
     self.navigationItem.rightBarButtonItem = self.rightButton;
     
@@ -29,6 +30,8 @@
     [self setupPickers];
     [self setupTypePicker];
     [self selectEmptyScreen];
+    [self fetchCoreData];
+    self.rightButton.enabled = self.selectedBudgetIndex == nil ? NO : YES;
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -76,6 +79,14 @@
     tap.cancelsTouchesInView = NO;
     [self.view addGestureRecognizer:tap];
 }
+
+- (void)fetchCoreData {
+    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+    NSError *error = nil;
+    self.budgets = [self getBudgetValues:context error:&error];
+    self.category = [self getCategoryValues:context error:&error isIncome: self.selectedTypeIndex];
+}
+
 
 #pragma mark - UITextFieldDelegate
 - (BOOL)textField:(UITextField *)textField
@@ -155,6 +166,7 @@ replacementString:(NSString *)string {
     NSMutableArray *budgetsArray = [NSMutableArray array];
     for (Budget *budget in results) {
         if (budget.name) {
+            self.selectedBudgetIndex = budget.objectID;
             [budgetsArray addObject:@{
                 @"name": budget.name,
                 @"objectID": budget.objectID
@@ -175,7 +187,7 @@ replacementString:(NSString *)string {
 
     NSMutableArray *categoryArray = [NSMutableArray array];
     for (Category *category in results) {
-        if (category.name) {
+        if (category.name && self.selectedBudgetIndex == category.budget.objectID && self.selectedBudgetIndex != nil) {
             [categoryArray addObject:@{
                 @"name": category.name,
                 @"objectID": category.objectID,
@@ -239,6 +251,7 @@ replacementString:(NSString *)string {
             [typeButton setTitle:@"Select Budget" forState:UIControlStateNormal];
             typeButton.translatesAutoresizingMaskIntoConstraints = NO;
             typeButton.tag = 0;
+            typeButton.enabled = self.selectedBudgetIndex == nil ? NO : YES;
             [typeButton addTarget:self action:@selector(pickerButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
             [cell.contentView addSubview:typeButton];
             
@@ -255,6 +268,7 @@ replacementString:(NSString *)string {
             [typeButton setTitle:@"Select Type" forState:UIControlStateNormal];
             typeButton.translatesAutoresizingMaskIntoConstraints = NO;
             typeButton.tag = 1;
+            typeButton.enabled = self.selectedBudgetIndex == nil ? NO : YES;
             [typeButton addTarget:self action:@selector(pickerButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
             [cell.contentView addSubview:typeButton];
             
@@ -270,6 +284,7 @@ replacementString:(NSString *)string {
             [typeButton setTitle:@"Select Category" forState:UIControlStateNormal];
             typeButton.translatesAutoresizingMaskIntoConstraints = NO;
             typeButton.tag = 2;
+            typeButton.enabled = self.selectedBudgetIndex == nil ? NO : YES;
             [typeButton addTarget:self action:@selector(pickerButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
             [cell.contentView addSubview:typeButton];
             
@@ -294,14 +309,8 @@ replacementString:(NSString *)string {
     
     [alert.view addSubview:picker];
     self.currentPickerMode = sender.tag;
-    
-    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
-    
-    NSError *error = nil;
-    NSArray *budgets = [self getBudgetValues:context error:&error];
-    NSArray *category = [self getCategoryValues:context error:&error isIncome: self.selectedTypeIndex];
-    self.budgetValues = [budgets valueForKey:@"name"];
-    self.categoryValues = [category valueForKey:@"name"];
+    self.budgetValues = [self.budgets valueForKey:@"name"];
+    self.categoryValues = [self.category valueForKey:@"name"];
     
     if(self.currentPickerMode == 0 && self.budgetValues.count == 0){
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"An error occured."
@@ -323,7 +332,7 @@ replacementString:(NSString *)string {
             case 0:
             {
                 selectedRow = [picker selectedRowInComponent:0];
-                NSDictionary *selectedBudget = budgets[selectedRow];
+                NSDictionary *selectedBudget = self.budgets[selectedRow];
                 self.selectedBudgetIndex = selectedBudget[@"objectID"];
                 [sender setTitle:self.budgetValues[selectedRow] forState:UIControlStateNormal];
                 break;
@@ -337,7 +346,7 @@ replacementString:(NSString *)string {
             case 2:
             {
                 selectedRow = [picker selectedRowInComponent:0];
-                NSDictionary *selectedCategory = category[selectedRow];
+                NSDictionary *selectedCategory = self.category[selectedRow];
                 self.selectedCategoryIndex = selectedCategory[@"objectID"];
                 [sender setTitle:self.categoryValues[selectedRow] forState:UIControlStateNormal];
                 break;
@@ -391,12 +400,10 @@ replacementString:(NSString *)string {
     NSInteger type = self.selectedTypeIndex;
     NSManagedObjectID *budgetID = self.selectedBudgetIndex;
     NSManagedObjectID *categoryID = self.selectedCategoryIndex;
-    Budget *budget = (Budget *)[context existingObjectWithID:budgetID error:&error];
-    Category *category = (Category *)[context existingObjectWithID:categoryID error:&error];
     
     NSDate *date = self.datePicker.date;
     
-    if ([self.amountTextField.text  isEqual: @"0"] || [self.amountTextField.text  isEqual: @""] || !date) {
+    if ([self.amountTextField.text  isEqual: @"0"] || self.selectedBudgetIndex == nil || !date) {
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Invalid Input"
                                                                        message:@"Please fill all fields correctly."
                                                                 preferredStyle:UIAlertControllerStyleAlert];
@@ -411,6 +418,9 @@ replacementString:(NSString *)string {
         return;
     }
     
+    Budget *budget = (Budget *)[context existingObjectWithID:budgetID error:&error];
+    Category *category = (Category *)[context existingObjectWithID:categoryID error:&error];
+    
     // Parse amount as NSDecimalNumber using NSNumberFormatter for safety
     NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
     formatter.numberStyle = NSNumberFormatterDecimalStyle;
@@ -418,13 +428,6 @@ replacementString:(NSString *)string {
     NSDecimalNumber *amount = [NSDecimalNumber decimalNumberWithDecimal:amountNumber.decimalValue];
         
     Transaction *transaction = self.isEditMode ? self.existingTransaction : [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
-    
-    NSDate *now = [NSDate date];
-    if (self.isEditMode) {
-        transaction.updatedAt = now;
-    } else {
-        transaction.createdAt = now;
-    }
 
     transaction.amount = amount;
     transaction.date = date;

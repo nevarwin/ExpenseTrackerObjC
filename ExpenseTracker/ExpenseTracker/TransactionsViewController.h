@@ -37,6 +37,12 @@
 
 @property (nonatomic, assign) NSInteger currentPickerMode;
 
+@property (nonatomic, strong) NSArray *budgets;
+@property (nonatomic, strong) NSArray *category;
+
+@property (nonatomic, strong) NSDate *createdAt;
+@property (nonatomic, strong) NSDate *updatedAt;
+
 @end
 
 #endif /* TransactionsViewController_h */
