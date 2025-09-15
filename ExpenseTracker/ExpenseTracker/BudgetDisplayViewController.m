@@ -55,10 +55,10 @@
     }
     
     self.headerLabelTextField.delegate = self;
+    self.rightButton.enabled = self.headerLabelTextField.text.length == 0 ? NO : YES;
     [self setupHeaderView];
     [self setupTableView];
     [self selectEmptyScreen];
-    
     // Add observer for keyboard notifications
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(keyboardWillShow:)
@@ -476,8 +476,8 @@
     
     
     if (budgetName.length == 0) {
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Invalid"
-                                                                       message:@"An error occured."
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Invalid budget name"
+                                                                       message:@"Please enter a valid budget name."
                                                                 preferredStyle:UIAlertControllerStyleAlert];
         
         UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
@@ -487,6 +487,22 @@
         [alert addAction:ok];
         
         [self presentViewController:alert animated:YES completion:nil];
+        return;
+    }
+    
+    if (self.expenses.count == 0 || self.income.count == 0) {
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Invalid expense or income"
+                                                                       message:@"Please enter a valid expense or income."
+                                                                preferredStyle:UIAlertControllerStyleAlert];
+        
+        UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
+                                                     style:UIAlertActionStyleDefault
+                                                   handler:nil];
+        
+        [alert addAction:ok];
+        
+        [self presentViewController:alert animated:YES completion:nil];
+        return;
     }
     
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
