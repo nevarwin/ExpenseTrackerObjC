@@ -33,9 +33,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSMutableArray* incomeAmounts;
 @property (nonatomic, strong) NSMutableArray* expensesAmounts;
 
-@property (nonatomic) NSInteger incomeCount;
-@property (nonatomic) NSInteger expenseCount;
-
 @end
 
 NS_ASSUME_NONNULL_END
