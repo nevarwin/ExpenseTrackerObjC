@@ -184,7 +184,6 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    // cellForRowAtIndexPath
     if (indexPath.section == 0) {
         // Expense attributes
         NSString *expenseName = self.expenses[indexPath.row];
@@ -332,6 +331,14 @@
         NSLog(@"editingStyle: %ld", (long)editingStyle);
         return;
     }
+    if(indexPath.section == 0){
+        [self.expenses removeObjectAtIndex:indexPath.row];
+        [self.expensesAmounts removeObjectAtIndex:indexPath.row];
+    } else {
+        [self.income removeObjectAtIndex:indexPath.row];
+        [self.incomeAmounts removeObjectAtIndex:indexPath.row];
+    }
+    [self.budgetDisplayTableView reloadData];
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
@@ -534,7 +541,7 @@
         } else {
             incomeAllocation.allocatedAmount = [NSDecimalNumber zero];
         }
-
+        
         incomeAllocation.createdAt = [NSDate date];
         
         incomeCategory.allocations = [NSSet setWithObject:incomeAllocation];
@@ -544,9 +551,6 @@
     budget.category = categoriesSet;
     if ([self.delegate respondsToSelector:@selector(didUpdateData)]) {
         [self.delegate didUpdateData];
-        NSLog(@"did update");
-    } else {
-        NSLog(@"did not update");
     }
     // Save context
     NSError *error = nil;
