@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1831B2BB2E77EF310076F721 /* Transaction+CoreDataClass.m in Sources */ = {isa = PBXBuildFile; fileRef = 1831B2B82E77EF310076F721 /* Transaction+CoreDataClass.m */; };
+		1831B2BC2E77EF310076F721 /* Transaction+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 1831B2BA2E77EF310076F721 /* Transaction+CoreDataProperties.m */; };
+		1831B2C12E77F53E0076F721 /* Budget+CoreDataClass.m in Sources */ = {isa = PBXBuildFile; fileRef = 1831B2BE2E77F53E0076F721 /* Budget+CoreDataClass.m */; };
+		1831B2C22E77F53E0076F721 /* Budget+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 1831B2C02E77F53E0076F721 /* Budget+CoreDataProperties.m */; };
 		18E0C21C2E14E2C400CE9F57 /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 18E0C21B2E14E2C400CE9F57 /* CoreData.framework */; };
 /* End PBXBuildFile section */
 
@@ -28,6 +32,14 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		1831B2B72E77EF310076F721 /* Transaction+CoreDataClass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Transaction+CoreDataClass.h"; sourceTree = "<group>"; };
+		1831B2B82E77EF310076F721 /* Transaction+CoreDataClass.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "Transaction+CoreDataClass.m"; sourceTree = "<group>"; };
+		1831B2B92E77EF310076F721 /* Transaction+CoreDataProperties.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Transaction+CoreDataProperties.h"; sourceTree = "<group>"; };
+		1831B2BA2E77EF310076F721 /* Transaction+CoreDataProperties.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "Transaction+CoreDataProperties.m"; sourceTree = "<group>"; };
+		1831B2BD2E77F53E0076F721 /* Budget+CoreDataClass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Budget+CoreDataClass.h"; sourceTree = "<group>"; };
+		1831B2BE2E77F53E0076F721 /* Budget+CoreDataClass.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "Budget+CoreDataClass.m"; sourceTree = "<group>"; };
+		1831B2BF2E77F53E0076F721 /* Budget+CoreDataProperties.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Budget+CoreDataProperties.h"; sourceTree = "<group>"; };
+		1831B2C02E77F53E0076F721 /* Budget+CoreDataProperties.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "Budget+CoreDataProperties.m"; sourceTree = "<group>"; };
 		1873DFEC2E0D3E6500C2C70B /* ExpenseTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExpenseTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1873E00A2E0D3E6600C2C70B /* ExpenseTrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExpenseTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1873E0142E0D3E6700C2C70B /* ExpenseTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExpenseTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -94,6 +106,14 @@
 		1873DFE32E0D3E6500C2C70B = {
 			isa = PBXGroup;
 			children = (
+				1831B2BD2E77F53E0076F721 /* Budget+CoreDataClass.h */,
+				1831B2BE2E77F53E0076F721 /* Budget+CoreDataClass.m */,
+				1831B2BF2E77F53E0076F721 /* Budget+CoreDataProperties.h */,
+				1831B2C02E77F53E0076F721 /* Budget+CoreDataProperties.m */,
+				1831B2B72E77EF310076F721 /* Transaction+CoreDataClass.h */,
+				1831B2B82E77EF310076F721 /* Transaction+CoreDataClass.m */,
+				1831B2B92E77EF310076F721 /* Transaction+CoreDataProperties.h */,
+				1831B2BA2E77EF310076F721 /* Transaction+CoreDataProperties.m */,
 				1873DFEE2E0D3E6500C2C70B /* ExpenseTracker */,
 				1873E00D2E0D3E6600C2C70B /* ExpenseTrackerTests */,
 				1873E0172E0D3E6700C2C70B /* ExpenseTrackerUITests */,
@@ -264,6 +284,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1831B2C12E77F53E0076F721 /* Budget+CoreDataClass.m in Sources */,
+				1831B2C22E77F53E0076F721 /* Budget+CoreDataProperties.m in Sources */,
+				1831B2BB2E77EF310076F721 /* Transaction+CoreDataClass.m in Sources */,
+				1831B2BC2E77EF310076F721 /* Transaction+CoreDataProperties.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
