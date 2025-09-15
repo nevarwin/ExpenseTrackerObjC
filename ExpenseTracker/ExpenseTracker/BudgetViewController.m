@@ -40,12 +40,12 @@
     NSFetchRequest *request = [NSFetchRequest fetchRequestWithEntityName:@"Budget"];
     NSPredicate *activePredicate = [NSPredicate predicateWithFormat:@"isActive == YES"];
     NSSortDescriptor *sort = [NSSortDescriptor sortDescriptorWithKey:@"createdAt" ascending:NO];
-
+    
     request.predicate = activePredicate;
     request.sortDescriptors = @[sort];
     
     self.budgets = [context executeFetchRequest:request error:&error];
-
+    
     [self.budgetTableView reloadData];
 }
 
@@ -183,9 +183,15 @@
     // Set detail text with totals
     NSString *detailText = [NSString stringWithFormat:@"Expenses: ₱%.2f | Income: ₱%.2f", totalExpense.doubleValue, totalIncome.doubleValue];
     cell.detailTextLabel.text = detailText;
+    cell.contentView.layer.masksToBounds = YES;
+    cell.contentView.layer.cornerRadius = 8;
     
     cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     return cell;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return 100;
 }
 
 #pragma mark - UITableViewDelegate
@@ -210,28 +216,59 @@
 }
 
 // Deleting via swipe gesture
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
+- (void)tableView:(UITableView *)tableView
+commitEditingStyle:(UITableViewCellEditingStyle)editingStyle
+forRowAtIndexPath:(NSIndexPath *)indexPath {
+
     if (editingStyle != UITableViewCellEditingStyleDelete) {
         NSLog(@"editingStyle: %ld", (long)editingStyle);
         return;
     }
-    
-//    if (indexPath.row >= self.budgets.count){
-//        NSLog(@"Attempted to delete budget at invalid index: %ld", (long)indexPath.row);
-//        return;
-//    }
-    
-    Budget *budgetToDelete = self.budgets[indexPath.row];
-    
-    budgetToDelete.isActive = NO;
-    
-    NSError *saveError = nil;
-    if(![self.managedObjectContext save:&saveError]){
-        NSLog(@"Failed to save context after budget deletion: %@, %@", saveError, saveError.userInfo);
-        return;
-    }
-    
-    [self fetchBudgets];
+
+    UIAlertController *confirmAlert = [UIAlertController alertControllerWithTitle:@"Warning!"
+                                                                          message:@"Are you sure you want to delete this budget?"
+                                                                   preferredStyle:UIAlertControllerStyleAlert];
+
+    UIAlertAction *yesBtn = [UIAlertAction actionWithTitle:@"Yes"
+                                                     style:UIAlertActionStyleDestructive
+                                                   handler:^(UIAlertAction * _Nonnull action) {
+        NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+        Budget *budgetToDelete = self.budgets[indexPath.row];
+        budgetToDelete.isActive = NO;
+
+        NSError *saveError = nil;
+        if (![context save:&saveError]) {
+            NSLog(@"Failed to save context after budget deletion: %@, %@", saveError, saveError.userInfo);
+            
+            // Show alert on failure
+            UIAlertController *errorAlert = [UIAlertController alertControllerWithTitle:@"Error"
+                                                                                message:@"Failed to save budget deletion. Try again later."
+                                                                         preferredStyle:UIAlertControllerStyleAlert];
+            UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil];
+            [errorAlert addAction:ok];
+
+            // Reset flag
+            budgetToDelete.isActive = YES;
+
+            // Present error alert
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self presentViewController:errorAlert animated:YES completion:nil];
+            });
+
+            return;
+        }
+
+        [self fetchBudgets];
+    }];
+
+    UIAlertAction *noBtn = [UIAlertAction actionWithTitle:@"No"
+                                                    style:UIAlertActionStyleCancel
+                                                  handler:nil];
+
+    [confirmAlert addAction:noBtn];
+    [confirmAlert addAction:yesBtn];
+
+    [self presentViewController:confirmAlert animated:YES completion:nil];
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
