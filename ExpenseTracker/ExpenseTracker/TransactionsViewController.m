@@ -298,7 +298,21 @@ replacementString:(NSString *)string {
 }
 
 - (void)pickerButtonTapped:(UIButton *)sender {
+    [self fetchCoreData];
     NSString *title = [sender titleForState:UIControlStateNormal];
+    switch (sender.tag) {
+        case 0:
+            title = @"Budget";
+            break;
+        case 1:
+            title = @"Type";
+            break;
+        case 2:
+            title = @"Category";
+        default:
+            title = [sender titleForState:UIControlStateNormal];
+            break;
+    }
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
                                                                    message:@"\n\n\n\n\n\n"
                                                             preferredStyle:UIAlertControllerStyleActionSheet];
@@ -394,6 +408,8 @@ replacementString:(NSString *)string {
 
 - (void)leftButtonTapped { [self dismissViewControllerAnimated:YES completion:nil]; }
 - (void)rightButtonTapped {
+    // TODO: Use the amount for the budget allocation usedAmount
+    // TODO: Remaining amount in the budget
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     NSError *error = nil;
     
