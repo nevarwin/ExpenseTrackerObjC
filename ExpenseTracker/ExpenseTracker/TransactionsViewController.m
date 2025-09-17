@@ -5,6 +5,7 @@
 #import "CoreDataManager.h"
 #import "Budget+CoreDataClass.h"
 #import "Category+CoreDataClass.h"
+#import "BudgetAllocation+CoreDataClass.h"
 
 @interface TransactionsViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate, UIPickerViewDelegate, UIPickerViewDataSource>
 @property (nonatomic, assign) BOOL isDatePickerVisible;
@@ -184,9 +185,11 @@ replacementString:(NSString *)string {
     
     NSArray<Category *> *results = [context executeFetchRequest:fetchRequest error:error];
     if (!results) return nil;
-
     NSMutableArray *categoryArray = [NSMutableArray array];
     for (Category *category in results) {
+        NSLog(@"objectID: %@", category.budget.objectID);
+        NSLog(@"condition: %d", self.selectedBudgetIndex == category.budget.objectID);
+        NSLog(@"budgetIndex: %@", self.selectedBudgetIndex);
         if (category.name && self.selectedBudgetIndex == category.budget.objectID && self.selectedBudgetIndex != nil) {
             [categoryArray addObject:@{
                 @"name": category.name,
@@ -251,7 +254,7 @@ replacementString:(NSString *)string {
             [typeButton setTitle:@"Select Budget" forState:UIControlStateNormal];
             typeButton.translatesAutoresizingMaskIntoConstraints = NO;
             typeButton.tag = 0;
-            typeButton.enabled = self.selectedBudgetIndex == nil ? NO : YES;
+            typeButton.enabled = self.budgets.count == 0 ? NO : YES;
             [typeButton addTarget:self action:@selector(pickerButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
             [cell.contentView addSubview:typeButton];
             
@@ -268,7 +271,7 @@ replacementString:(NSString *)string {
             [typeButton setTitle:@"Select Type" forState:UIControlStateNormal];
             typeButton.translatesAutoresizingMaskIntoConstraints = NO;
             typeButton.tag = 1;
-            typeButton.enabled = self.selectedBudgetIndex == nil ? NO : YES;
+            typeButton.enabled = self.budgets.count == 0 ? NO : YES;
             [typeButton addTarget:self action:@selector(pickerButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
             [cell.contentView addSubview:typeButton];
             
@@ -284,7 +287,7 @@ replacementString:(NSString *)string {
             [typeButton setTitle:@"Select Category" forState:UIControlStateNormal];
             typeButton.translatesAutoresizingMaskIntoConstraints = NO;
             typeButton.tag = 2;
-            typeButton.enabled = self.selectedBudgetIndex == nil ? NO : YES;
+            typeButton.enabled = self.budgets.count == 0 ? NO : YES;
             [typeButton addTarget:self action:@selector(pickerButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
             [cell.contentView addSubview:typeButton];
             
@@ -298,7 +301,6 @@ replacementString:(NSString *)string {
 }
 
 - (void)pickerButtonTapped:(UIButton *)sender {
-    [self fetchCoreData];
     NSString *title = [sender titleForState:UIControlStateNormal];
     switch (sender.tag) {
         case 0:
@@ -374,7 +376,8 @@ replacementString:(NSString *)string {
     
     [alert addAction:done];
     [alert addAction:cancel];
-    
+    NSLog(@"selectedBudgetIndex in pickerbutton: %@", self.selectedBudgetIndex);
+    [self fetchCoreData];
     [self presentViewController:alert animated:YES completion:nil];
 }
 
@@ -448,6 +451,9 @@ replacementString:(NSString *)string {
     transaction.amount = amount;
     transaction.date = date;
     transaction.budget = budget;
+    
+    NSLog(@"allocationsSet: %0@", transaction.budget.allocations);
+    
     transaction.category = category;
     transaction.category.isIncome = type;
 
