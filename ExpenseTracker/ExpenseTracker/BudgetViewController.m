@@ -7,6 +7,7 @@
 #import "BudgetViewController.h"
 #import "AppDelegate.h"
 #import "Budget+CoreDataClass.h"
+#import "Transaction+CoreDataClass.h"
 #import "BudgetDisplayViewController.h"
 #import "CoreDataManager.h"
 #import "BudgetDisplayViewController.h"
@@ -232,9 +233,20 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
     UIAlertAction *yesBtn = [UIAlertAction actionWithTitle:@"Yes"
                                                      style:UIAlertActionStyleDestructive
                                                    handler:^(UIAlertAction * _Nonnull action) {
+        
         NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+        
         Budget *budgetToDelete = self.budgets[indexPath.row];
         budgetToDelete.isActive = NO;
+        
+        NSSet *transactions = budgetToDelete.transactions;
+        
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"isActive == YES"];
+        NSSet *activeTransactions = [transactions filteredSetUsingPredicate:predicate];
+        
+        for (Transaction *transaction in activeTransactions){
+            transaction.isActive = NO;
+        }
 
         NSError *saveError = nil;
         if (![context save:&saveError]) {
