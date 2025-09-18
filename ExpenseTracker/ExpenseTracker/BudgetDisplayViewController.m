@@ -22,7 +22,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.delegate = self;
     // Set background color to match Health app
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
     self.title = self.isEditMode ? @"Edit Budget" : @"Add Budget";
