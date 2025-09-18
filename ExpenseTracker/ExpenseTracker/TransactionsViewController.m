@@ -466,11 +466,18 @@ replacementString:(NSString *)string {
     transaction.amount = amount;
     transaction.date = date;
     transaction.budget = budget;
-    
-    NSLog(@"allocationsSet: %@", transaction.budget.allocations);
-    
     transaction.category = category;
     transaction.category.isIncome = type;
+    
+    NSLog(@"transaction.category: %@", transaction.category);
+    NSSet *categories = [NSSet setWithObject:transaction.category];
+    for (Category *category in categories){
+        for (BudgetAllocation *allocation in category.allocations){
+//            NSDecimalNumber usedAmount minus the amount and the allocated amount
+            allocation.usedAmount = amount;
+            NSLog(@"usedAmount: %@", allocation);
+        }
+    }
     
     if (![context save:&error]) {
         NSLog(@"Failed to save transaction: %@", error);
