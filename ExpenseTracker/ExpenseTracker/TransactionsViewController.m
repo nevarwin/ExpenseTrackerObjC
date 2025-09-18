@@ -26,13 +26,13 @@
     self.rightButton = [[UIBarButtonItem alloc] initWithTitle:rightButtonTitle style:UIBarButtonItemStyleDone target:self action:@selector(rightButtonTapped)];
     self.navigationItem.leftBarButtonItem = self.leftButton;
     self.navigationItem.rightBarButtonItem = self.rightButton;
+    self.selectedTypeIndex = 3;
     
     [self setupTableView];
     [self setupPickers];
     [self setupTypePicker];
     [self selectEmptyScreen];
     [self fetchCoreData];
-    self.rightButton.enabled = self.selectedBudgetIndex == nil ? NO : YES;
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -120,6 +120,7 @@ replacementString:(NSString *)string {
         // Type
         self.selectedTypeIndex = self.existingTransaction.category.isIncome;
         UIButton *typeButton = [self buttonForRow:3];
+        typeButton.enabled = YES;
         [typeButton setTitle:self.typeValues[self.selectedTypeIndex] forState:UIControlStateNormal];
         
         // Budget
@@ -131,12 +132,13 @@ replacementString:(NSString *)string {
         }
         
         // Category
-        NSArray *category = [self getCategoryValues:context error:&error isIncome:self.existingTransaction.category.isIncome];
-        self.categoryValues = [category valueForKey:@"name"];
+        self.category = [self getCategoryValues:context error:&error isIncome:self.existingTransaction.category.isIncome];
+        self.categoryValues = [self.category valueForKey:@"name"];
         
         self.selectedCategoryIndex = self.existingTransaction.category.objectID;
         
         UIButton *categoryButton = [self buttonForRow:4];
+        categoryButton.enabled = YES;
         if (self.existingTransaction.category.objectID) {
             [categoryButton setTitle:self.existingTransaction.category.name forState:UIControlStateNormal];
         }
@@ -163,11 +165,10 @@ replacementString:(NSString *)string {
     
     NSArray<Budget *> *results = [context executeFetchRequest:fetchRequest error:error];
     if (!results) return nil;
-
+    
     NSMutableArray *budgetsArray = [NSMutableArray array];
     for (Budget *budget in results) {
         if (budget.name) {
-            self.selectedBudgetIndex = budget.objectID;
             [budgetsArray addObject:@{
                 @"name": budget.name,
                 @"objectID": budget.objectID
@@ -187,9 +188,6 @@ replacementString:(NSString *)string {
     if (!results) return nil;
     NSMutableArray *categoryArray = [NSMutableArray array];
     for (Category *category in results) {
-        NSLog(@"objectID: %@", category.budget.objectID);
-        NSLog(@"condition: %d", self.selectedBudgetIndex == category.budget.objectID);
-        NSLog(@"budgetIndex: %@", self.selectedBudgetIndex);
         if (category.name && self.selectedBudgetIndex == category.budget.objectID && self.selectedBudgetIndex != nil) {
             [categoryArray addObject:@{
                 @"name": category.name,
@@ -203,7 +201,7 @@ replacementString:(NSString *)string {
 
 
 #pragma mark - UITableViewDataSource
-   
+
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView { return 1; }
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section { return 5; }
 
@@ -212,6 +210,11 @@ replacementString:(NSString *)string {
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellId];
     if (!cell) cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:cellId];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    
+    for (UIView *subview in cell.contentView.subviews) {
+            [subview removeFromSuperview];
+        
+    }
     
     switch (indexPath.row) {
         case 0: // Date
@@ -224,29 +227,29 @@ replacementString:(NSString *)string {
             ]];
             break;
         case 1: // Amount
-            {
-                UILabel *pesoLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 16, 20)];
-                pesoLabel.text = @"₱";
-                pesoLabel.font = self.amountTextField.font;
-                pesoLabel.textAlignment = NSTextAlignmentLeft;
-                pesoLabel.textColor = [UIColor systemTealColor];
-                cell.textLabel.text = @"Amount";
-                [cell.contentView addSubview:self.amountTextField];
-                
-                self.amountTextField.leftView = pesoLabel;
-                self.amountTextField.leftViewMode = UITextFieldViewModeAlways;
-                self.amountTextField.textColor = [UIColor systemTealColor];
-                self.amountTextField.translatesAutoresizingMaskIntoConstraints = NO;
-                self.amountTextField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
-                self.amountTextField.textAlignment = NSTextAlignmentRight;
-                self.amountTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
-                [NSLayoutConstraint activateConstraints:@[
-                    [self.amountTextField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
-                    [self.amountTextField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
-                    [self.amountTextField.widthAnchor constraintEqualToConstant:120]
-                ]];
-                break;
-            }
+        {
+            UILabel *pesoLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 16, 20)];
+            pesoLabel.text = @"₱";
+            pesoLabel.font = self.amountTextField.font;
+            pesoLabel.textAlignment = NSTextAlignmentLeft;
+            pesoLabel.textColor = [UIColor systemTealColor];
+            cell.textLabel.text = @"Amount";
+            [cell.contentView addSubview:self.amountTextField];
+            
+            self.amountTextField.leftView = pesoLabel;
+            self.amountTextField.leftViewMode = UITextFieldViewModeAlways;
+            self.amountTextField.textColor = [UIColor systemTealColor];
+            self.amountTextField.translatesAutoresizingMaskIntoConstraints = NO;
+            self.amountTextField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
+            self.amountTextField.textAlignment = NSTextAlignmentRight;
+            self.amountTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
+            [NSLayoutConstraint activateConstraints:@[
+                [self.amountTextField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
+                [self.amountTextField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+                [self.amountTextField.widthAnchor constraintEqualToConstant:120]
+            ]];
+            break;
+        }
         case 2: // Budget
         {
             cell.textLabel.text = @"Budget";
@@ -271,7 +274,7 @@ replacementString:(NSString *)string {
             [typeButton setTitle:@"Select Type" forState:UIControlStateNormal];
             typeButton.translatesAutoresizingMaskIntoConstraints = NO;
             typeButton.tag = 1;
-            typeButton.enabled = self.budgets.count == 0 ? NO : YES;
+            typeButton.enabled = self.selectedBudgetIndex == nil ? NO : YES;
             [typeButton addTarget:self action:@selector(pickerButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
             [cell.contentView addSubview:typeButton];
             
@@ -287,7 +290,7 @@ replacementString:(NSString *)string {
             [typeButton setTitle:@"Select Category" forState:UIControlStateNormal];
             typeButton.translatesAutoresizingMaskIntoConstraints = NO;
             typeButton.tag = 2;
-            typeButton.enabled = self.budgets.count == 0 ? NO : YES;
+            typeButton.enabled = self.selectedTypeIndex == 3 ? NO : YES;
             [typeButton addTarget:self action:@selector(pickerButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
             [cell.contentView addSubview:typeButton];
             
@@ -301,6 +304,8 @@ replacementString:(NSString *)string {
 }
 
 - (void)pickerButtonTapped:(UIButton *)sender {
+    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+    
     NSString *title = [sender titleForState:UIControlStateNormal];
     switch (sender.tag) {
         case 0:
@@ -330,7 +335,7 @@ replacementString:(NSString *)string {
     
     if(self.currentPickerMode == 0 && self.budgetValues.count == 0){
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"An error occured."
-                                                                       message:@"There is no existing budget. Please a budget to proceed."
+                                                                       message:@"There is no existing budget. Please add a budget to proceed."
                                                                 preferredStyle:UIAlertControllerStyleAlert];
         
         UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
@@ -344,6 +349,8 @@ replacementString:(NSString *)string {
     
     UIAlertAction *done = [UIAlertAction actionWithTitle:@"Done" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         NSInteger selectedRow;
+        NSError *error = nil;
+        
         switch (sender.tag) {
             case 0:
             {
@@ -351,14 +358,25 @@ replacementString:(NSString *)string {
                 NSDictionary *selectedBudget = self.budgets[selectedRow];
                 self.selectedBudgetIndex = selectedBudget[@"objectID"];
                 [sender setTitle:self.budgetValues[selectedRow] forState:UIControlStateNormal];
+                
+                NSIndexPath *indexPath3 = [NSIndexPath indexPathForRow:3 inSection:0];
+                NSIndexPath *indexPath4 = [NSIndexPath indexPathForRow:4 inSection:0];
+                [self.tableView reloadRowsAtIndexPaths:@[indexPath3, indexPath4]
+                                      withRowAnimation:UITableViewRowAnimationAutomatic];
                 break;
             }
             case 1:
+            {
                 selectedRow = [picker selectedRowInComponent:0];
                 self.selectedTypeIndex = selectedRow;
                 [sender setTitle:self.typeValues[selectedRow] forState:UIControlStateNormal];
-                break;
                 
+                self.category = [self getCategoryValues:context error:&error isIncome: self.selectedTypeIndex];
+                NSIndexPath *indexPath = [NSIndexPath indexPathForRow:4 inSection:0];
+                [self.tableView reloadRowsAtIndexPaths:@[indexPath]
+                                      withRowAnimation:UITableViewRowAnimationAutomatic];
+                break;
+            }
             case 2:
             {
                 selectedRow = [picker selectedRowInComponent:0];
@@ -370,14 +388,11 @@ replacementString:(NSString *)string {
             default:
                 break;
         }
-        
     }];
     UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil];
     
     [alert addAction:done];
     [alert addAction:cancel];
-    NSLog(@"selectedBudgetIndex in pickerbutton: %@", self.selectedBudgetIndex);
-    [self fetchCoreData];
     [self presentViewController:alert animated:YES completion:nil];
 }
 
@@ -422,7 +437,7 @@ replacementString:(NSString *)string {
     
     NSDate *date = self.datePicker.date;
     
-    if ([self.amountTextField.text  isEqual: @"0"] || self.selectedBudgetIndex == nil || !date) {
+    if (([self.amountTextField.text  isEqual: @""] || [self.amountTextField.text  isEqual: @"0"]) || self.selectedBudgetIndex == nil || !date) {
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Invalid Input"
                                                                        message:@"Please fill all fields correctly."
                                                                 preferredStyle:UIAlertControllerStyleAlert];
@@ -445,18 +460,18 @@ replacementString:(NSString *)string {
     formatter.numberStyle = NSNumberFormatterDecimalStyle;
     NSNumber *amountNumber = [formatter numberFromString:self.amountTextField.text];
     NSDecimalNumber *amount = [NSDecimalNumber decimalNumberWithDecimal:amountNumber.decimalValue];
-        
+    
     Transaction *transaction = self.isEditMode ? self.existingTransaction : [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
-
+    
     transaction.amount = amount;
     transaction.date = date;
     transaction.budget = budget;
     
-    NSLog(@"allocationsSet: %0@", transaction.budget.allocations);
+    NSLog(@"allocationsSet: %@", transaction.budget.allocations);
     
     transaction.category = category;
     transaction.category.isIncome = type;
-
+    
     if (![context save:&error]) {
         NSLog(@"Failed to save transaction: %@", error);
     } else {
