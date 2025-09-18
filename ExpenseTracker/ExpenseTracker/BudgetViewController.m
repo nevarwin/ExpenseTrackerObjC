@@ -8,6 +8,8 @@
 #import "AppDelegate.h"
 #import "Budget+CoreDataClass.h"
 #import "Transaction+CoreDataClass.h"
+#import "BudgetAllocation+CoreDataClass.h"
+#import "Category+CoreDataClass.h"
 #import "BudgetDisplayViewController.h"
 #import "CoreDataManager.h"
 #import "BudgetDisplayViewController.h"
@@ -149,6 +151,7 @@
     
     Budget *budget = self.budgets[indexPath.row];
     cell.textLabel.text = budget.name;
+    cell.textLabel.font = [UIFont systemFontOfSize:24];
     
     // Date formatter
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
@@ -167,23 +170,24 @@
     // TODO: Refactor the UI of Totals
     // Calculate total expense (using NSDecimalNumber)
     NSDecimalNumber *totalExpense = [NSDecimalNumber zero];
-//    if (budget.expenses) {
-//        totalExpense = [budget.expenses.travel decimalNumberByAdding:budget.expenses.save];
-//        totalExpense = [totalExpense decimalNumberByAdding:budget.expenses.housing];
-//        totalExpense = [totalExpense decimalNumberByAdding:budget.expenses.grocery];
-//        totalExpense = [totalExpense decimalNumberByAdding:budget.expenses.electricity];
-//    }
-    
-    // Calculate total income (using NSDecimalNumber)
     NSDecimalNumber *totalIncome = [NSDecimalNumber zero];
-//    if (budget.income) {
-//        totalIncome = [budget.income.salary decimalNumberByAdding:budget.income.savings];
-//        totalIncome = [totalIncome decimalNumberByAdding:budget.income.bonus];
-//    }
+    
+    NSSet *categories = budget.category;
+    
+    for (Category *category in categories){
+        for (BudgetAllocation *allocation in category.allocations){
+            if (category.isIncome) {
+                totalIncome = [totalIncome decimalNumberByAdding:allocation.allocatedAmount];
+            } else {
+                totalExpense = [totalExpense decimalNumberByAdding:allocation.allocatedAmount];
+            }
+        }
+    }
     
     // Set detail text with totals
-    NSString *detailText = [NSString stringWithFormat:@"Expenses: ₱%.2f | Income: ₱%.2f", totalExpense.doubleValue, totalIncome.doubleValue];
+    NSString *detailText = [NSString stringWithFormat:@"Expenses: ₱%.2f\nIncome: ₱%.2f", totalExpense.doubleValue, totalIncome.doubleValue];
     cell.detailTextLabel.text = detailText;
+    cell.detailTextLabel.numberOfLines = 0;
     cell.contentView.layer.masksToBounds = YES;
     cell.contentView.layer.cornerRadius = 8;
     
@@ -211,7 +215,7 @@
     displayVC.budget = self.budgets[indexPath.row];
     displayVC.isEditMode = YES;
     displayVC.managedObjectContext = self.managedObjectContext;
-
+    
     // Push onto navigation stack
     [self.navigationController pushViewController:displayVC animated:YES];
 }
@@ -220,16 +224,16 @@
 - (void)tableView:(UITableView *)tableView
 commitEditingStyle:(UITableViewCellEditingStyle)editingStyle
 forRowAtIndexPath:(NSIndexPath *)indexPath {
-
+    
     if (editingStyle != UITableViewCellEditingStyleDelete) {
         NSLog(@"editingStyle: %ld", (long)editingStyle);
         return;
     }
-
+    
     UIAlertController *confirmAlert = [UIAlertController alertControllerWithTitle:@"Warning!"
                                                                           message:@"Are you sure you want to delete this budget?"
                                                                    preferredStyle:UIAlertControllerStyleAlert];
-
+    
     UIAlertAction *yesBtn = [UIAlertAction actionWithTitle:@"Yes"
                                                      style:UIAlertActionStyleDestructive
                                                    handler:^(UIAlertAction * _Nonnull action) {
@@ -247,7 +251,7 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
         for (Transaction *transaction in activeTransactions){
             transaction.isActive = NO;
         }
-
+        
         NSError *saveError = nil;
         if (![context save:&saveError]) {
             NSLog(@"Failed to save context after budget deletion: %@, %@", saveError, saveError.userInfo);
@@ -258,28 +262,28 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
                                                                          preferredStyle:UIAlertControllerStyleAlert];
             UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil];
             [errorAlert addAction:ok];
-
+            
             // Reset flag
             budgetToDelete.isActive = YES;
-
+            
             // Present error alert
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self presentViewController:errorAlert animated:YES completion:nil];
             });
-
+            
             return;
         }
-
+        
         [self fetchBudgets];
     }];
-
+    
     UIAlertAction *noBtn = [UIAlertAction actionWithTitle:@"No"
                                                     style:UIAlertActionStyleCancel
                                                   handler:nil];
-
+    
     [confirmAlert addAction:noBtn];
     [confirmAlert addAction:yesBtn];
-
+    
     [self presentViewController:confirmAlert animated:YES completion:nil];
 }
 
@@ -294,6 +298,7 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
 
 #pragma mark - BudgetDisplayViewControllerDelegate
 - (void)didUpdateData {
+    NSLog(@"is this called");
     [self fetchBudgets];
 }
 
