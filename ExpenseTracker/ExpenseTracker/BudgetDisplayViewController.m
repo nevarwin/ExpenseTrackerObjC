@@ -353,16 +353,14 @@
 
 - (void)plusButtonTapped:(UIButton *)sender indexPath:(NSIndexPath *)indexPath {
     NSInteger section = sender.tag;
-    NSInteger row;
-    NSString *actionTitle = @"";
+    NSInteger row = NSNotFound;
+    NSString *actionTitle = @"Add";
     
     if ([indexPath isKindOfClass:[NSIndexPath class]]) {
         NSIndexPath *correctIndexPath = (NSIndexPath *)indexPath;
         row = correctIndexPath.row;
         section = correctIndexPath.section;
         actionTitle = @"Update";
-    } else {
-        actionTitle = @"Add";
     }
     
     
@@ -373,16 +371,17 @@
     
     [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
         textField.placeholder = @"Enter name";
-        if (section == 0) {
-            if (row < self.expenses.count) {
-                textField.text = self.expenses[row];
-            }
-        } else if (section == 1) {
-            if (row < self.income.count) {
-                textField.text = self.income[row];
+        if (row != NSNotFound) {
+            if (section == 0) {
+                if (row < self.expenses.count) {
+                    textField.text = self.expenses[row];
+                }
+            } else if (section == 1) {
+                if (row < self.income.count) {
+                    textField.text = self.income[row];
+                }
             }
         }
-        
     }];
     
     [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
@@ -396,26 +395,28 @@
         textField.leftViewMode = UITextFieldViewModeAlways;
         textField.placeholder = @"Enter amount";
         textField.keyboardType = UIKeyboardTypeDecimalPad;
-        if (section == 0) {
-            if (row < self.expensesAmounts.count) {
-                id value = self.expensesAmounts[row];
-                if ([value isKindOfClass:[NSDecimalNumber class]]) {
-                    textField.text = [(NSDecimalNumber *)value stringValue];
-                } else if ([value isKindOfClass:[NSString class]]) {
-                    textField.text = (NSString *)value;
-                } else {
-                    textField.text = @"";
+        if (row != NSNotFound) {
+            if (section == 0) {
+                if (row < self.expensesAmounts.count) {
+                    id value = self.expensesAmounts[row];
+                    if ([value isKindOfClass:[NSDecimalNumber class]]) {
+                        textField.text = [(NSDecimalNumber *)value stringValue];
+                    } else if ([value isKindOfClass:[NSString class]]) {
+                        textField.text = (NSString *)value;
+                    } else {
+                        textField.text = @"";
+                    }
                 }
-            }
-        } else if (section == 1) {
-            if (row < self.incomeAmounts.count) {
-                id value = self.incomeAmounts[row];
-                if ([value isKindOfClass:[NSDecimalNumber class]]) {
-                    textField.text = [(NSDecimalNumber *)value stringValue];
-                } else if ([value isKindOfClass:[NSString class]]) {
-                    textField.text = (NSString *)value;
-                } else {
-                    textField.text = @"";
+            } else if (section == 1) {
+                if (row < self.incomeAmounts.count) {
+                    id value = self.incomeAmounts[row];
+                    if ([value isKindOfClass:[NSDecimalNumber class]]) {
+                        textField.text = [(NSDecimalNumber *)value stringValue];
+                    } else if ([value isKindOfClass:[NSString class]]) {
+                        textField.text = (NSString *)value;
+                    } else {
+                        textField.text = @"";
+                    }
                 }
             }
         }
@@ -435,20 +436,23 @@
         }
         
         if ([actionTitle isEqual:@"Update"]) {
+            if (row == NSNotFound) {
+                return; // Safety: should not happen, but avoid using an invalid row
+            }
             if (section == 0) {
-                self.expenses[row] = name;
-                self.expensesAmounts[row] = amount;
+                if (row < self.expenses.count) self.expenses[row] = name;
+                if (row < self.expensesAmounts.count) self.expensesAmounts[row] = amount;
             } else {
-                self.income[row] = name;
-                self.incomeAmounts[row] = amount;
+                if (row < self.income.count) self.income[row] = name;
+                if (row < self.incomeAmounts.count) self.incomeAmounts[row] = amount;
             }
         } else {
             if (section == 0) {
-                [self.expenses addObject:name];
-                [self.expensesAmounts addObject:amount];
+                [self.expenses addObject:name ?: @""];
+                [self.expensesAmounts addObject:amount ?: @""];
             } else {
-                [self.income addObject:name];
-                [self.incomeAmounts addObject:amount];
+                [self.income addObject:name ?: @""];
+                [self.incomeAmounts addObject:amount ?: @""];
             }
         }
         
