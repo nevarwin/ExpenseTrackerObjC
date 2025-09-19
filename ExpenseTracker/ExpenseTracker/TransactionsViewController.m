@@ -6,6 +6,7 @@
 #import "Budget+CoreDataClass.h"
 #import "Category+CoreDataClass.h"
 #import "BudgetAllocation+CoreDataClass.h"
+#import "Transaction+CoreDataClass.h"
 
 @interface TransactionsViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate, UIPickerViewDelegate, UIPickerViewDataSource>
 @property (nonatomic, assign) BOOL isDatePickerVisible;
@@ -212,7 +213,7 @@ replacementString:(NSString *)string {
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     
     for (UIView *subview in cell.contentView.subviews) {
-            [subview removeFromSuperview];
+        [subview removeFromSuperview];
         
     }
     
@@ -430,6 +431,8 @@ replacementString:(NSString *)string {
     // TODO: Remaining amount in the budget
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     NSError *error = nil;
+    NSDecimalNumber *totalUsedAmount = [NSDecimalNumber zero];
+    BOOL amountOverflow = NO;
     
     NSInteger type = self.selectedTypeIndex;
     NSManagedObjectID *budgetID = self.selectedBudgetIndex;
@@ -473,10 +476,19 @@ replacementString:(NSString *)string {
     NSSet *categories = [NSSet setWithObject:transaction.category];
     for (Category *category in categories){
         for (BudgetAllocation *allocation in category.allocations){
-//            NSDecimalNumber usedAmount minus the amount and the allocated amount
-            allocation.usedAmount = amount;
-            NSLog(@"usedAmount: %@", allocation);
+            NSDecimalNumber *previousAmount = allocation.usedAmount;
+            if (previousAmount < allocation.allocatedAmount) {
+                totalUsedAmount = [previousAmount decimalNumberByAdding:amount];
+                allocation.usedAmount = totalUsedAmount;
+            }
+            amountOverflow = YES;
         }
+    }
+    
+    NSLog(@"amountOverflow: %d", amountOverflow);
+    if (amountOverflow) {
+        NSLog(@"Transaction not saved due to amount overflow.");
+        return;
     }
     
     if (![context save:&error]) {
