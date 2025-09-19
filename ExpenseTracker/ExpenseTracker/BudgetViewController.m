@@ -298,7 +298,6 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
 
 #pragma mark - BudgetDisplayViewControllerDelegate
 - (void)didUpdateData {
-    NSLog(@"is this called");
     [self fetchBudgets];
 }
 
