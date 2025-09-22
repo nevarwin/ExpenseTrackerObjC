@@ -200,6 +200,16 @@ replacementString:(NSString *)string {
     return [categoryArray copy];
 }
 
+- (void)showAlertWithTitle:(NSString *)title message:(NSString *)message {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
+                                                                   message:message
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
+    [alert addAction:ok];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
+
 
 #pragma mark - UITableViewDataSource
 
@@ -440,18 +450,14 @@ replacementString:(NSString *)string {
     
     NSDate *date = self.datePicker.date;
     
-    if (([self.amountTextField.text  isEqual: @""] || [self.amountTextField.text  isEqual: @"0"]) || self.selectedBudgetIndex == nil || !date) {
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Invalid Input"
-                                                                       message:@"Please fill all fields correctly."
-                                                                preferredStyle:UIAlertControllerStyleAlert];
+    if ([self.amountTextField.text  isEqual: @""] ||
+        [self.amountTextField.text  isEqual: @"0"] ||
+        self.selectedBudgetIndex == nil ||
+        [self.amountTextField.text  isEqual: @""]  ||
+        self.selectedCategoryIndex == nil ||
+        !date) {
         
-        UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
-                                                     style:UIAlertActionStyleDefault
-                                                   handler:nil];
-        
-        [alert addAction:ok];
-        
-        [self presentViewController:alert animated:YES completion:nil];
+        [self showAlertWithTitle:@"Invalid Input" message:@"Please fill all fields correctly."];
         return;
     }
     
@@ -464,6 +470,23 @@ replacementString:(NSString *)string {
     NSNumber *amountNumber = [formatter numberFromString:self.amountTextField.text];
     NSDecimalNumber *amount = [NSDecimalNumber decimalNumberWithDecimal:amountNumber.decimalValue];
     
+    for (BudgetAllocation *allocation in category.allocations) {
+        NSDecimalNumber *usedAmount = allocation.usedAmount ?: [NSDecimalNumber zero];
+        usedAmount = allocation.usedAmount;
+        totalUsedAmount = [usedAmount decimalNumberByAdding:amount];
+        
+        if ([totalUsedAmount compare:allocation.allocatedAmount] != NSOrderedDescending) {
+            allocation.usedAmount = totalUsedAmount;
+        } else {
+            amountOverflow = YES;
+        }
+    }
+    
+    if (amountOverflow) {
+        [self showAlertWithTitle:@"Invalid Amount" message:@"There is no budget left."];
+        return;
+    }
+    
     Transaction *transaction = self.isEditMode ? self.existingTransaction : [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
     
     transaction.amount = amount;
@@ -471,25 +494,6 @@ replacementString:(NSString *)string {
     transaction.budget = budget;
     transaction.category = category;
     transaction.category.isIncome = type;
-    
-    NSLog(@"transaction.category: %@", transaction.category);
-    NSSet *categories = [NSSet setWithObject:transaction.category];
-    for (Category *category in categories){
-        for (BudgetAllocation *allocation in category.allocations){
-            NSDecimalNumber *previousAmount = allocation.usedAmount;
-            if (previousAmount < allocation.allocatedAmount) {
-                totalUsedAmount = [previousAmount decimalNumberByAdding:amount];
-                allocation.usedAmount = totalUsedAmount;
-            }
-            amountOverflow = YES;
-        }
-    }
-    
-    NSLog(@"amountOverflow: %d", amountOverflow);
-    if (amountOverflow) {
-        NSLog(@"Transaction not saved due to amount overflow.");
-        return;
-    }
     
     if (![context save:&error]) {
         NSLog(@"Failed to save transaction: %@", error);

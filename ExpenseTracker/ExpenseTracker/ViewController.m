@@ -8,6 +8,7 @@
 #import "ViewController.h"
 #import "Transaction+CoreDataClass.h"
 #import "Category+CoreDataClass.h"
+#import "BudgetAllocation+CoreDataClass.h"
 #import "TransactionsViewController.h"
 #import "AppDelegate.h"
 #import "CoreDataManager.h"
@@ -320,6 +321,7 @@
 // Deleting via swipe gesture
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
     if (editingStyle == UITableViewCellEditingStyleDelete) {
+        NSDecimalNumber *previousAmount = [NSDecimalNumber zero];
         // Fetch the Transaction object directly from NSFetchedResultsController
         Transaction *transactionToDelete = [self.fetchedResultsController objectAtIndexPath:indexPath];
         
@@ -328,9 +330,23 @@
         //[context deleteObject:transactionToDelete]; // Actual Deletion
         transactionToDelete.isActive = NO;
         
+        NSSet *categories = [NSSet setWithObject:transactionToDelete.category];
+        for (Category *category in categories){
+            for (BudgetAllocation *allocation in category.allocations){
+                previousAmount = allocation.usedAmount;
+                allocation.usedAmount = [previousAmount decimalNumberBySubtracting:transactionToDelete.amount];
+                NSLog(@"used amount: %@", allocation.usedAmount);
+            }
+        }
+        
         NSError *error = nil;
         if (![context save:&error]) {
             transactionToDelete.isActive = YES;
+            for (Category *category in categories){
+                for (BudgetAllocation *allocation in category.allocations){
+                    allocation.usedAmount = previousAmount;
+                }
+            }
             NSLog(@"Error deleting transaction: %@, %@", error, error.userInfo);
         }
     }
