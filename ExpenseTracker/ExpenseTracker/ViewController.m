@@ -39,7 +39,9 @@
     [self updateFetchPredicateForSegment:self.dateSegmentIndex typeIndex:@(self.typeSegmentIndex)];
     [self.transactionTableView reloadData];
 }
-
+// TODO: Add default All
+// TODO: Think of past year transactions
+// TODO: Pagination
 - (void)updateFetchPredicateForSegment:(NSInteger)dateIndex typeIndex:(NSNumber * _Nullable)typeIndex{
     NSMutableArray *subpredicates = [NSMutableArray array];
     [subpredicates addObject:[NSPredicate predicateWithFormat:@"isActive == YES"]];

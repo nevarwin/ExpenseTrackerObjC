@@ -31,7 +31,6 @@
     
     [self setupTableView];
     [self setupPickers];
-    [self setupTypePicker];
     [self selectEmptyScreen];
     [self fetchCoreData];
 }
@@ -67,9 +66,6 @@
     self.amountTextField.placeholder = @"Enter amount";
     self.amountTextField.keyboardType = UIKeyboardTypeDecimalPad;
     self.amountTextField.delegate = self;
-}
-
-- (void)setupTypePicker {
     self.typeValues = @[@"Expense", @"Income"];
     self.typePicker = [[UIPickerView alloc] init];
     self.typePicker.delegate = self;
@@ -315,6 +311,7 @@ replacementString:(NSString *)string {
 }
 
 - (void)pickerButtonTapped:(UIButton *)sender {
+    // TODO: UI fixes for iOS26
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     
     NSString *title = [sender titleForState:UIControlStateNormal];
