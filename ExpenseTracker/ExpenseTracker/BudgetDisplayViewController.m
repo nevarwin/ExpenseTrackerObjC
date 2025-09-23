@@ -565,9 +565,7 @@
     }
     
     budget.category = categoriesSet;
-    if ([self.delegate respondsToSelector:@selector(didUpdateData)]) {
-        [self.delegate didUpdateData];
-    }
+    
     // Save context
     NSError *error = nil;
     if (![context save:&error]) {
