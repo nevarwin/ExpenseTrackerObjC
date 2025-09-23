@@ -335,7 +335,10 @@
             for (BudgetAllocation *allocation in category.allocations){
                 previousAmount = allocation.usedAmount;
                 allocation.usedAmount = [previousAmount decimalNumberBySubtracting:transactionToDelete.amount];
-                NSLog(@"used amount: %@", allocation.usedAmount);
+                
+                if ([allocation.usedAmount compare:[NSDecimalNumber zero]] == NSOrderedAscending) {
+                    allocation.usedAmount = [NSDecimalNumber zero];
+                }
             }
         }
         
