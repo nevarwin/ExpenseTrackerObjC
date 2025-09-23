@@ -472,7 +472,11 @@ replacementString:(NSString *)string {
     
     for (BudgetAllocation *allocation in category.allocations) {
         NSDecimalNumber *usedAmount = allocation.usedAmount ?: [NSDecimalNumber zero];
-        usedAmount = allocation.usedAmount;
+
+        if (self.isEditMode){
+            usedAmount = [usedAmount decimalNumberBySubtracting:self.existingTransaction.amount];
+        }
+        
         totalUsedAmount = [usedAmount decimalNumberByAdding:amount];
         
         if ([totalUsedAmount compare:allocation.allocatedAmount] != NSOrderedDescending) {
