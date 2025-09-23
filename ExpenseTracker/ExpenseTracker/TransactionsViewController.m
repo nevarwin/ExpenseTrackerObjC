@@ -437,8 +437,6 @@ replacementString:(NSString *)string {
 
 - (void)leftButtonTapped { [self dismissViewControllerAnimated:YES completion:nil]; }
 - (void)rightButtonTapped {
-    // TODO: Use the amount for the budget allocation usedAmount
-    // TODO: Remaining amount in the budget
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     NSError *error = nil;
     NSDecimalNumber *totalUsedAmount = [NSDecimalNumber zero];

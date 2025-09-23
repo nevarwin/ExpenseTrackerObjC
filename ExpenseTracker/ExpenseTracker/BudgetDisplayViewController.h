@@ -11,13 +11,14 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @protocol BudgetDisplayViewControllerDelegate <NSObject>
+@optional
 - (void)didUpdateData;
 @end
 
 @interface BudgetDisplayViewController : UIViewController
 
 @property (nonatomic, assign) BOOL isEditMode;
-@property (nonatomic, weak) id delegate;
+@property (nonatomic, weak) id<BudgetDisplayViewControllerDelegate> delegate;
 
 @property (nonatomic, strong) Budget *budget;
 @property (nonatomic, strong) UITextField *headerLabelTextField;
