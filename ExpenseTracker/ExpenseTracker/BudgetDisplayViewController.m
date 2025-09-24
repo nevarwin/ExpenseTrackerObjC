@@ -121,8 +121,6 @@
     self.budgetDisplayTableView.dataSource = self;
     [self.view addSubview:self.budgetDisplayTableView];
     
-    [self.budgetDisplayTableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"TextFieldCell"];
-    
     [NSLayoutConstraint activateConstraints:@[
         [self.budgetDisplayTableView.topAnchor constraintEqualToAnchor:_headerContainer.bottomAnchor],
         [self.budgetDisplayTableView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
@@ -206,7 +204,7 @@
         ];
         
     }
-    return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"DefaultCell"];
+    return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"TextFieldCell"];
 }
 
 - (UITableViewCell *)configuredTextFieldCellForTableView:(UITableView *)tableView
@@ -215,18 +213,47 @@
                                             keyboardType:(UIKeyboardType)keyboardType
                                                    value:(NSDecimalNumber *)value
 {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TextFieldCell" forIndexPath:indexPath];
-    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    static NSString *cellIdentifier = @"TextFieldCell";
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
+    if (!cell) {
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
+    }
     cell.textLabel.text = placeholder;
+    cell.detailTextLabel.text = @"Your detail text here";
+
+    NSInteger tag = 100;
+    UITextField *textField = [cell.contentView viewWithTag:tag];
     
-    // Remove old views
-    for (UIView *subview in cell.contentView.subviews) {
-        [subview removeFromSuperview];
+    if (!textField) {
+        textField = [[UITextField alloc] init];
+        textField.tag = tag;
+        textField.translatesAutoresizingMaskIntoConstraints = NO;
+        textField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
+        textField.textAlignment = NSTextAlignmentRight;
+        textField.textColor = [UIColor systemTealColor];
+        textField.delegate = self;
+        [textField addTarget:self action:@selector(textFieldChanged:) forControlEvents:UIControlEventEditingChanged];
+        
+        UILabel *pesoLabel = [[UILabel alloc] init];
+        pesoLabel.text = @"₱";
+        pesoLabel.font = textField.font;
+        pesoLabel.textAlignment = NSTextAlignmentLeft;
+        pesoLabel.textColor = [UIColor systemTealColor];
+        [pesoLabel sizeToFit];
+        
+        textField.leftView = pesoLabel;
+        textField.leftViewMode = UITextFieldViewModeAlways;
+        
+        [cell.contentView addSubview:textField];
+        
+        [NSLayoutConstraint activateConstraints:@[
+            [textField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+            [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
+            [textField.widthAnchor constraintEqualToConstant:80]
+        ]];
     }
     
-    UITextField *textField = [[UITextField alloc] init];
-    textField.delegate = self;
-    
+    // Configure the text each time
     if ([value isKindOfClass:[NSDecimalNumber class]]) {
         textField.text = [(NSDecimalNumber *)value stringValue];
     } else if ([value isKindOfClass:[NSString class]]) {
@@ -235,37 +262,13 @@
         textField.text = @"";
     }
     
-    textField.translatesAutoresizingMaskIntoConstraints = NO;
-    textField.clearButtonMode = UITextFieldViewModeWhileEditing;
     textField.placeholder = placeholder;
-    textField.tag = 100 + indexPath.row;
     textField.keyboardType = keyboardType;
     textField.accessibilityIdentifier = (indexPath.section == 0) ? @"expenseAmount" : @"incomeAmount";
-    textField.textColor = [UIColor systemTealColor];
-    [textField addTarget:self action:@selector(textFieldChanged:) forControlEvents:UIControlEventEditingChanged];
-    textField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
-    textField.textAlignment = NSTextAlignmentRight;
-    
-    UILabel *pesoLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 16, 20)];
-    pesoLabel.text = @"₱";
-    pesoLabel.font = textField.font;
-    pesoLabel.textAlignment = NSTextAlignmentLeft;
-    pesoLabel.textColor = [UIColor systemTealColor];
-    
-    textField.leftView = pesoLabel;
-    textField.leftViewMode = UITextFieldViewModeAlways;
-    
-    [cell.contentView addSubview:textField];
-    
-    [textField setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-    [NSLayoutConstraint activateConstraints:@[
-        [textField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
-        [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
-        [textField.widthAnchor constraintEqualToConstant:80]
-    ]];
     
     return cell;
 }
+
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
     UIView *headerView = [[UIView alloc] init];
@@ -278,19 +281,19 @@
     titleLabel.textAlignment = NSTextAlignmentLeft;
     [titleLabel setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     [titleLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-
+    
     NSDecimalNumber *totalExpense = [self.expensesAmounts valueForKeyPath:@"@sum.self"];
     NSDecimalNumber *totalIncome = [self.incomeAmounts valueForKeyPath:@"@sum.self"];
-
+    
     NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
     formatter.numberStyle = NSNumberFormatterCurrencyStyle;
-
+    
     NSString *formattedExpenses = [formatter stringFromNumber:totalExpense];
     NSString *formattedIncome = [formatter stringFromNumber:totalIncome];
-
+    
     NSString *expensesTitleLabel = [NSString stringWithFormat:@"EXPENSES - %@", formattedExpenses];
     NSString *incomeTitleLabel = [NSString stringWithFormat:@"INCOME - %@", formattedIncome];
-
+    
     switch (section) {
         case 0:
             titleLabel.text = expensesTitleLabel;
@@ -355,7 +358,7 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return 44;
+    return 60;
 }
 
 
