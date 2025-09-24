@@ -39,7 +39,6 @@
     [self updateFetchPredicateForSegment:self.dateSegmentIndex typeIndex:@(self.typeSegmentIndex)];
     [self.transactionTableView reloadData];
 }
-// TODO: Add default All
 // TODO: Think of past year transactions
 // TODO: Pagination
 - (void)updateFetchPredicateForSegment:(NSInteger)dateIndex typeIndex:(NSNumber * _Nullable)typeIndex{
@@ -51,20 +50,20 @@
     NSDate *startDate = nil;
     
     switch (dateIndex) {
-        case 0: // Day
-            startDate = [calendar startOfDayForDate:now];
-            break;
-        case 1: // Week
+        case 0: // Week
             [calendar rangeOfUnit:NSCalendarUnitWeekOfYear startDate:&startDate interval:NULL forDate:now];
             break;
-        case 2: // Month
+        case 1: // Month
             [calendar rangeOfUnit:NSCalendarUnitMonth startDate:&startDate interval:NULL forDate:now];
             break;
-        case 3: // 6 Months
+        case 2: // 6 Months
             startDate = [calendar dateByAddingUnit:NSCalendarUnitMonth value:-6 toDate:now options:0];
             break;
-        case 4: // Year
+        case 3: // Year
             [calendar rangeOfUnit:NSCalendarUnitYear startDate:&startDate interval:NULL forDate:now];
+            break;
+        case 4: // All
+            startDate = nil;
             break;
         default:
             startDate = nil;
@@ -172,10 +171,10 @@
     self.typeSegmentControl.translatesAutoresizingMaskIntoConstraints = NO;
     self.typeSegmentControl.selectedSegmentIndex = 2;
     
-    self.dateSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"D", @"W", @"M", @"6M", @"Y"]];
+    self.dateSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"W", @"M", @"6M", @"Y", @"All"]];
     self.dateSegmentControl.translatesAutoresizingMaskIntoConstraints = NO;
-    self.dateSegmentControl.selectedSegmentIndex = 0;
-    
+    self.dateSegmentControl.selectedSegmentIndex = 4;
+
     [self.typeSegmentControl addTarget:self
                                 action:@selector(typeSegmentChange:)
                       forControlEvents:UIControlEventValueChanged];
