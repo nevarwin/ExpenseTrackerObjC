@@ -144,55 +144,78 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"BudgetCell"];
+    static NSString *cellIdentifier = @"BudgetCell";
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
+    
+    if (!cell) {
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
+        cell.textLabel.font = [UIFont systemFontOfSize:24];
+        cell.detailTextLabel.numberOfLines = 0;
+        cell.contentView.layer.masksToBounds = YES;
+        cell.contentView.layer.cornerRadius = 8;
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    }
     
     if (indexPath.row >= self.budgets.count) {
-        return [[UITableViewCell alloc] init];
+        return [UITableViewCell new];
     }
     
     Budget *budget = self.budgets[indexPath.row];
     cell.textLabel.text = budget.name;
-    cell.textLabel.font = [UIFont systemFontOfSize:24];
     
-    // Date formatter
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.dateStyle = NSDateFormatterShortStyle;
+    // Use shared (or cached) date formatter to avoid repeated allocations
+    static NSDateFormatter *dateFormatter;
+    static dispatch_once_t dateToken;
+    dispatch_once(&dateToken, ^{
+        dateFormatter = [[NSDateFormatter alloc] init];
+        dateFormatter.dateStyle = NSDateFormatterShortStyle;
+    });
+    
     NSString *formattedDate = [dateFormatter stringFromDate:budget.createdAt];
     
-    // Create a label for the date
-    UILabel *dateLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 80, 20)];
+    // Reuse UILabel instead of recreating
+    UILabel *dateLabel = (UILabel *)cell.accessoryView;
+    if (![dateLabel isKindOfClass:[UILabel class]]) {
+        dateLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 80, 20)];
+        dateLabel.font = [UIFont systemFontOfSize:12];
+        dateLabel.textColor = [UIColor grayColor];
+        dateLabel.textAlignment = NSTextAlignmentRight;
+        cell.accessoryView = dateLabel;
+    }
     dateLabel.text = formattedDate;
-    dateLabel.font = [UIFont systemFontOfSize:12];
-    dateLabel.textColor = [UIColor grayColor];
-    dateLabel.textAlignment = NSTextAlignmentRight;
     
-    cell.accessoryView = dateLabel;
-    
-    // TODO: Refactor the UI of Totals
-    // Calculate total expense (using NSDecimalNumber)
-    NSDecimalNumber *totalExpense = [NSDecimalNumber zero];
+    // Calculate totals using KVC
     NSDecimalNumber *totalIncome = [NSDecimalNumber zero];
+    NSDecimalNumber *totalExpense = [NSDecimalNumber zero];
     
-    NSSet *categories = budget.category;
-    
-    for (Category *category in categories){
-        for (BudgetAllocation *allocation in category.allocations){
-            if (category.isIncome) {
-                totalIncome = [totalIncome decimalNumberByAdding:allocation.allocatedAmount];
-            } else {
-                totalExpense = [totalExpense decimalNumberByAdding:allocation.allocatedAmount];
-            }
+    for (Category *category in budget.category) {
+        NSDecimalNumber *categoryTotal = [category.allocations valueForKeyPath:@"@sum.allocatedAmount"];
+        if (category.isIncome) {
+            totalIncome = [totalIncome decimalNumberByAdding:categoryTotal];
+        } else {
+            totalExpense = [totalExpense decimalNumberByAdding:categoryTotal];
         }
     }
     
-    // Set detail text with totals
-    NSString *detailText = [NSString stringWithFormat:@"Expenses: ₱%.2f\nIncome: ₱%.2f", totalExpense.doubleValue, totalIncome.doubleValue];
-    cell.detailTextLabel.text = detailText;
-    cell.detailTextLabel.numberOfLines = 0;
-    cell.contentView.layer.masksToBounds = YES;
-    cell.contentView.layer.cornerRadius = 8;
+    // Create a static formatter to reuse
+    static NSNumberFormatter *currencyFormatter;
+    static dispatch_once_t currencyToken;
+    dispatch_once(&currencyToken, ^{
+        currencyFormatter = [[NSNumberFormatter alloc] init];
+        currencyFormatter.numberStyle = NSNumberFormatterCurrencyStyle;
+        currencyFormatter.currencySymbol = @"₱";
+        currencyFormatter.maximumFractionDigits = 2;
+        currencyFormatter.minimumFractionDigits = 2;
+    });
+
     
-    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    NSString *formattedExpense = [currencyFormatter stringFromNumber:totalExpense];
+    NSString *formattedIncome = [currencyFormatter stringFromNumber:totalIncome];
+    
+    cell.detailTextLabel.text = [NSString stringWithFormat:@"Expenses: %@\nIncome: %@",
+                                 formattedExpense, formattedIncome];
+
+    
     return cell;
 }
 
