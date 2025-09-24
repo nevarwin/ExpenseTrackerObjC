@@ -273,19 +273,30 @@
     
     UILabel *titleLabel = [[UILabel alloc] init];
     titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];
+    titleLabel.font = [UIFont boldSystemFontOfSize:[UIFont preferredFontForTextStyle:UIFontTextStyleFootnote].pointSize];
     titleLabel.textColor = [UIColor secondaryLabelColor];
     titleLabel.textAlignment = NSTextAlignmentLeft;
-    
     [titleLabel setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     [titleLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-    
+
+    NSDecimalNumber *totalExpense = [self.expensesAmounts valueForKeyPath:@"@sum.self"];
+    NSDecimalNumber *totalIncome = [self.incomeAmounts valueForKeyPath:@"@sum.self"];
+
+    NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
+    formatter.numberStyle = NSNumberFormatterCurrencyStyle;
+
+    NSString *formattedExpenses = [formatter stringFromNumber:totalExpense];
+    NSString *formattedIncome = [formatter stringFromNumber:totalIncome];
+
+    NSString *expensesTitleLabel = [NSString stringWithFormat:@"EXPENSES - %@", formattedExpenses];
+    NSString *incomeTitleLabel = [NSString stringWithFormat:@"INCOME - %@", formattedIncome];
+
     switch (section) {
         case 0:
-            titleLabel.text = @"EXPENSES";
+            titleLabel.text = expensesTitleLabel;
             break;
         case 1:
-            titleLabel.text = @"INCOME";
+            titleLabel.text = incomeTitleLabel;
             break;
         default:
             titleLabel.text = @"";
