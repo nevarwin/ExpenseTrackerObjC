@@ -37,6 +37,8 @@
     self.expenses = [NSMutableArray array];
     self.incomeAmounts = [NSMutableArray array];
     self.expensesAmounts = [NSMutableArray array];
+    self.incomeUsedAmounts = [NSMutableArray array];
+    self.expensesUsedAmounts = [NSMutableArray array];
     
     for (Category *category in self.budget.category) {
         if (category.isIncome == 1) {
@@ -44,12 +46,14 @@
             
             for (BudgetAllocation *allocation in category.allocations) {
                 [self.incomeAmounts addObject:allocation.allocatedAmount];
+                [self.incomeUsedAmounts addObject:allocation.usedAmount];
             }
         } else {
             [self.expenses addObject:category.name];
             
             for (BudgetAllocation *allocation in category.allocations) {
                 [self.expensesAmounts addObject:allocation.allocatedAmount];
+                [self.expensesUsedAmounts addObject:allocation.usedAmount];
             }
         }
     }
@@ -184,23 +188,27 @@
         // Expense attributes
         NSString *expenseName = self.expenses[indexPath.row];
         NSDecimalNumber *expenseAmount = self.expensesAmounts[indexPath.row];
+        NSDecimalNumber *expenseUsedAmount = self.expensesUsedAmounts[indexPath.row];
         
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
                                              placeholder:expenseName
                                             keyboardType:UIKeyboardTypeDecimalPad
                                                    value:expenseAmount
+                                              usedAmount:expenseUsedAmount
         ];
     } else if (indexPath.section == 1) {
         // Income attributes
         NSString *incomeName = self.income[indexPath.row];
         NSDecimalNumber *incomeAmount = self.incomeAmounts[indexPath.row];
+        NSDecimalNumber *incomeUsedAmount = self.incomeUsedAmounts[indexPath.row];
         
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
                                              placeholder:incomeName
                                             keyboardType:UIKeyboardTypeDecimalPad
                                                    value:incomeAmount
+                                              usedAmount:incomeUsedAmount
         ];
         
     }
@@ -212,6 +220,7 @@
                                              placeholder:(NSString *)placeholder
                                             keyboardType:(UIKeyboardType)keyboardType
                                                    value:(NSDecimalNumber *)value
+                                              usedAmount:(NSDecimalNumber *)usedAmount
 {
     static NSString *cellIdentifier = @"TextFieldCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
@@ -219,8 +228,9 @@
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
     }
     cell.textLabel.text = placeholder;
-    cell.detailTextLabel.text = @"Your detail text here";
-
+    cell.detailTextLabel.text = [NSString stringWithFormat:@"Used Amount: %@", [(NSDecimalNumber *)usedAmount stringValue]];
+    cell.detailTextLabel.textColor = [UIColor systemGrayColor];
+    
     NSInteger tag = 100;
     UITextField *textField = [cell.contentView viewWithTag:tag];
     
