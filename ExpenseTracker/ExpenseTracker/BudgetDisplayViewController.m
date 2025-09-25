@@ -14,6 +14,16 @@
 
 #define MAX_HEADER_TEXT_LENGTH 16
 
+static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultString) {
+    if ([obj isKindOfClass:[NSString class]]) {
+        return (NSString *)obj;
+    }
+    if ([obj isKindOfClass:[NSDecimalNumber class]] || [obj isKindOfClass:[NSNumber class]]) {
+        return [(NSNumber *)obj stringValue];
+    }
+    return defaultString;
+}
+
 @interface BudgetDisplayViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate>
 
 @end
@@ -33,29 +43,16 @@
         NSLog(@"allocationByCategoryID: %@", allocationByCategoryID);
     }
     
+    // Usage in viewDidLoad
     self.income = [NSMutableArray array];
     self.expenses = [NSMutableArray array];
     self.incomeAmounts = [NSMutableArray array];
     self.expensesAmounts = [NSMutableArray array];
     self.incomeUsedAmounts = [NSMutableArray array];
     self.expensesUsedAmounts = [NSMutableArray array];
-    
+
     for (Category *category in self.budget.category) {
-        if (category.isIncome == 1) {
-            [self.income addObject:category.name];
-            
-            for (BudgetAllocation *allocation in category.allocations) {
-                [self.incomeAmounts addObject:allocation.allocatedAmount];
-                [self.incomeUsedAmounts addObject:allocation.usedAmount];
-            }
-        } else {
-            [self.expenses addObject:category.name];
-            
-            for (BudgetAllocation *allocation in category.allocations) {
-                [self.expensesAmounts addObject:allocation.allocatedAmount];
-                [self.expensesUsedAmounts addObject:allocation.usedAmount];
-            }
-        }
+        [self processCategory:category isIncome:category.isIncome];
     }
     
     self.headerLabelTextField.delegate = self;
@@ -77,6 +74,25 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [self.navigationController setNavigationBarHidden:NO animated:NO];
+}
+
+// Helper method to process a category
+- (void)processCategory:(Category *)category isIncome:(BOOL)isIncome {
+    NSMutableArray *names = isIncome ? self.income : self.expenses;
+    NSMutableArray *amounts = isIncome ? self.incomeAmounts : self.expensesAmounts;
+    NSMutableArray *usedAmounts = isIncome ? self.incomeUsedAmounts : self.expensesUsedAmounts;
+
+    [names addObject:category.name];
+    if (category.allocations.count > 0) {
+        for (BudgetAllocation *allocation in category.allocations) {
+            [amounts addObject:allocation.allocatedAmount ?: [NSDecimalNumber zero]];
+            [usedAmounts addObject:allocation.usedAmount ?: [NSDecimalNumber zero]];
+        }
+    } else {
+        // Add default zero if no allocations
+        [amounts addObject:[NSDecimalNumber zero]];
+        [usedAmounts addObject:[NSDecimalNumber zero]];
+    }
 }
 
 - (void)setupHeaderView {
@@ -186,9 +202,9 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == 0) {
         // Expense attributes
-        NSString *expenseName = self.expenses[indexPath.row];
-        NSDecimalNumber *expenseAmount = self.expensesAmounts[indexPath.row];
-        NSDecimalNumber *expenseUsedAmount = self.expensesUsedAmounts[indexPath.row];
+        NSString *expenseName = (indexPath.row < self.expenses.count) ? self.expenses[indexPath.row] : @"";
+        NSDecimalNumber *expenseAmount = (indexPath.row < self.expensesAmounts.count) ? self.expensesAmounts[indexPath.row] : [NSDecimalNumber zero];
+        NSDecimalNumber *expenseUsedAmount = (indexPath.row < self.expensesUsedAmounts.count) ? self.expensesUsedAmounts[indexPath.row] : [NSDecimalNumber zero];
         
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
@@ -199,9 +215,9 @@
         ];
     } else if (indexPath.section == 1) {
         // Income attributes
-        NSString *incomeName = self.income[indexPath.row];
-        NSDecimalNumber *incomeAmount = self.incomeAmounts[indexPath.row];
-        NSDecimalNumber *incomeUsedAmount = self.incomeUsedAmounts[indexPath.row];
+        NSString *incomeName = (indexPath.row < self.income.count) ? self.income[indexPath.row] : @"";
+        NSDecimalNumber *incomeAmount = (indexPath.row < self.incomeAmounts.count) ? self.incomeAmounts[indexPath.row] : [NSDecimalNumber zero];
+        NSDecimalNumber *incomeUsedAmount = (indexPath.row < self.incomeUsedAmounts.count) ? self.incomeUsedAmounts[indexPath.row] : [NSDecimalNumber zero];
         
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
@@ -228,7 +244,7 @@
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
     }
     cell.textLabel.text = placeholder;
-    cell.detailTextLabel.text = [NSString stringWithFormat:@"Used Amount: %@", [(NSDecimalNumber *)usedAmount stringValue]];
+//    cell.detailTextLabel.text = [NSString stringWithFormat:@"Used Amount: %@", [(NSDecimalNumber *)usedAmount stringValue]];
     cell.detailTextLabel.textColor = [UIColor systemGrayColor];
     
     NSInteger tag = 100;
@@ -263,14 +279,11 @@
         ]];
     }
     
+    NSString *usedAmountString = ETStringFromNumberOrString(usedAmount, @"0");
+    cell.detailTextLabel.text = [NSString stringWithFormat:@"Used Amount: %@", usedAmountString];
+
     // Configure the text each time
-    if ([value isKindOfClass:[NSDecimalNumber class]]) {
-        textField.text = [(NSDecimalNumber *)value stringValue];
-    } else if ([value isKindOfClass:[NSString class]]) {
-        textField.text = (NSString *)value;
-    } else {
-        textField.text = @"";
-    }
+    textField.text = ETStringFromNumberOrString(value, @"");
     
     textField.placeholder = placeholder;
     textField.keyboardType = keyboardType;
@@ -356,9 +369,15 @@
     if(indexPath.section == 0){
         [self.expenses removeObjectAtIndex:indexPath.row];
         [self.expensesAmounts removeObjectAtIndex:indexPath.row];
+        if (indexPath.row < self.expensesUsedAmounts.count) {
+            [self.expensesUsedAmounts removeObjectAtIndex:indexPath.row];
+        }
     } else {
         [self.income removeObjectAtIndex:indexPath.row];
         [self.incomeAmounts removeObjectAtIndex:indexPath.row];
+        if (indexPath.row < self.incomeUsedAmounts.count) {
+            [self.incomeUsedAmounts removeObjectAtIndex:indexPath.row];
+        }
     }
     [self.budgetDisplayTableView reloadData];
 }
@@ -454,7 +473,7 @@
         NSString *name = nameField.text;
         NSString *amount = amountField.text;
         
-        if (name.length < 0 && amount.length < 0) {
+        if (name.length <= 0 && amount.length <= 0) {
             return;
         }
         
@@ -473,9 +492,11 @@
             if (section == 0) {
                 [self.expenses addObject:name ?: @""];
                 [self.expensesAmounts addObject:amount ?: @""];
+                [self.expensesUsedAmounts addObject:[NSDecimalNumber zero]];
             } else {
                 [self.income addObject:name ?: @""];
                 [self.incomeAmounts addObject:amount ?: @""];
+                [self.incomeUsedAmounts addObject:[NSDecimalNumber zero]];
             }
         }
         
@@ -644,3 +665,5 @@
 }
 
 @end
+
+
