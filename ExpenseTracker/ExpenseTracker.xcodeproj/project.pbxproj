@@ -11,6 +11,9 @@
 		1831B2BC2E77EF310076F721 /* Transaction+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 1831B2BA2E77EF310076F721 /* Transaction+CoreDataProperties.m */; };
 		1831B2C12E77F53E0076F721 /* Budget+CoreDataClass.m in Sources */ = {isa = PBXBuildFile; fileRef = 1831B2BE2E77F53E0076F721 /* Budget+CoreDataClass.m */; };
 		1831B2C22E77F53E0076F721 /* Budget+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 1831B2C02E77F53E0076F721 /* Budget+CoreDataProperties.m */; };
+		18AEAE982E867646003C31FA /* Transaction.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = 18AEAE942E867646003C31FA /* Transaction.sqlite */; };
+		18AEAE992E867646003C31FA /* Transaction.sqlite-shm in Resources */ = {isa = PBXBuildFile; fileRef = 18AEAE952E867646003C31FA /* Transaction.sqlite-shm */; };
+		18AEAE9A2E867646003C31FA /* Transaction.sqlite-wal in Resources */ = {isa = PBXBuildFile; fileRef = 18AEAE962E867646003C31FA /* Transaction.sqlite-wal */; };
 		18E0C21C2E14E2C400CE9F57 /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 18E0C21B2E14E2C400CE9F57 /* CoreData.framework */; };
 /* End PBXBuildFile section */
 
@@ -43,6 +46,9 @@
 		1873DFEC2E0D3E6500C2C70B /* ExpenseTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExpenseTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1873E00A2E0D3E6600C2C70B /* ExpenseTrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExpenseTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1873E0142E0D3E6700C2C70B /* ExpenseTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExpenseTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		18AEAE942E867646003C31FA /* Transaction.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = Transaction.sqlite; sourceTree = "<group>"; };
+		18AEAE952E867646003C31FA /* Transaction.sqlite-shm */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Transaction.sqlite-shm"; sourceTree = "<group>"; };
+		18AEAE962E867646003C31FA /* Transaction.sqlite-wal */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Transaction.sqlite-wal"; sourceTree = "<group>"; };
 		18E0C21B2E14E2C400CE9F57 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -106,6 +112,7 @@
 		1873DFE32E0D3E6500C2C70B = {
 			isa = PBXGroup;
 			children = (
+				18AEAE972E867646003C31FA /* Application Support */,
 				1831B2BD2E77F53E0076F721 /* Budget+CoreDataClass.h */,
 				1831B2BE2E77F53E0076F721 /* Budget+CoreDataClass.m */,
 				1831B2BF2E77F53E0076F721 /* Budget+CoreDataProperties.h */,
@@ -130,6 +137,16 @@
 				1873E0142E0D3E6700C2C70B /* ExpenseTrackerUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		18AEAE972E867646003C31FA /* Application Support */ = {
+			isa = PBXGroup;
+			children = (
+				18AEAE942E867646003C31FA /* Transaction.sqlite */,
+				18AEAE952E867646003C31FA /* Transaction.sqlite-shm */,
+				18AEAE962E867646003C31FA /* Transaction.sqlite-wal */,
+			);
+			path = "Application Support";
 			sourceTree = "<group>";
 		};
 		18E0C21A2E14E2C400CE9F57 /* Frameworks */ = {
@@ -260,6 +277,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				18AEAE982E867646003C31FA /* Transaction.sqlite in Resources */,
+				18AEAE992E867646003C31FA /* Transaction.sqlite-shm in Resources */,
+				18AEAE9A2E867646003C31FA /* Transaction.sqlite-wal in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

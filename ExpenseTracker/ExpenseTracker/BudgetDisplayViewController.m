@@ -44,7 +44,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         NSLog(@"allocationByCategoryID: %@", allocationByCategoryID);
     }
     
-    // Usage in viewDidLoad
+    
     self.income = [NSMutableArray array];
     self.expenses = [NSMutableArray array];
     self.incomeAmounts = [NSMutableArray array];
@@ -61,7 +61,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     [self setupHeaderView];
     [self setupTableView];
     [self selectEmptyScreen];
-    // Add observer for keyboard notifications
+    
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(keyboardWillShow:)
                                                  name:UIKeyboardWillShowNotification
@@ -77,6 +77,8 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     [self.navigationController setNavigationBarHidden:NO animated:NO];
 }
 
+# pragma mark - Helper
+
 // Helper method to process a category
 - (void)processCategory:(Category *)category isIncome:(BOOL)isIncome {
     NSMutableArray *names = isIncome ? self.income : self.expenses;
@@ -88,8 +90,15 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         [amounts addObject:allocation.allocatedAmount ?: [NSDecimalNumber zero]];
         [usedAmounts addObject:allocation.usedAmount ?: [NSDecimalNumber zero]];
     }
+}
 
-    NSLog(@"usedAmounts: %@", usedAmounts);
+- (void)showAlertWithTitle:(NSString *)title message:(NSString *)message {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
+                                                                   message:message
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
+    [alert addAction:ok];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)setupHeaderView {
@@ -113,7 +122,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
                         initWithTitle:@"Save"
                         style:UIBarButtonItemStyleDone
                         target:self
-                        action:@selector(addButtonTapped)];
+                        action:@selector(saveButtonTapped)];
     self.navigationItem.rightBarButtonItem = self.rightButton;
     
     // Setup constraints for header container
@@ -568,7 +577,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 }
 
 
-- (void)addButtonTapped {
+- (void)saveButtonTapped {
     NSString *budgetName = self.headerLabelTextField.text;
     NSDecimalNumber *totalAmount = [NSDecimalNumber decimalNumberWithString:@"0"];
     
@@ -578,33 +587,11 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     
     
     if (budgetName.length == 0) {
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Invalid budget name"
-                                                                       message:@"Please enter a valid budget name."
-                                                                preferredStyle:UIAlertControllerStyleAlert];
-        
-        UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
-                                                     style:UIAlertActionStyleDefault
-                                                   handler:nil];
-        
-        [alert addAction:ok];
-        
-        [self presentViewController:alert animated:YES completion:nil];
-        return;
+        [self showAlertWithTitle:@"Invalid budget name" message:@"Please enter a valid budget name."];
     }
     
     if (self.expenses.count == 0 || self.income.count == 0) {
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Invalid expense or income"
-                                                                       message:@"Please enter a valid expense or income."
-                                                                preferredStyle:UIAlertControllerStyleAlert];
-        
-        UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
-                                                     style:UIAlertActionStyleDefault
-                                                   handler:nil];
-        
-        [alert addAction:ok];
-        
-        [self presentViewController:alert animated:YES completion:nil];
-        return;
+        [self showAlertWithTitle:@"Invalid expense or income" message:@"Please enter a valid expense or income."];
     }
     
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
@@ -633,6 +620,16 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
             expenseAllocation.allocatedAmount = [NSDecimalNumber zero];
         }
         
+        id usedAmount = self.expensesUsedAmounts[i];
+        NSLog(@"usedAmount Expenses: %@", usedAmount);
+        if ([usedAmount isKindOfClass:[NSDecimalNumber class]]) {
+            expenseAllocation.usedAmount = usedAmount;
+        } else if ([usedAmount isKindOfClass:[NSString class]]) {
+            expenseAllocation.usedAmount = [NSDecimalNumber decimalNumberWithString:(NSString *)usedAmount];
+        } else {
+            expenseAllocation.usedAmount = [NSDecimalNumber zero];
+        }
+        
         expenseAllocation.createdAt = [NSDate date];
         
         expenseCategory.allocations = [NSSet setWithObject:expenseAllocation];
@@ -654,6 +651,16 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
             incomeAllocation.allocatedAmount = [NSDecimalNumber decimalNumberWithString:(NSString *)value];
         } else {
             incomeAllocation.allocatedAmount = [NSDecimalNumber zero];
+        }
+        
+        id usedAmount = self.incomeUsedAmounts[i];
+        NSLog(@"usedAmount Income: %@", usedAmount);
+        if ([usedAmount isKindOfClass:[NSDecimalNumber class]]) {
+            incomeAllocation.usedAmount = usedAmount;
+        } else if ([usedAmount isKindOfClass:[NSString class]]) {
+            incomeAllocation.usedAmount = [NSDecimalNumber decimalNumberWithString:(NSString *)usedAmount];
+        } else {
+            incomeAllocation.usedAmount = [NSDecimalNumber zero];
         }
         
         incomeAllocation.createdAt = [NSDate date];
