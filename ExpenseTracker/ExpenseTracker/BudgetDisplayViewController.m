@@ -11,6 +11,7 @@
 #import "Category+CoreDataClass.h"
 #import "BudgetAllocation+CoreDataClass.h"
 #import "CoreDataManager.h"
+#import "AppDelegate.h"
 
 #define MAX_HEADER_TEXT_LENGTH 16
 
@@ -83,16 +84,12 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     NSMutableArray *usedAmounts = isIncome ? self.incomeUsedAmounts : self.expensesUsedAmounts;
 
     [names addObject:category.name];
-    if (category.allocations.count > 0) {
-        for (BudgetAllocation *allocation in category.allocations) {
-            [amounts addObject:allocation.allocatedAmount ?: [NSDecimalNumber zero]];
-            [usedAmounts addObject:allocation.usedAmount ?: [NSDecimalNumber zero]];
-        }
-    } else {
-        // Add default zero if no allocations
-        [amounts addObject:[NSDecimalNumber zero]];
-        [usedAmounts addObject:[NSDecimalNumber zero]];
+    for (BudgetAllocation *allocation in category.allocations) {
+        [amounts addObject:allocation.allocatedAmount ?: [NSDecimalNumber zero]];
+        [usedAmounts addObject:allocation.usedAmount ?: [NSDecimalNumber zero]];
     }
+
+    NSLog(@"usedAmounts: %@", usedAmounts);
 }
 
 - (void)setupHeaderView {
@@ -406,8 +403,40 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     [self.budgetDisplayTableView reloadData];
 }
 
-- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
-    return nil;
+- (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section {
+    NSInteger lastSection = [tableView numberOfSections] - 1;
+    
+    if (section != lastSection) {
+        return nil;
+    }
+    
+    UIView *footerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.frame.size.width, 50)];
+    footerView.backgroundColor = [UIColor clearColor];
+    
+    UIButton *exportButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [exportButton setTitle:@"Export Budget" forState:UIControlStateNormal];
+    exportButton.titleLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightMedium];
+    exportButton.translatesAutoresizingMaskIntoConstraints = NO;
+    exportButton.tag = section;
+    
+    [exportButton addTarget:self action:@selector(exportButtonTapped) forControlEvents:UIControlEventTouchUpInside];
+    
+    [footerView addSubview:exportButton];
+    
+    [NSLayoutConstraint activateConstraints:@[
+        [exportButton.centerXAnchor constraintEqualToAnchor:footerView.centerXAnchor],
+        [exportButton.centerYAnchor constraintEqualToAnchor:footerView.centerYAnchor],
+    ]];
+    
+    return footerView;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
+    NSInteger lastSection = [tableView numberOfSections] - 1;
+    if (section == lastSection) {
+        return 50;
+    }
+    return 0.01f;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -651,8 +680,16 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         
         [self presentViewController:alert animated:YES completion:nil];
     }
+    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+    NSPersistentContainer *persistentContainer = appDelegate.persistentContainer;
     
+    NSPersistentStore *store = persistentContainer.persistentStoreCoordinator.persistentStores.firstObject;
+    NSLog(@"Core Data store URL: %@", store.URL);
     [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (void)exportButtonTapped{
+
 }
 
 #pragma mark - Keyboard Notifications
