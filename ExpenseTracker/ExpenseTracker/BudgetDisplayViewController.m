@@ -74,10 +74,15 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    [self fetch];
     [self.navigationController setNavigationBarHidden:NO animated:NO];
 }
 
 # pragma mark - Helper
+
+- (void)fetch{
+    [self.budgetDisplayTableView reloadData];
+}
 
 // Helper method to process a category
 - (void)processCategory:(Category *)category isIncome:(BOOL)isIncome {
@@ -86,9 +91,15 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     NSMutableArray *usedAmounts = isIncome ? self.incomeUsedAmounts : self.expensesUsedAmounts;
 
     [names addObject:category.name];
-    for (BudgetAllocation *allocation in category.allocations) {
-        [amounts addObject:allocation.allocatedAmount ?: [NSDecimalNumber zero]];
-        [usedAmounts addObject:allocation.usedAmount ?: [NSDecimalNumber zero]];
+    if (category.allocations.count > 0) {
+        for (BudgetAllocation *allocation in category.allocations) {
+            [amounts addObject:allocation.allocatedAmount ?: [NSDecimalNumber zero]];
+            [usedAmounts addObject:allocation.usedAmount ?: [NSDecimalNumber zero]];
+        }
+    } else {
+        // Add default zero if no allocations
+        [amounts addObject:[NSDecimalNumber zero]];
+        [usedAmounts addObject:[NSDecimalNumber zero]];
     }
 }
 
@@ -535,13 +546,14 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         NSString *name = nameField.text;
         NSString *amount = amountField.text;
         
-        if (name.length <= 0 && amount.length <= 0) {
+        if (name.length <= 0 || amount.length <= 0) {
+            [self showAlertWithTitle:@"Warning" message:@"All fields are required."];
             return;
         }
         
         if ([actionTitle isEqual:@"Update"]) {
             if (row == NSNotFound) {
-                return; // Safety: should not happen, but avoid using an invalid row
+                return;
             }
             if (section == 0) {
                 if (row < self.expenses.count) self.expenses[row] = name;
@@ -621,7 +633,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         }
         
         id usedAmount = self.expensesUsedAmounts[i];
-        NSLog(@"usedAmount Expenses: %@", usedAmount);
         if ([usedAmount isKindOfClass:[NSDecimalNumber class]]) {
             expenseAllocation.usedAmount = usedAmount;
         } else if ([usedAmount isKindOfClass:[NSString class]]) {
@@ -654,7 +665,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         }
         
         id usedAmount = self.incomeUsedAmounts[i];
-        NSLog(@"usedAmount Income: %@", usedAmount);
         if ([usedAmount isKindOfClass:[NSDecimalNumber class]]) {
             incomeAllocation.usedAmount = usedAmount;
         } else if ([usedAmount isKindOfClass:[NSString class]]) {
