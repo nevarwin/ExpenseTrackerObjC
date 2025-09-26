@@ -205,6 +205,35 @@ replacementString:(NSString *)string {
     [self presentViewController:alert animated:YES completion:nil];
 }
 
+- (void)saveTransactionWithAmount:(NSDecimalNumber *)amount
+                             date:(NSDate *)date
+                           budget:(Budget *)budget
+                         category:(Category *)category
+                             type:(BOOL)type {
+    
+    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+    
+    Transaction *transaction = self.isEditMode ? self.existingTransaction :
+    [NSEntityDescription insertNewObjectForEntityForName:@"Transaction"
+                                  inManagedObjectContext:context];
+    
+    transaction.amount = amount;
+    transaction.date = date;
+    transaction.budget = budget;
+    transaction.category = category;
+    transaction.category.isIncome = type;
+    
+    NSError *error = nil;
+    if (![context save:&error]) {
+        NSLog(@"Failed to save transaction: %@", error);
+    } else {
+        NSLog(@"Transaction saved: %@", transaction);
+    }
+    
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+
 
 
 #pragma mark - UITableViewDataSource
@@ -483,30 +512,43 @@ replacementString:(NSString *)string {
         if ([totalUsedAmount compare:allocation.allocatedAmount] != NSOrderedDescending) {
             allocation.usedAmount = totalUsedAmount;
         } else {
+            allocation.usedAmount = totalUsedAmount;
             amountOverflow = YES;
         }
     }
     
     if (amountOverflow) {
-        [self showAlertWithTitle:@"Invalid Amount" message:@"There is no budget left."];
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Amount exceeded"
+                                                                       message:@"The amount exceeds the budget allocated, but the transaction will still be saved."
+                                                                preferredStyle:UIAlertControllerStyleAlert];
+        
+        UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
+                                                     style:UIAlertActionStyleDefault
+                                                   handler:^(UIAlertAction * _Nonnull action) {
+            [self saveTransactionWithAmount:amount
+                                       date:date
+                                     budget:budget
+                                   category:category
+                                       type:type];
+        }];
+        
+        UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel"
+                                                         style:UIAlertActionStyleCancel
+                                                       handler:nil];
+        
+        [alert addAction:cancel];
+        [alert addAction:ok];
+        
+        [self presentViewController:alert animated:YES completion:nil];
+        
         return;
     }
     
-    Transaction *transaction = self.isEditMode ? self.existingTransaction : [NSEntityDescription insertNewObjectForEntityForName:@"Transaction" inManagedObjectContext:context];
-    
-    transaction.amount = amount;
-    transaction.date = date;
-    transaction.budget = budget;
-    transaction.category = category;
-    transaction.category.isIncome = type;
-    
-    if (![context save:&error]) {
-        NSLog(@"Failed to save transaction: %@", error);
-    } else {
-        NSLog(@"Transaction saved: %@", transaction);
-    }
-    
-    [self dismissViewControllerAnimated:YES completion:nil];
+    [self saveTransactionWithAmount:amount
+                               date:date
+                             budget:budget
+                           category:category
+                               type:type];
 }
 
 - (void)dismissKeyboard {
