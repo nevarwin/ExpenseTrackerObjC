@@ -244,7 +244,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
     }
     cell.textLabel.text = placeholder;
-//    cell.detailTextLabel.text = [NSString stringWithFormat:@"Used Amount: %@", [(NSDecimalNumber *)usedAmount stringValue]];
     cell.detailTextLabel.textColor = [UIColor systemGrayColor];
     
     NSInteger tag = 100;
@@ -279,8 +278,33 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         ]];
     }
     
+    // Convert both to NSNumber for safe comparison
+    NSNumber *usedAmountNum = ([usedAmount isKindOfClass:[NSNumber class]]) ? usedAmount : @([[usedAmount description] doubleValue]);
+    NSNumber *valueNum = ([value isKindOfClass:[NSNumber class]]) ? value : @([[value description] doubleValue]);
+    
+    // Format the string
     NSString *usedAmountString = ETStringFromNumberOrString(usedAmount, @"0");
-    cell.detailTextLabel.text = [NSString stringWithFormat:@"Used Amount: %@", usedAmountString];
+    NSString *fullString = [NSString stringWithFormat:@"Used Amount: %@", usedAmountString];
+    
+    // Create attributed string
+    NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] initWithString:fullString];
+    
+    // Find range of the amount part
+    NSRange amountRange = [fullString rangeOfString:usedAmountString];
+    
+    // Decide color
+    UIColor *amountColor = ([usedAmountNum compare:valueNum] == NSOrderedDescending) ?
+    [UIColor systemRedColor] :
+    (([usedAmountNum isEqualToNumber:@0]) ?
+     [UIColor systemGrayColor] :
+     [UIColor systemGreenColor]);
+
+    
+    // Apply color to only the amount part
+    [attributedText addAttribute:NSForegroundColorAttributeName value:amountColor range:amountRange];
+    
+    // Set to label
+    cell.detailTextLabel.attributedText = attributedText;
 
     // Configure the text each time
     textField.text = ETStringFromNumberOrString(value, @"");
