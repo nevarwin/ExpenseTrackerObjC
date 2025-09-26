@@ -310,84 +310,67 @@ replacementString:(NSString *)string {
     return cell;
 }
 
-- (void)pickerButtonTapped:(UIButton *)sender {
-    // TODO: UI fixes for iOS26
-    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
-    
-    NSString *title = [sender titleForState:UIControlStateNormal];
+#pragma mark - Picker Button
+
+- (NSString *)titleForPickerWithSender:(UIButton *)sender {
     switch (sender.tag) {
-        case 0:
-            title = @"Budget";
-            break;
-        case 1:
-            title = @"Type";
-            break;
-        case 2:
-            title = @"Category";
-        default:
-            title = [sender titleForState:UIControlStateNormal];
-            break;
+        case 0: return @"Budget";
+        case 1: return @"Type";
+        case 2: return @"Category";
+        default: return [sender titleForState:UIControlStateNormal];
     }
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
-                                                                   message:@"\n\n\n\n\n\n"
-                                                            preferredStyle:UIAlertControllerStyleActionSheet];
-    
-    UIPickerView *picker = [[UIPickerView alloc] initWithFrame:CGRectMake(0, 40, alert.view.bounds.size.width - 20, 140)];
-    picker.dataSource = self;
-    picker.delegate = self;
-    
-    [alert.view addSubview:picker];
-    self.currentPickerMode = sender.tag;
-    self.budgetValues = [self.budgets valueForKey:@"name"];
-    self.categoryValues = [self.category valueForKey:@"name"];
-    
-    if(self.currentPickerMode == 0 && self.budgetValues.count == 0){
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"An error occured."
+}
+
+- (BOOL)checkAndShowEmptyBudgetAlertIfNeeded {
+    if (self.currentPickerMode == 0 && self.budgetValues.count == 0) {
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"An error occurred."
                                                                        message:@"There is no existing budget. Please add a budget to proceed."
                                                                 preferredStyle:UIAlertControllerStyleAlert];
-        
         UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
                                                      style:UIAlertActionStyleDefault
                                                    handler:nil];
-        
         [alert addAction:ok];
-        
         [self presentViewController:alert animated:YES completion:nil];
+        return YES;
     }
-    
-    UIAlertAction *done = [UIAlertAction actionWithTitle:@"Done" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        NSInteger selectedRow;
+    return NO;
+}
+
+- (UIPickerView *)createPickerForAlert:(UIAlertController *)alert {
+    UIPickerView *picker = [[UIPickerView alloc] initWithFrame:CGRectMake(0, 40, alert.view.bounds.size.width - 20, 140)];
+    picker.dataSource = self;
+    picker.delegate = self;
+    return picker;
+}
+
+- (UIAlertAction *)createDoneActionForPicker:(UIPickerView *)picker sender:(UIButton *)sender context:(NSManagedObjectContext *)context {
+    return [UIAlertAction actionWithTitle:@"Done" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSInteger selectedRow = [picker selectedRowInComponent:0];
         NSError *error = nil;
         
         switch (sender.tag) {
-            case 0:
-            {
-                selectedRow = [picker selectedRowInComponent:0];
+            case 0: { // Budget
                 NSDictionary *selectedBudget = self.budgets[selectedRow];
                 self.selectedBudgetIndex = selectedBudget[@"objectID"];
                 [sender setTitle:self.budgetValues[selectedRow] forState:UIControlStateNormal];
                 
-                NSIndexPath *indexPath3 = [NSIndexPath indexPathForRow:3 inSection:0];
-                NSIndexPath *indexPath4 = [NSIndexPath indexPathForRow:4 inSection:0];
-                [self.tableView reloadRowsAtIndexPaths:@[indexPath3, indexPath4]
-                                      withRowAnimation:UITableViewRowAnimationAutomatic];
+                [self.tableView reloadRowsAtIndexPaths:@[
+                    [NSIndexPath indexPathForRow:3 inSection:0],
+                    [NSIndexPath indexPathForRow:4 inSection:0]
+                ] withRowAnimation:UITableViewRowAnimationAutomatic];
                 break;
             }
-            case 1:
-            {
-                selectedRow = [picker selectedRowInComponent:0];
+            case 1: { // Type
                 self.selectedTypeIndex = selectedRow;
                 [sender setTitle:self.typeValues[selectedRow] forState:UIControlStateNormal];
                 
-                self.category = [self getCategoryValues:context error:&error isIncome: self.selectedTypeIndex];
-                NSIndexPath *indexPath = [NSIndexPath indexPathForRow:4 inSection:0];
-                [self.tableView reloadRowsAtIndexPaths:@[indexPath]
-                                      withRowAnimation:UITableViewRowAnimationAutomatic];
+                self.category = [self getCategoryValues:context error:&error isIncome:self.selectedTypeIndex];
+                [self.tableView reloadRowsAtIndexPaths:@[
+                    [NSIndexPath indexPathForRow:4 inSection:0]
+                ] withRowAnimation:UITableViewRowAnimationAutomatic];
                 break;
             }
-            case 2:
-            {
-                selectedRow = [picker selectedRowInComponent:0];
+            case 2: { // Category
                 NSDictionary *selectedCategory = self.category[selectedRow];
                 self.selectedCategoryIndex = selectedCategory[@"objectID"];
                 [sender setTitle:self.categoryValues[selectedRow] forState:UIControlStateNormal];
@@ -397,12 +380,35 @@ replacementString:(NSString *)string {
                 break;
         }
     }];
+}
+
+
+- (void)pickerButtonTapped:(UIButton *)sender {
+    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+    self.currentPickerMode = sender.tag;
+    
+    NSString *title = [self titleForPickerWithSender:sender];
+    self.budgetValues = [self.budgets valueForKey:@"name"];
+    self.categoryValues = [self.category valueForKey:@"name"];
+    
+    if ([self checkAndShowEmptyBudgetAlertIfNeeded]) return;
+    
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
+                                                                   message:@"\n\n\n\n\n\n"
+                                                            preferredStyle:UIAlertControllerStyleActionSheet];
+    
+    UIPickerView *picker = [self createPickerForAlert:alert];
+    [alert.view addSubview:picker];
+    
+    UIAlertAction *done = [self createDoneActionForPicker:picker sender:sender context:context];
     UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil];
     
     [alert addAction:done];
     [alert addAction:cancel];
+    
     [self presentViewController:alert animated:YES completion:nil];
 }
+
 
 #pragma mark - UITableViewDelegate
 
