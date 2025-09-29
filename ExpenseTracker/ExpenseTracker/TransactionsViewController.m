@@ -7,6 +7,7 @@
 #import "Category+CoreDataClass.h"
 #import "BudgetAllocation+CoreDataClass.h"
 #import "Transaction+CoreDataClass.h"
+#import "PickerModalViewController.h"
 
 @interface TransactionsViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate, UIPickerViewDelegate, UIPickerViewDataSource>
 @property (nonatomic, assign) BOOL isDatePickerVisible;
@@ -415,29 +416,52 @@ replacementString:(NSString *)string {
 - (void)pickerButtonTapped:(UIButton *)sender {
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     self.currentPickerMode = sender.tag;
-    
-    NSString *title = [self titleForPickerWithSender:sender];
-    self.budgetValues = [self.budgets valueForKey:@"name"];
-    self.categoryValues = [self.category valueForKey:@"name"];
-    
-    if ([self checkAndShowEmptyBudgetAlertIfNeeded]) return;
-    
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
-                                                                   message:@"\n\n\n\n\n\n"
-                                                            preferredStyle:UIAlertControllerStyleActionSheet];
-    
-    UIPickerView *picker = [self createPickerForAlert:alert];
-    [alert.view addSubview:picker];
-    
-    UIAlertAction *done = [self createDoneActionForPicker:picker sender:sender context:context];
-    UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil];
-    
-    [alert addAction:done];
-    [alert addAction:cancel];
-    
-    [self presentViewController:alert animated:YES completion:nil];
-}
 
+    PickerModalViewController *pickerVC = [[PickerModalViewController alloc] init];
+    pickerVC.modalPresentationStyle = UIModalPresentationPageSheet;
+
+    if (@available(iOS 15.0, *)) {
+        UISheetPresentationController *sheet = pickerVC.sheetPresentationController;
+        sheet.detents = @[UISheetPresentationControllerDetent.mediumDetent];
+        sheet.prefersGrabberVisible = YES;
+        sheet.preferredCornerRadius = 16.0;
+    }
+
+    if (sender.tag == 0) {
+        pickerVC.items = [self.budgets valueForKey:@"name"];
+        pickerVC.selectedIndex = 0;
+        pickerVC.onDone = ^(NSInteger selectedIndex) {
+            NSDictionary *selectedBudget = self.budgets[selectedIndex];
+            self.selectedBudgetIndex = selectedBudget[@"objectID"];
+            [sender setTitle:selectedBudget[@"name"] forState:UIControlStateNormal];
+            [self.tableView reloadRowsAtIndexPaths:@[
+                [NSIndexPath indexPathForRow:3 inSection:0],
+                [NSIndexPath indexPathForRow:4 inSection:0]
+            ] withRowAnimation:UITableViewRowAnimationAutomatic];
+        };
+    } else if (sender.tag == 1) {
+        pickerVC.items = self.typeValues;
+        pickerVC.selectedIndex = self.selectedTypeIndex;
+        pickerVC.onDone = ^(NSInteger selectedIndex) {
+            self.selectedTypeIndex = selectedIndex;
+            [sender setTitle:self.typeValues[selectedIndex] forState:UIControlStateNormal];
+            self.category = [self getCategoryValues:context error:nil isIncome:self.selectedTypeIndex];
+            [self.tableView reloadRowsAtIndexPaths:@[
+                [NSIndexPath indexPathForRow:4 inSection:0]
+            ] withRowAnimation:UITableViewRowAnimationAutomatic];
+        };
+    } else if (sender.tag == 2) {
+        pickerVC.items = [self.category valueForKey:@"name"];
+        pickerVC.selectedIndex = 0;
+        pickerVC.onDone = ^(NSInteger selectedIndex) {
+            NSDictionary *selectedCategory = self.category[selectedIndex];
+            self.selectedCategoryIndex = selectedCategory[@"objectID"];
+            [sender setTitle:selectedCategory[@"name"] forState:UIControlStateNormal];
+        };
+    }
+
+    [self presentViewController:pickerVC animated:YES completion:nil];
+}
 
 #pragma mark - UITableViewDelegate
 
