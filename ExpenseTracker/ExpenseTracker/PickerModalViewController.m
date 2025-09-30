@@ -29,6 +29,7 @@
     [doneButton setTitle:@"Done" forState:UIControlStateNormal];
     doneButton.translatesAutoresizingMaskIntoConstraints = NO;
     [doneButton addTarget:self action:@selector(doneTapped) forControlEvents:UIControlEventTouchUpInside];
+    doneButton.titleLabel.font = [UIFont systemFontOfSize:22 weight:UIFontWeightSemibold];
     [self.view addSubview:doneButton];
     
     UILayoutGuide *guide = self.view.safeAreaLayoutGuide;
@@ -37,6 +38,7 @@
         [self.pickerView.leadingAnchor constraintEqualToAnchor:guide.leadingAnchor constant:16],
         [self.pickerView.trailingAnchor constraintEqualToAnchor:guide.trailingAnchor constant:-16],
 
+        [doneButton.heightAnchor constraintEqualToConstant:56],
         [doneButton.topAnchor constraintEqualToAnchor:self.pickerView.bottomAnchor constant:16],
         [doneButton.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
         [doneButton.bottomAnchor constraintEqualToAnchor:guide.bottomAnchor constant:0],
