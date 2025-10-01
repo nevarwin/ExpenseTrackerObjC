@@ -2,7 +2,7 @@
 //  CoreDataManager.h
 //  ExpenseTracker
 //
-//  Created by XOO_Raven on 9/8/25.
+//  Created by raven on 9/8/25.
 //
 
 #ifndef CoreDataManager_h
