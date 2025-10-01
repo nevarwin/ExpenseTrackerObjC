@@ -12,6 +12,7 @@
 
 @property (nonatomic, strong) UIView *headerContainer;
 @property (nonatomic, strong) UILabel *headerLabel;
+@property (nonatomic, strong) UILabel *yearHeaderLabel;
 @property (nonatomic, strong) UIButton *addButton;
 
 @property (strong, nonatomic) UITableView *transactionTableView;
@@ -20,7 +21,9 @@
 @property (strong, nonatomic) NSFetchedResultsController *fetchedResultsController;
 
 @property (strong, nonatomic) UISegmentedControl *typeSegmentControl;
+@property (strong, nonatomic) UISegmentedControl *weekSegmentControl;
 @property (nonatomic, assign) NSInteger typeSegmentIndex;
+@property (nonatomic, assign) NSInteger weekSegmentIndex;
 
 
 @end
