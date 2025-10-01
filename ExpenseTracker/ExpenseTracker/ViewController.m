@@ -2,7 +2,7 @@
 //  ViewController.m
 //  ExpenseTracker
 //
-//  Created by XOO_Raven on 6/26/25.
+//  Created by raven on 6/26/25.
 //
 
 #import "ViewController.h"
@@ -41,6 +41,7 @@
 }
 // TODO: Think of past year transactions
 // TODO: Pagination
+// TODO: Per Month Transaction
 - (void)updateFetchPredicateForSegment:(NSInteger)dateIndex typeIndex:(NSNumber * _Nullable)typeIndex{
     NSMutableArray *subpredicates = [NSMutableArray array];
     [subpredicates addObject:[NSPredicate predicateWithFormat:@"isActive == YES"]];
@@ -344,7 +345,10 @@
         }
         
         NSError *error = nil;
-        if (![context save:&error]) {
+        BOOL success = [context save:&error];
+        
+        if (!success) {
+            // Save failed
             transactionToDelete.isActive = YES;
             for (Category *category in categories){
                 for (BudgetAllocation *allocation in category.allocations){
@@ -352,7 +356,11 @@
                 }
             }
             NSLog(@"Error deleting transaction: %@, %@", error, error.userInfo);
+        } else {
+            // Save succeeded
+            NSLog(@"Transaction successfully deleted.");
         }
+
     }
 }
 
