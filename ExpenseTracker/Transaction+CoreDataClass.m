@@ -2,7 +2,7 @@
 //  Transaction+CoreDataClass.m
 //  ExpenseTracker
 //
-//  Created by XOO_Raven on 9/15/25.
+//  Created by raven on 9/15/25.
 //
 //
 
