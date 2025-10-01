@@ -369,7 +369,7 @@
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
-    return @"Tap Add Data to add a new transaction";
+    return @"";
 }
 
 
