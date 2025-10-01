@@ -19,10 +19,8 @@
 
 @property (strong, nonatomic) NSFetchedResultsController *fetchedResultsController;
 
-@property (strong, nonatomic) UISegmentedControl *dateSegmentControl;
 @property (strong, nonatomic) UISegmentedControl *typeSegmentControl;
 @property (nonatomic, assign) NSInteger typeSegmentIndex;
-@property (nonatomic, assign) NSInteger dateSegmentIndex;
 
 
 @end
