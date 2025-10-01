@@ -8,6 +8,7 @@
 #import "BudgetAllocation+CoreDataClass.h"
 #import "Transaction+CoreDataClass.h"
 #import "PickerModalViewController.h"
+#import "UIViewController+Alerts.h"
 
 @interface TransactionsViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate, UIPickerViewDelegate, UIPickerViewDataSource>
 @property (nonatomic, assign) BOOL isDatePickerVisible;
@@ -195,15 +196,6 @@ replacementString:(NSString *)string {
         }
     }
     return [categoryArray copy];
-}
-
-- (void)showAlertWithTitle:(NSString *)title message:(NSString *)message {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
-                                                                   message:message
-                                                            preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
-    [alert addAction:ok];
-    [self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)saveTransactionWithAmount:(NSDecimalNumber *)amount
@@ -495,51 +487,72 @@ replacementString:(NSString *)string {
 - (void)rightButtonTapped {
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     NSError *error = nil;
-    NSDecimalNumber *totalUsedAmount = [NSDecimalNumber zero];
-    BOOL amountOverflow = NO;
     
-    NSInteger type = self.selectedTypeIndex;
-    NSManagedObjectID *budgetID = self.selectedBudgetIndex;
-    NSManagedObjectID *categoryID = self.selectedCategoryIndex;
-    
-    NSDate *date = self.datePicker.date;
-    
-    if ([self.amountTextField.text  isEqual: @""] ||
-        [self.amountTextField.text  isEqual: @"0"] ||
+    // --- Step 1: Validation ---
+    if ([self.amountTextField.text isEqualToString:@""] ||
+        [self.amountTextField.text isEqualToString:@"0"] ||
         self.selectedBudgetIndex == nil ||
-        [self.amountTextField.text  isEqual: @""]  ||
         self.selectedCategoryIndex == nil ||
-        !date) {
+        !self.datePicker.date) {
         
         [self showAlertWithTitle:@"Invalid Input" message:@"Please fill all fields correctly."];
         return;
     }
     
-    Budget *budget = (Budget *)[context existingObjectWithID:budgetID error:&error];
-    Category *category = (Category *)[context existingObjectWithID:categoryID error:&error];
-    
-    // Parse amount as NSDecimalNumber using NSNumberFormatter for safety
+    // --- Step 2: Parse Inputs ---
     NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
     formatter.numberStyle = NSNumberFormatterDecimalStyle;
     NSNumber *amountNumber = [formatter numberFromString:self.amountTextField.text];
     NSDecimalNumber *amount = [NSDecimalNumber decimalNumberWithDecimal:amountNumber.decimalValue];
     
-    for (BudgetAllocation *allocation in category.allocations) {
-        NSDecimalNumber *usedAmount = allocation.usedAmount ?: [NSDecimalNumber zero];
-
-        if (self.isEditMode){
-            usedAmount = [usedAmount decimalNumberBySubtracting:self.existingTransaction.amount];
-        }
+    NSInteger type = self.selectedTypeIndex;
+    NSDate *date = self.datePicker.date;
+    
+    Budget *newBudget = (Budget *)[context existingObjectWithID:self.selectedBudgetIndex error:&error];
+    Category *newCategory = (Category *)[context existingObjectWithID:self.selectedCategoryIndex error:&error];
+    
+    BOOL isEditing = (self.existingTransaction != nil);
+    BOOL amountOverflow = NO;
+    
+    // --- Step 3: Undo Old Transaction if Editing ---
+    if (isEditing) {
+        Budget *oldBudget = self.existingTransaction.budget;
+        Category *oldCategory = self.existingTransaction.category;
         
-        totalUsedAmount = [usedAmount decimalNumberByAdding:amount];
-        
-        if ([totalUsedAmount compare:allocation.allocatedAmount] != NSOrderedDescending) {
-            allocation.usedAmount = totalUsedAmount;
-        } else {
-            allocation.usedAmount = totalUsedAmount;
-            amountOverflow = YES;
+        for (BudgetAllocation *allocation in oldCategory.allocations) {
+            if ([allocation.budget.objectID isEqual:oldBudget.objectID]) {
+                NSDecimalNumber *usedAmount = allocation.usedAmount ?: [NSDecimalNumber zero];
+                allocation.usedAmount = [usedAmount decimalNumberBySubtracting:self.existingTransaction.amount];
+                break;
+            }
         }
     }
+    
+    // --- Step 4: Apply New Transaction Amount ---
+    for (BudgetAllocation *allocation in newCategory.allocations) {
+        allocation.budget = newBudget;
+        if ([allocation.budget.objectID isEqual:newBudget.objectID]) {
+            NSDecimalNumber *usedAmount = allocation.usedAmount ?: [NSDecimalNumber zero];
+            NSDecimalNumber *totalUsedAmount = [usedAmount decimalNumberByAdding:amount];
+            
+            if ([totalUsedAmount compare:allocation.allocatedAmount] != NSOrderedDescending) {
+                allocation.usedAmount = totalUsedAmount;
+            } else {
+                allocation.usedAmount = totalUsedAmount;
+                amountOverflow = YES;
+            }
+            break;
+        }
+    }
+    
+    // --- Step 5: Save Transaction ---
+    void (^saveBlock)(void) = ^{
+        [self saveTransactionWithAmount:amount
+                                   date:date
+                                 budget:newBudget
+                               category:newCategory
+                                   type:type];
+    };
     
     if (amountOverflow) {
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Amount exceeded"
@@ -549,11 +562,7 @@ replacementString:(NSString *)string {
         UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
                                                      style:UIAlertActionStyleDefault
                                                    handler:^(UIAlertAction * _Nonnull action) {
-            [self saveTransactionWithAmount:amount
-                                       date:date
-                                     budget:budget
-                                   category:category
-                                       type:type];
+            saveBlock();
         }];
         
         UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel"
@@ -564,15 +573,9 @@ replacementString:(NSString *)string {
         [alert addAction:ok];
         
         [self presentViewController:alert animated:YES completion:nil];
-        
-        return;
+    } else {
+        saveBlock();
     }
-    
-    [self saveTransactionWithAmount:amount
-                               date:date
-                             budget:budget
-                           category:category
-                               type:type];
 }
 
 - (void)dismissKeyboard {
