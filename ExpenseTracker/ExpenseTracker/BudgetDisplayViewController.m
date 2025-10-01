@@ -12,6 +12,7 @@
 #import "BudgetAllocation+CoreDataClass.h"
 #import "CoreDataManager.h"
 #import "AppDelegate.h"
+#import "UIViewController+Alerts.h"
 
 #define MAX_HEADER_TEXT_LENGTH 16
 
@@ -33,16 +34,9 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Set background color to match Health app
+    // TODO: Add installment logic
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
     self.title = self.isEditMode ? @"Edit Budget" : @"Add Budget";
-    
-    // Build a lookup dictionary for allocations by category objectID
-    NSMutableDictionary *allocationByCategoryID = [NSMutableDictionary dictionary];
-    for (BudgetAllocation *allocation in self.budget.allocations) {
-        allocationByCategoryID[allocation.category] = allocation;
-        NSLog(@"allocationByCategoryID: %@", allocationByCategoryID);
-    }
     
     
     self.income = [NSMutableArray array];
@@ -101,15 +95,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         [amounts addObject:[NSDecimalNumber zero]];
         [usedAmounts addObject:[NSDecimalNumber zero]];
     }
-}
-
-- (void)showAlertWithTitle:(NSString *)title message:(NSString *)message {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
-                                                                   message:message
-                                                            preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
-    [alert addAction:ok];
-    [self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)setupHeaderView {
