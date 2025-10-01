@@ -45,7 +45,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     self.expensesAmounts = [NSMutableArray array];
     self.incomeUsedAmounts = [NSMutableArray array];
     self.expensesUsedAmounts = [NSMutableArray array];
-
+    
     for (Category *category in self.budget.category) {
         [self processCategory:category isIncome:category.isIncome];
     }
@@ -83,7 +83,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     NSMutableArray *names = isIncome ? self.income : self.expenses;
     NSMutableArray *amounts = isIncome ? self.incomeAmounts : self.expensesAmounts;
     NSMutableArray *usedAmounts = isIncome ? self.incomeUsedAmounts : self.expensesUsedAmounts;
-
+    
     [names addObject:category.name];
     if (category.allocations.count > 0) {
         for (BudgetAllocation *allocation in category.allocations) {
@@ -170,7 +170,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     NSString *attributeKey = textField.accessibilityIdentifier;
     
     if (attributeKey) {
-        // Handle expense/income value update here
         if (indexPath.section == 0) {
             self.expensesAmounts[indexPath.row] = textField.text;
         } else {
@@ -196,8 +195,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    NSLog(@"tableView indexPath: %@", indexPath);
-    
     [self plusButtonTapped:nil indexPath:indexPath];
 }
 
@@ -283,32 +280,46 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     // Convert both to NSNumber for safe comparison
     NSNumber *usedAmountNum = ([usedAmount isKindOfClass:[NSNumber class]]) ? usedAmount : @([[usedAmount description] doubleValue]);
     NSNumber *valueNum = ([value isKindOfClass:[NSNumber class]]) ? value : @([[value description] doubleValue]);
+    NSNumber *remainingAmount = @([valueNum doubleValue] - [usedAmountNum doubleValue]);
     
-    // Format the string
+    // Format the strings
     NSString *usedAmountString = ETStringFromNumberOrString(usedAmount, @"0");
-    NSString *fullString = [NSString stringWithFormat:@"Used Amount: %@", usedAmountString];
+    NSString *remainingAmountString = ETStringFromNumberOrString(remainingAmount, @"0");
     
-    // Create attributed string
-    NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] initWithString:fullString];
+    // Full texts
+    NSString *usedAmountText = [NSString stringWithFormat:@"Used Amount: %@", usedAmountString];
+    NSString *remainingAmountText = [NSString stringWithFormat:@"Remaining Amount: %@", remainingAmountString];
     
-    // Find range of the amount part
-    NSRange amountRange = [fullString rangeOfString:usedAmountString];
+    // Build one combined string with a newline
+    NSString *combinedText = [NSString stringWithFormat:@"%@\n%@", usedAmountText, remainingAmountText];
+    NSMutableAttributedString *attributedCombinedText = [[NSMutableAttributedString alloc] initWithString:combinedText];
     
-    // Decide color
+    // Find ranges
+    NSRange usedRange = [combinedText rangeOfString:usedAmountString];
+    NSRange remainingRange = [combinedText rangeOfString:remainingAmountString];
+    
+    // Decide color for used amount
     UIColor *amountColor = ([usedAmountNum compare:valueNum] == NSOrderedDescending) ?
-    [UIColor systemRedColor] :
+    [UIColor colorWithRed:220.0/255.0
+                    green:53.0/255.0
+                     blue:69.0/255.0
+                    alpha:1.0] :
     (([usedAmountNum isEqualToNumber:@0]) ?
      [UIColor systemGrayColor] :
-     [UIColor systemGreenColor]);
-
+     [UIColor colorWithRed:40.0/255.0
+                     green:167.0/255.0
+                      blue:69.0/255.0
+                     alpha:1.0]);
     
-    // Apply color to only the amount part
-    [attributedText addAttribute:NSForegroundColorAttributeName value:amountColor range:amountRange];
+    // Apply colors
+    [attributedCombinedText addAttribute:NSForegroundColorAttributeName value:[UIColor labelColor] range:usedRange];
+    [attributedCombinedText addAttribute:NSForegroundColorAttributeName value:amountColor range:remainingRange];
     
-    // Set to label
-    cell.detailTextLabel.attributedText = attributedText;
-
-    // Configure the text each time
+    // Use multiline in label
+    cell.detailTextLabel.numberOfLines = 0; // allow wrapping
+    cell.detailTextLabel.attributedText = attributedCombinedText;
+    
+    // Configure text field
     textField.text = ETStringFromNumberOrString(value, @"");
     
     textField.placeholder = placeholder;
@@ -445,7 +456,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return 60;
+    return 80;
 }
 
 
@@ -691,7 +702,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 }
 
 - (void)exportButtonTapped{
-
+    
 }
 
 #pragma mark - Keyboard Notifications
