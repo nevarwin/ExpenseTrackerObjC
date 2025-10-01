@@ -48,13 +48,16 @@
     [self.pickerView selectRow:self.selectedIndex inComponent:0 animated:NO];
 }
 
-- (NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView { return 1;
+- (NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView {
+    return 1;
 }
 
-- (NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component { return self.items.count;
+- (NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component {
+    return self.items.count;
 }
 
-- (NSString *)pickerView:(UIPickerView *)pickerView titleForRow:(NSInteger)row forComponent:(NSInteger)component { return self.items[row];
+- (NSString *)pickerView:(UIPickerView *)pickerView titleForRow:(NSInteger)row forComponent:(NSInteger)component {
+    return self.items[row];
 }
 
 - (void)doneTapped {
