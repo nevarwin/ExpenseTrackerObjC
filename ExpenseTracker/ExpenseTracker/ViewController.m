@@ -15,6 +15,8 @@
 
 @interface ViewController () <UITableViewDataSource, UITableViewDelegate, NSFetchedResultsControllerDelegate>
 
+- (void)updateFetchPredicateForSegment:(NSNumber *)typeIndex;
+
 @end
 
 @implementation ViewController
@@ -30,65 +32,46 @@
 
 - (void)typeSegmentChange:(UISegmentedControl *)sender{
     self.typeSegmentIndex = sender.selectedSegmentIndex;
-    [self updateFetchPredicateForSegment:self.dateSegmentIndex typeIndex:@(self.typeSegmentIndex)];
+    [self updateFetchPredicateForSegment:@(self.typeSegmentIndex)];
     [self.transactionTableView reloadData];
 }
 
-- (void)dateSegmentChange:(UISegmentedControl *)sender {
-    self.dateSegmentIndex = sender.selectedSegmentIndex;
-    [self updateFetchPredicateForSegment:self.dateSegmentIndex typeIndex:@(self.typeSegmentIndex)];
-    [self.transactionTableView reloadData];
+- (void)updateFetchPredicateForSegment:(NSNumber *)typeIndex {
+    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+
+    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Transaction"];    
+
+    NSMutableArray<NSPredicate *> *predicates = [NSMutableArray array];
+
+    // Always fetch only active transactions
+    [predicates addObject:[NSPredicate predicateWithFormat:@"isActive == YES"]];
+
+    // Filter by type if not 'All' (0 = Expense, 1 = Income, 2 = All)
+    if (typeIndex != nil && typeIndex.integerValue != 2) {
+        BOOL isIncome = (typeIndex.integerValue == 1);
+        [predicates addObject:[NSPredicate predicateWithFormat:@"category.isIncome == %@", @(isIncome)]];
+    }
+
+
+    fetchRequest.predicate = [NSCompoundPredicate andPredicateWithSubpredicates:predicates];
+    fetchRequest.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"createdAt" ascending:NO]];
+
+    // Recreate the fetched results controller with the new request
+    _fetchedResultsController = [[NSFetchedResultsController alloc] initWithFetchRequest:fetchRequest
+                                                                  managedObjectContext:context
+                                                                    sectionNameKeyPath:nil
+                                                                             cacheName:nil];
+    _fetchedResultsController.delegate = self;
+
+    NSError *error = nil;
+    if (![_fetchedResultsController performFetch:&error]) {
+        NSLog(@"Unresolved fetch error %@, %@", error, error.userInfo);
+    }
 }
+
 // TODO: Think of past year transactions
 // TODO: Pagination
 // TODO: Per Month Transaction
-- (void)updateFetchPredicateForSegment:(NSInteger)dateIndex typeIndex:(NSNumber * _Nullable)typeIndex{
-    NSMutableArray *subpredicates = [NSMutableArray array];
-    [subpredicates addObject:[NSPredicate predicateWithFormat:@"isActive == YES"]];
-    
-    NSDate *now = [NSDate date];
-    NSCalendar *calendar = [NSCalendar currentCalendar];
-    NSDate *startDate = nil;
-    
-    switch (dateIndex) {
-        case 0: // Week
-            [calendar rangeOfUnit:NSCalendarUnitWeekOfYear startDate:&startDate interval:NULL forDate:now];
-            break;
-        case 1: // Month
-            [calendar rangeOfUnit:NSCalendarUnitMonth startDate:&startDate interval:NULL forDate:now];
-            break;
-        case 2: // 6 Months
-            startDate = [calendar dateByAddingUnit:NSCalendarUnitMonth value:-6 toDate:now options:0];
-            break;
-        case 3: // Year
-            [calendar rangeOfUnit:NSCalendarUnitYear startDate:&startDate interval:NULL forDate:now];
-            break;
-        case 4: // All
-            startDate = nil;
-            break;
-        default:
-            startDate = nil;
-            break;
-    }
-    
-    if (startDate) {
-        [subpredicates addObject:[NSPredicate predicateWithFormat:@"date >= %@", startDate]];
-    }
-    
-    if (typeIndex != nil && [typeIndex integerValue] != 2) {
-        [subpredicates addObject:[NSPredicate predicateWithFormat:@"category.isIncome == %@", typeIndex]];
-    }
-    
-    NSPredicate *predicate = [NSCompoundPredicate andPredicateWithSubpredicates:subpredicates];
-    self.fetchedResultsController.fetchRequest.predicate = predicate;
-    
-    NSError *error = nil;
-    [self.fetchedResultsController performFetch:&error];
-    if (error) {
-        NSLog(@"Fetch error: %@", error);
-    }
-}
-
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
     if ([segue.identifier isEqualToString:@"TransactionsViewController"]) {
@@ -171,19 +154,12 @@
     self.typeSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"Expense", @"Income", @"All"]];
     self.typeSegmentControl.translatesAutoresizingMaskIntoConstraints = NO;
     self.typeSegmentControl.selectedSegmentIndex = 2;
-    
-    self.dateSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"W", @"M", @"6M", @"Y", @"All"]];
-    self.dateSegmentControl.translatesAutoresizingMaskIntoConstraints = NO;
-    self.dateSegmentControl.selectedSegmentIndex = 4;
 
     [self.typeSegmentControl addTarget:self
                                 action:@selector(typeSegmentChange:)
                       forControlEvents:UIControlEventValueChanged];
-    [self.dateSegmentControl addTarget:self
-                                action:@selector(dateSegmentChange:)
-                      forControlEvents:UIControlEventValueChanged];
+ 
     [self.view addSubview:self.typeSegmentControl];
-    [self.view addSubview:self.dateSegmentControl];
     
     // 2. Setup auto layout constraints
     CGFloat margin = 16.0;
@@ -197,19 +173,12 @@
         [self.typeSegmentControl.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-margin],
         [self.typeSegmentControl.heightAnchor constraintEqualToConstant:segmentHeight],
         
-        // Date segment under type segment
-        [self.dateSegmentControl.topAnchor constraintEqualToAnchor:self.typeSegmentControl.bottomAnchor constant:gap],
-        [self.dateSegmentControl.leadingAnchor constraintEqualToAnchor:self.typeSegmentControl.leadingAnchor],
-        [self.dateSegmentControl.trailingAnchor constraintEqualToAnchor:self.typeSegmentControl.trailingAnchor],
-        [self.dateSegmentControl.heightAnchor constraintEqualToConstant:segmentHeight],
-        
         // Table view below date segment (modify your tableView's top constraint!)
-        [self.transactionTableView.topAnchor constraintEqualToAnchor:self.dateSegmentControl.bottomAnchor constant:gap]
+        [self.transactionTableView.topAnchor constraintEqualToAnchor:self.typeSegmentControl.bottomAnchor constant:gap]
     ]];
     
     // 3. Initialize states
     self.typeSegmentIndex = self.typeSegmentControl.selectedSegmentIndex;
-    self.dateSegmentIndex = self.dateSegmentControl.selectedSegmentIndex;
 }
 
 
@@ -450,3 +419,4 @@
 }
 
 @end
+
