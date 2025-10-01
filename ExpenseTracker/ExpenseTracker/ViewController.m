@@ -26,6 +26,8 @@
     [self setupHeaderView];
     [self setupTableView];
     [self setupSegmentControls];
+    [self setupYearHeaderView];
+    [self setupWeekSegmentControls];
     
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
 }
@@ -146,6 +148,22 @@
     ]];
 }
 
+- (void)setupYearHeaderView {
+    // Month/Year label
+    self.yearHeaderLabel = [[UILabel alloc] init];
+    self.yearHeaderLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    self.yearHeaderLabel.text = @"September 2025";
+    self.yearHeaderLabel.font = [UIFont systemFontOfSize:28 weight:UIFontWeightSemibold];
+    self.yearHeaderLabel.textAlignment = NSTextAlignmentCenter;
+    [self.view addSubview:self.yearHeaderLabel];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [self.yearHeaderLabel.topAnchor constraintEqualToAnchor:self.typeSegmentControl.bottomAnchor constant:8],
+        [self.yearHeaderLabel.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [self.yearHeaderLabel.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [self.yearHeaderLabel.heightAnchor constraintEqualToConstant:40]
+    ]];
+}
 
 #pragma mark - setupSegmetControls
 
@@ -181,7 +199,35 @@
     self.typeSegmentIndex = self.typeSegmentControl.selectedSegmentIndex;
 }
 
-
+- (void)setupWeekSegmentControls {
+    // 1. Create the segment controls
+    self.weekSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"Week 1", @"Week 2", @"Week 3", @"Week 4"]];
+    self.weekSegmentControl.translatesAutoresizingMaskIntoConstraints = NO;
+    self.weekSegmentControl.selectedSegmentIndex = 2;
+    
+    [self.weekSegmentControl addTarget:self
+                                action:@selector(typeSegmentChange:)
+                      forControlEvents:UIControlEventValueChanged];
+    
+    [self.view addSubview:self.weekSegmentControl];
+    
+    // 2. Setup auto layout constraints
+    CGFloat margin = 16.0;
+    CGFloat segmentHeight = 32.0;
+    CGFloat gap = 8.0;
+    
+    [NSLayoutConstraint activateConstraints:@[
+        // Type segment at top, under safe area
+        [self.weekSegmentControl.topAnchor constraintEqualToAnchor:self.yearHeaderLabel.bottomAnchor constant:16.0],
+        [self.weekSegmentControl.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:margin],
+        [self.weekSegmentControl.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-margin],
+        [self.weekSegmentControl.heightAnchor constraintEqualToConstant:segmentHeight],
+    ]];
+    
+    // 3. Initialize states
+    self.weekSegmentIndex = self.weekSegmentControl.selectedSegmentIndex;
+    
+}
 #pragma mark - setupTableView
 - (void)setupTableView {
     // Setup table view for budget items - use inset grouped style like Health app
