@@ -12,6 +12,7 @@
 #import "TransactionsViewController.h"
 #import "AppDelegate.h"
 #import "CoreDataManager.h"
+#import "PickerModalViewController.h"
 
 @interface ViewController () <UITableViewDataSource, UITableViewDelegate, NSFetchedResultsControllerDelegate>
 
@@ -24,10 +25,11 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self setupHeaderView];
-    [self setupTableView];
-    [self setupSegmentControls];
     [self setupYearHeaderView];
+    [self setupSegmentControls];
     [self setupWeekSegmentControls];
+    [self setupTableView];
+    [self initializeCurrentDate];
     
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
 }
@@ -84,6 +86,24 @@
     }
 }
 
+#pragma mark - Init current date
+- (void)initializeCurrentDate {
+    NSDate *today = [NSDate date];
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    self.currentDateComponents = [calendar components:NSCalendarUnitYear | NSCalendarUnitMonth fromDate:today];
+    [self updateHeaderLabels];
+}
+
+#pragma mark - Update header
+- (void)updateHeaderLabels {
+    NSArray *months = @[@"January",@"February",@"March",@"April",@"May",@"June",
+                        @"July",@"August",@"September",@"October",@"November",@"December"];
+    NSInteger monthIndex = self.currentDateComponents.month - 1;
+    self.monthLabel.text = months[monthIndex];
+    self.yearLabel.text = [NSString stringWithFormat:@"%ld", (long)self.currentDateComponents.year];
+}
+
+
 
 #pragma mark - Actions
 
@@ -95,6 +115,64 @@
     
     transactionVC.delegate = self;
     [self presentViewController:navController animated:YES completion:nil];
+}
+
+- (void)didTapPreviousMonth {
+    self.currentDateComponents.month -= 1;
+    if (self.currentDateComponents.month < 1) {
+        self.currentDateComponents.month = 12;
+        self.currentDateComponents.year -= 1;
+    }
+    [self updateHeaderLabels];
+}
+
+- (void)didTapNextMonth {
+    self.currentDateComponents.month += 1;
+    if (self.currentDateComponents.month > 12) {
+        self.currentDateComponents.month = 1;
+        self.currentDateComponents.year += 1;
+    }
+    [self updateHeaderLabels];
+}
+
+- (void)showYearPicker {
+    NSInteger startYear = 2000;
+    NSInteger range = 50; // 2000–2049
+    
+    NSMutableArray *years = [NSMutableArray array];
+    for (NSInteger i = 0; i < range; i++) {
+        [years addObject:[NSString stringWithFormat:@"%ld", (long)(startYear + i)]];
+    }
+    
+    PickerModalViewController *vc = [[PickerModalViewController alloc] init];
+    vc.items = years;
+    vc.selectedIndex = self.currentDateComponents.year - startYear;
+    
+    __weak typeof(self) weakSelf = self;
+    vc.onDone = ^(NSInteger selectedIndex) {
+        weakSelf.currentDateComponents.year = startYear + selectedIndex;
+        [weakSelf updateHeaderLabels];
+    };
+    
+    [self presentViewController:vc animated:YES completion:nil];
+}
+
+
+- (void)showMonthPicker {
+    NSArray *months = @[@"January",@"February",@"March",@"April",@"May",@"June",
+                        @"July",@"August",@"September",@"October",@"November",@"December"];
+    
+    PickerModalViewController *vc = [[PickerModalViewController alloc] init];
+    vc.items = months;
+    vc.selectedIndex = self.currentDateComponents.month - 1; // 1-based → 0-based
+    
+    __weak typeof(self) weakSelf = self;
+    vc.onDone = ^(NSInteger selectedIndex) {
+        weakSelf.currentDateComponents.month = selectedIndex + 1;
+        [weakSelf updateHeaderLabels];
+    };
+    
+    [self presentViewController:vc animated:YES completion:nil];
 }
 
 
@@ -149,19 +227,79 @@
 }
 
 - (void)setupYearHeaderView {
-    // Month/Year label
-    self.yearHeaderLabel = [[UILabel alloc] init];
-    self.yearHeaderLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    self.yearHeaderLabel.text = @"September 2025";
-    self.yearHeaderLabel.font = [UIFont systemFontOfSize:28 weight:UIFontWeightSemibold];
-    self.yearHeaderLabel.textAlignment = NSTextAlignmentCenter;
-    [self.view addSubview:self.yearHeaderLabel];
-
+    // --- Container for header ---
+    self.yearHeaderView = [[UIView alloc] init];
+    self.yearHeaderView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:self.yearHeaderView];
+    
     [NSLayoutConstraint activateConstraints:@[
-        [self.yearHeaderLabel.topAnchor constraintEqualToAnchor:self.typeSegmentControl.bottomAnchor constant:8],
-        [self.yearHeaderLabel.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-        [self.yearHeaderLabel.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
-        [self.yearHeaderLabel.heightAnchor constraintEqualToConstant:40]
+        [self.yearHeaderView.topAnchor constraintEqualToAnchor:self.headerContainer.bottomAnchor constant:16.0],
+        [self.yearHeaderView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:16.0],
+        [self.yearHeaderView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-16.0],
+        [self.yearHeaderView.heightAnchor constraintEqualToConstant:40.0]
+    ]];
+    
+    // --- Left button ---
+    UIButton *leftButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [leftButton setTitle:@"◀︎" forState:UIControlStateNormal];
+    leftButton.titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightBold];
+    leftButton.translatesAutoresizingMaskIntoConstraints = NO;
+    [leftButton addTarget:self action:@selector(didTapPreviousMonth) forControlEvents:UIControlEventTouchUpInside];
+    [self.yearHeaderView addSubview:leftButton];
+    
+    // --- Right button ---
+    UIButton *rightButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [rightButton setTitle:@"▶︎" forState:UIControlStateNormal];
+    rightButton.titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightBold];
+    rightButton.translatesAutoresizingMaskIntoConstraints = NO;
+    [rightButton addTarget:self action:@selector(didTapNextMonth) forControlEvents:UIControlEventTouchUpInside];
+    [self.yearHeaderView addSubview:rightButton];
+    
+    // --- Month label ---
+    self.monthLabel = [[UILabel alloc] init];
+    self.monthLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    self.monthLabel.text = @"September"; // default
+    self.monthLabel.font = [UIFont systemFontOfSize:22 weight:UIFontWeightSemibold];
+    self.monthLabel.textAlignment = NSTextAlignmentCenter;
+    self.monthLabel.userInteractionEnabled = YES;
+    [self.yearHeaderView addSubview:self.monthLabel];
+    
+    UITapGestureRecognizer *monthTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showMonthPicker)];
+    [self.monthLabel addGestureRecognizer:monthTap];
+    
+    // --- Year label ---
+    self.yearLabel = [[UILabel alloc] init];
+    self.yearLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    self.yearLabel.text = @"2025"; // default
+    self.yearLabel.font = [UIFont systemFontOfSize:22 weight:UIFontWeightSemibold];
+    self.yearLabel.textAlignment = NSTextAlignmentCenter;
+    self.yearLabel.userInteractionEnabled = YES;
+    [self.yearHeaderView addSubview:self.yearLabel];
+    
+    UITapGestureRecognizer *yearTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showYearPicker)];
+    [self.yearLabel addGestureRecognizer:yearTap];
+    
+    // --- Hidden textfields to show pickers ---
+    self.monthTextField = [[UITextField alloc] initWithFrame:CGRectZero];
+    self.yearTextField = [[UITextField alloc] initWithFrame:CGRectZero];
+    [self.view addSubview:self.monthTextField];
+    [self.view addSubview:self.yearTextField];
+    
+    // --- Layout ---
+    [NSLayoutConstraint activateConstraints:@[
+        [leftButton.centerYAnchor constraintEqualToAnchor:self.yearHeaderView.centerYAnchor],
+        [leftButton.leadingAnchor constraintEqualToAnchor:self.yearHeaderView.leadingAnchor],
+        [leftButton.widthAnchor constraintEqualToConstant:40],
+        
+        [rightButton.centerYAnchor constraintEqualToAnchor:self.yearHeaderView.centerYAnchor],
+        [rightButton.trailingAnchor constraintEqualToAnchor:self.yearHeaderView.trailingAnchor],
+        [rightButton.widthAnchor constraintEqualToConstant:40],
+        
+        [self.monthLabel.centerYAnchor constraintEqualToAnchor:self.yearHeaderView.centerYAnchor],
+        [self.monthLabel.trailingAnchor constraintEqualToAnchor:self.yearLabel.leadingAnchor constant:-8.0],
+        
+        [self.yearLabel.centerYAnchor constraintEqualToAnchor:self.yearHeaderView.centerYAnchor],
+        [self.yearLabel.centerXAnchor constraintEqualToAnchor:self.yearHeaderView.centerXAnchor constant:40.0]
     ]];
 }
 
@@ -182,17 +320,14 @@
     // 2. Setup auto layout constraints
     CGFloat margin = 16.0;
     CGFloat segmentHeight = 32.0;
-    CGFloat gap = 8.0;
     
     [NSLayoutConstraint activateConstraints:@[
         // Type segment at top, under safe area
-        [self.typeSegmentControl.topAnchor constraintEqualToAnchor:self.headerContainer.bottomAnchor constant:16.0],
+        [self.typeSegmentControl.topAnchor constraintEqualToAnchor:self.yearHeaderView.bottomAnchor constant:8.0],
         [self.typeSegmentControl.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:margin],
         [self.typeSegmentControl.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-margin],
         [self.typeSegmentControl.heightAnchor constraintEqualToConstant:segmentHeight],
         
-        // Table view below date segment (modify your tableView's top constraint!)
-        [self.transactionTableView.topAnchor constraintEqualToAnchor:self.typeSegmentControl.bottomAnchor constant:gap]
     ]];
     
     // 3. Initialize states
@@ -214,11 +349,10 @@
     // 2. Setup auto layout constraints
     CGFloat margin = 16.0;
     CGFloat segmentHeight = 32.0;
-    CGFloat gap = 8.0;
     
     [NSLayoutConstraint activateConstraints:@[
         // Type segment at top, under safe area
-        [self.weekSegmentControl.topAnchor constraintEqualToAnchor:self.yearHeaderLabel.bottomAnchor constant:16.0],
+        [self.weekSegmentControl.topAnchor constraintEqualToAnchor:self.typeSegmentControl.bottomAnchor constant:8.0],
         [self.weekSegmentControl.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:margin],
         [self.weekSegmentControl.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-margin],
         [self.weekSegmentControl.heightAnchor constraintEqualToConstant:segmentHeight],
@@ -245,6 +379,7 @@
     
     // Setup constraints for table view
     [NSLayoutConstraint activateConstraints:@[
+        [self.transactionTableView.topAnchor constraintEqualToAnchor:self.weekSegmentControl.bottomAnchor constant:8.0],
         [self.transactionTableView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
         [self.transactionTableView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
         [self.transactionTableView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
