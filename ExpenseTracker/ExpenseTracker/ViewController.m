@@ -229,7 +229,6 @@
     // --- Month label ---
     self.monthLabel = [[UILabel alloc] init];
     self.monthLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    self.monthLabel.text = @"September"; // default
     self.monthLabel.font = [UIFont systemFontOfSize:22 weight:UIFontWeightSemibold];
     self.monthLabel.textAlignment = NSTextAlignmentCenter;
     self.monthLabel.userInteractionEnabled = YES;
@@ -241,7 +240,6 @@
     // --- Year label ---
     self.yearLabel = [[UILabel alloc] init];
     self.yearLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    self.yearLabel.text = @"2025"; // default
     self.yearLabel.font = [UIFont systemFontOfSize:22 weight:UIFontWeightSemibold];
     self.yearLabel.textAlignment = NSTextAlignmentCenter;
     self.yearLabel.userInteractionEnabled = YES;
@@ -502,23 +500,36 @@
     
     // Date formatter
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.dateStyle = NSDateFormatterShortStyle;
+    dateFormatter.dateFormat = @"EEE, MMM d";
     NSString *formattedDate = [dateFormatter stringFromDate:transaction.date];
     
     // Type indicator emoji
     NSString *typeIndicator = transaction.category.isIncome == 0 ? @"💸" : @"💰";
     
     // Create a label for the date
-    UILabel *dateLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 80, 20)];
-    dateLabel.text = formattedDate;
-    dateLabel.font = [UIFont systemFontOfSize:12];
-    dateLabel.textColor = [UIColor grayColor];
-    dateLabel.textAlignment = NSTextAlignmentRight;
+    UILabel *amountLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 100, 20)];
+    NSNumberFormatter *currencyFormatter = [[NSNumberFormatter alloc] init];
+    currencyFormatter.numberStyle = NSNumberFormatterCurrencyStyle;
+    currencyFormatter.currencyCode = @"PHP";
+    
+    NSString *formattedAmount = [currencyFormatter stringFromNumber:transaction.amount];
+    NSString *sign = transaction.category.isIncome ? @"+" : @"–";
+    amountLabel.text = [NSString stringWithFormat:@"%@ %@", sign, formattedAmount];
+    
+    amountLabel.font = [UIFont boldSystemFontOfSize:20];
+    amountLabel.textAlignment = NSTextAlignmentRight;
+    amountLabel.textColor = transaction.category.isIncome ? [UIColor systemGreenColor] : [UIColor systemRedColor];
+    [amountLabel sizeToFit];
+    cell.accessoryView = amountLabel;
     
     cell.imageView.image = [self emojiToImage:typeIndicator];
-    cell.textLabel.text = [transaction.amount stringValue];
-    cell.detailTextLabel.text = transaction.category.isIncome == 0 ? @"Expenses" : @"Income";
-    cell.accessoryView = dateLabel;
+    
+    cell.textLabel.text = transaction.category.name;
+    cell.textLabel.font = [UIFont boldSystemFontOfSize:18];
+    
+    cell.detailTextLabel.text = formattedDate;
+    cell.detailTextLabel.font = [UIFont systemFontOfSize:14];
+    cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
     
     return cell;
 }
