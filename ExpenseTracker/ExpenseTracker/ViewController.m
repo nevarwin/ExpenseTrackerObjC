@@ -16,7 +16,7 @@
 
 @interface ViewController () <UITableViewDataSource, UITableViewDelegate, NSFetchedResultsControllerDelegate>
 
-- (void)updateFetchPredicateForSegment:(NSNumber *)typeIndex;
+- (void)updateFetchPredicateForSegment;
 
 @end
 
@@ -30,53 +30,12 @@
     [self setupWeekSegmentControls];
     [self setupTableView];
     [self initializeCurrentDate];
+    [self weekSegmentChange:self.weekSegmentControl];
     
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
 }
 
-- (void)typeSegmentChange:(UISegmentedControl *)sender{
-    self.typeSegmentIndex = sender.selectedSegmentIndex;
-    [self updateFetchPredicateForSegment:@(self.typeSegmentIndex)];
-    [self.transactionTableView reloadData];
-}
-
-- (void)updateFetchPredicateForSegment:(NSNumber *)typeIndex {
-    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
-
-    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Transaction"];    
-
-    NSMutableArray<NSPredicate *> *predicates = [NSMutableArray array];
-
-    // Always fetch only active transactions
-    [predicates addObject:[NSPredicate predicateWithFormat:@"isActive == YES"]];
-
-    // Filter by type if not 'All' (0 = Expense, 1 = Income, 2 = All)
-    if (typeIndex != nil && typeIndex.integerValue != 2) {
-        BOOL isIncome = (typeIndex.integerValue == 1);
-        [predicates addObject:[NSPredicate predicateWithFormat:@"category.isIncome == %@", @(isIncome)]];
-    }
-
-
-    fetchRequest.predicate = [NSCompoundPredicate andPredicateWithSubpredicates:predicates];
-    fetchRequest.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"createdAt" ascending:NO]];
-
-    // Recreate the fetched results controller with the new request
-    _fetchedResultsController = [[NSFetchedResultsController alloc] initWithFetchRequest:fetchRequest
-                                                                  managedObjectContext:context
-                                                                    sectionNameKeyPath:nil
-                                                                             cacheName:nil];
-    _fetchedResultsController.delegate = self;
-
-    NSError *error = nil;
-    if (![_fetchedResultsController performFetch:&error]) {
-        NSLog(@"Unresolved fetch error %@, %@", error, error.userInfo);
-    }
-}
-
-// TODO: Think of past year transactions
 // TODO: Pagination
-// TODO: Per Month Transaction
-
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
     if ([segue.identifier isEqualToString:@"TransactionsViewController"]) {
         UINavigationController *navController = segue.destinationViewController;
@@ -110,7 +69,6 @@
 - (void)addButtonTapped {
     UINavigationController *navController = [self.storyboard instantiateViewControllerWithIdentifier:@"TransactionNavController"];
     
-    // Get your TransactionsViewController from the nav controller
     TransactionsViewController *transactionVC = (TransactionsViewController *)navController.topViewController;
     
     transactionVC.delegate = self;
@@ -123,7 +81,7 @@
         self.currentDateComponents.month = 12;
         self.currentDateComponents.year -= 1;
     }
-    [self updateHeaderLabels];
+    [self refreshMonthChange];
 }
 
 - (void)didTapNextMonth {
@@ -132,7 +90,20 @@
         self.currentDateComponents.month = 1;
         self.currentDateComponents.year += 1;
     }
+    [self refreshMonthChange];
+}
+
+- (void)refreshMonthChange {
     [self updateHeaderLabels];
+    
+    NSInteger weekIndex = [self weekIndexForTodayInMonth:self.currentDateComponents.month
+                                                    year:self.currentDateComponents.year];
+    if (weekIndex < self.weekSegmentControl.numberOfSegments) {
+        self.weekSegmentControl.selectedSegmentIndex = weekIndex;
+        self.weekSegmentIndex = weekIndex;
+    }
+    
+    [self weekSegmentChange:self.weekSegmentControl];
 }
 
 - (void)showYearPicker {
@@ -152,6 +123,7 @@
     vc.onDone = ^(NSInteger selectedIndex) {
         weakSelf.currentDateComponents.year = startYear + selectedIndex;
         [weakSelf updateHeaderLabels];
+        [self refreshMonthChange];
     };
     
     [self presentViewController:vc animated:YES completion:nil];
@@ -170,6 +142,7 @@
     vc.onDone = ^(NSInteger selectedIndex) {
         weakSelf.currentDateComponents.month = selectedIndex + 1;
         [weakSelf updateHeaderLabels];
+        [self refreshMonthChange];
     };
     
     [self presentViewController:vc animated:YES completion:nil];
@@ -200,7 +173,6 @@
     [self.addButton setTitle:@"Add Data" forState:UIControlStateNormal];
     [self.addButton addTarget:self action:@selector(addButtonTapped) forControlEvents:UIControlEventTouchUpInside];
     self.addButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
-    // Increase button size to match Health app
     [self.addButton.imageView setContentMode:UIViewContentModeScaleAspectFit];
     [headerContainer addSubview:self.addButton];
     
@@ -219,7 +191,6 @@
         [self.headerLabel.trailingAnchor constraintEqualToAnchor:self.addButton.leadingAnchor constant:-10]
     ]];
     
-    // Setup constraints for add button - make it larger like in Health app
     [NSLayoutConstraint activateConstraints:@[
         [self.addButton.trailingAnchor constraintEqualToAnchor:headerContainer.trailingAnchor],
         [self.addButton.centerYAnchor constraintEqualToAnchor:headerContainer.centerYAnchor],
@@ -303,10 +274,47 @@
     ]];
 }
 
+- (NSInteger)weekIndexForTodayInMonth:(NSInteger)month year:(NSInteger)year {
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    calendar.firstWeekday = 2; // Monday
+    
+    // First day of month
+    NSDateComponents *components = [[NSDateComponents alloc] init];
+    components.year = year;
+    components.month = month;
+    components.day = 1;
+    NSDate *startOfMonth = [calendar dateFromComponents:components];
+    
+    // Find first Monday *inside* the month
+    NSDateComponents *weekdayComponents = [calendar components:NSCalendarUnitWeekday fromDate:startOfMonth];
+    NSInteger weekday = weekdayComponents.weekday;
+    NSInteger daysToAdd = (weekday == 2) ? 0 : (9 - weekday) % 7;
+    NSDate *firstMonday = [calendar dateByAddingUnit:NSCalendarUnitDay
+                                               value:daysToAdd
+                                              toDate:startOfMonth
+                                             options:0];
+    
+    // Today
+    NSDate *today = [NSDate date];
+    NSDateComponents *todayComp = [calendar components:NSCalendarUnitYear|NSCalendarUnitMonth fromDate:today];
+    
+    // Only compute if it's the same month & year
+    if (todayComp.year == year && todayComp.month == month) {
+        NSInteger daysDiff = [calendar components:NSCalendarUnitDay
+                                         fromDate:firstMonday
+                                           toDate:today
+                                          options:0].day;
+        if (daysDiff >= 0) {
+            return daysDiff / 7; // week index (0-based)
+        }
+    }
+    return 0; // default to week 0 if not current month
+}
+
+
 #pragma mark - setupSegmetControls
 
 - (void)setupSegmentControls {
-    // 1. Create the segment controls
     self.typeSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"Expense", @"Income", @"All"]];
     self.typeSegmentControl.translatesAutoresizingMaskIntoConstraints = NO;
     self.typeSegmentControl.selectedSegmentIndex = 2;
@@ -317,51 +325,132 @@
  
     [self.view addSubview:self.typeSegmentControl];
     
-    // 2. Setup auto layout constraints
-    CGFloat margin = 16.0;
-    CGFloat segmentHeight = 32.0;
-    
     [NSLayoutConstraint activateConstraints:@[
         // Type segment at top, under safe area
         [self.typeSegmentControl.topAnchor constraintEqualToAnchor:self.yearHeaderView.bottomAnchor constant:8.0],
-        [self.typeSegmentControl.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:margin],
-        [self.typeSegmentControl.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-margin],
-        [self.typeSegmentControl.heightAnchor constraintEqualToConstant:segmentHeight],
+        [self.typeSegmentControl.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:16.0],
+        [self.typeSegmentControl.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-16.0],
+        [self.typeSegmentControl.heightAnchor constraintEqualToConstant:32.0],
         
     ]];
     
-    // 3. Initialize states
     self.typeSegmentIndex = self.typeSegmentControl.selectedSegmentIndex;
 }
 
 - (void)setupWeekSegmentControls {
-    // 1. Create the segment controls
-    self.weekSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"Week 1", @"Week 2", @"Week 3", @"Week 4"]];
+    self.weekSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"Week 1", @"Week 2", @"Week 3", @"Week 4", @"Week 5"]];
     self.weekSegmentControl.translatesAutoresizingMaskIntoConstraints = NO;
-    self.weekSegmentControl.selectedSegmentIndex = 2;
+    self.weekSegmentControl.selectedSegmentIndex = 0;
     
     [self.weekSegmentControl addTarget:self
-                                action:@selector(typeSegmentChange:)
+                                action:@selector(weekSegmentChange:)
                       forControlEvents:UIControlEventValueChanged];
     
     [self.view addSubview:self.weekSegmentControl];
     
-    // 2. Setup auto layout constraints
-    CGFloat margin = 16.0;
-    CGFloat segmentHeight = 32.0;
-    
     [NSLayoutConstraint activateConstraints:@[
         // Type segment at top, under safe area
         [self.weekSegmentControl.topAnchor constraintEqualToAnchor:self.typeSegmentControl.bottomAnchor constant:8.0],
-        [self.weekSegmentControl.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:margin],
-        [self.weekSegmentControl.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-margin],
-        [self.weekSegmentControl.heightAnchor constraintEqualToConstant:segmentHeight],
+        [self.weekSegmentControl.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:16.0],
+        [self.weekSegmentControl.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-16.0],
+        [self.weekSegmentControl.heightAnchor constraintEqualToConstant:32.0],
     ]];
     
-    // 3. Initialize states
     self.weekSegmentIndex = self.weekSegmentControl.selectedSegmentIndex;
     
 }
+
+- (void)typeSegmentChange:(UISegmentedControl *)sender{
+    self.typeSegmentIndex = sender.selectedSegmentIndex;
+    [self updateFetchPredicateForSegment];
+    [self.transactionTableView reloadData];
+}
+
+- (void)weekSegmentChange:(UISegmentedControl *)sender{
+    self.weekSegmentIndex = sender.selectedSegmentIndex;
+    [self updateFetchPredicateForSegment];
+    [self.transactionTableView reloadData];
+}
+
+- (void)updateFetchPredicateForSegment {
+    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+    
+    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Transaction"];
+    
+    NSMutableArray<NSPredicate *> *predicates = [NSMutableArray array];
+    
+    // Always fetch only active transactions
+    [predicates addObject:[NSPredicate predicateWithFormat:@"isActive == YES"]];
+    
+    // 0 = Expense, 1 = Income, 2 = All
+    if (self.typeSegmentIndex != 2) {
+        BOOL isIncome = (self.typeSegmentIndex == 1);
+        [predicates addObject:[NSPredicate predicateWithFormat:@"category.isIncome == %@", @(isIncome)]];
+    }
+
+    if (self.weekSegmentIndex >= 0) {
+        NSCalendar *calendar = [NSCalendar currentCalendar];
+        calendar.firstWeekday = 2; // 1 = Sunday, 2 = Monday
+        
+        // 1. Build a date from current year + month (day = 1)
+        NSDateComponents *components = [[NSDateComponents alloc] init];
+        components.year = self.currentDateComponents.year;
+        components.month = self.currentDateComponents.month;
+        components.day = 1;
+        
+        NSDate *startOfMonth = [calendar dateFromComponents:components];
+        
+        // 2. Get the weekday of the first day
+        NSDateComponents *weekdayComponents = [calendar components:NSCalendarUnitWeekday fromDate:startOfMonth];
+        NSInteger weekday = weekdayComponents.weekday;
+        
+        // 3. Backtrack to Monday of that week
+        NSInteger daysToSubtract = (weekday == 1) ? 6 : (weekday - 2);
+        NSDate *firstMonday = [calendar dateByAddingUnit:NSCalendarUnitDay
+                                                   value:-daysToSubtract
+                                                  toDate:startOfMonth
+                                                 options:0];
+        
+        // 4. Compute week start & end based on segment index
+        NSDate *weekStart = [calendar dateByAddingUnit:NSCalendarUnitDay
+                                                 value:(self.weekSegmentIndex * 7)
+                                                toDate:firstMonday
+                                               options:0];
+        
+        NSDate *weekEnd = [calendar dateByAddingUnit:NSCalendarUnitDay
+                                               value:6
+                                              toDate:weekStart
+                                             options:0];
+
+        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+        formatter.dateFormat = @"MMM dd";
+        
+        NSString *startString = [formatter stringFromDate:weekStart];
+        NSString *endString   = [formatter stringFromDate:weekEnd];
+        
+        self.dateRange = [NSString stringWithFormat:@"From: %@ - To: %@",
+         startString, endString];
+
+        [predicates addObject:[NSPredicate predicateWithFormat:@"date >= %@ AND date < %@", weekStart, weekEnd]];
+    }
+    
+    fetchRequest.predicate = [NSCompoundPredicate andPredicateWithSubpredicates:predicates];
+    fetchRequest.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"createdAt" ascending:NO]];
+    
+    // Recreate the fetched results controller with the new request
+    _fetchedResultsController = [[NSFetchedResultsController alloc] initWithFetchRequest:fetchRequest
+                                                                    managedObjectContext:context
+                                                                      sectionNameKeyPath:nil
+                                                                               cacheName:nil];
+    _fetchedResultsController.delegate = self;
+    
+    NSError *error = nil;
+    if (![_fetchedResultsController performFetch:&error]) {
+        NSLog(@"Unresolved fetch error %@, %@", error, error.userInfo);
+    }
+}
+
+
 #pragma mark - setupTableView
 - (void)setupTableView {
     // Setup table view for budget items - use inset grouped style like Health app
@@ -515,7 +604,10 @@
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    return @"Transactions";
+    if (self.dateRange == nil){
+        self.dateRange = @"";
+    }
+    return [NSString stringWithFormat:@"Transactions %@", self.dateRange];
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
