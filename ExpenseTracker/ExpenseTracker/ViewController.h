@@ -32,6 +32,8 @@
 
 @property (nonatomic, strong) NSDateComponents *currentDateComponents;
 
+@property (nonatomic, strong) NSString *dateRange;
+
 @end
 
 
