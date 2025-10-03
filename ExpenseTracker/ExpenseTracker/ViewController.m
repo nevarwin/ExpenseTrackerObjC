@@ -316,11 +316,11 @@
     self.typeSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"Expense", @"Income", @"All"]];
     self.typeSegmentControl.translatesAutoresizingMaskIntoConstraints = NO;
     self.typeSegmentControl.selectedSegmentIndex = 2;
-
+    
     [self.typeSegmentControl addTarget:self
                                 action:@selector(typeSegmentChange:)
                       forControlEvents:UIControlEventValueChanged];
- 
+    
     [self.view addSubview:self.typeSegmentControl];
     
     [NSLayoutConstraint activateConstraints:@[
@@ -385,7 +385,7 @@
         BOOL isIncome = (self.typeSegmentIndex == 1);
         [predicates addObject:[NSPredicate predicateWithFormat:@"category.isIncome == %@", @(isIncome)]];
     }
-
+    
     if (self.weekSegmentIndex >= 0) {
         NSCalendar *calendar = [NSCalendar currentCalendar];
         calendar.firstWeekday = 2; // 1 = Sunday, 2 = Monday
@@ -419,7 +419,7 @@
                                                value:6
                                               toDate:weekStart
                                              options:0];
-
+        
         NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
         formatter.dateFormat = @"MMM dd";
         
@@ -427,8 +427,8 @@
         NSString *endString   = [formatter stringFromDate:weekEnd];
         
         self.dateRange = [NSString stringWithFormat:@"From: %@ - To: %@",
-         startString, endString];
-
+                          startString, endString];
+        
         [predicates addObject:[NSPredicate predicateWithFormat:@"date >= %@ AND date < %@", weekStart, weekEnd]];
     }
     
@@ -518,7 +518,13 @@
     
     amountLabel.font = [UIFont boldSystemFontOfSize:20];
     amountLabel.textAlignment = NSTextAlignmentRight;
-    amountLabel.textColor = transaction.category.isIncome ? [UIColor systemGreenColor] : [UIColor systemRedColor];
+    amountLabel.textColor = transaction.category.isIncome ? [UIColor colorWithRed:40.0/255.0
+                                                                            green:167.0/255.0
+                                                                             blue:69.0/255.0
+                                                                            alpha:1.0] : [UIColor colorWithRed:220.0/255.0
+                                                                                                         green:53.0/255.0
+                                                                                                          blue:69.0/255.0
+                                                                                                         alpha:1.0];
     [amountLabel sizeToFit];
     cell.accessoryView = amountLabel;
     
@@ -578,7 +584,7 @@
         Transaction *transactionToDelete = [self.fetchedResultsController objectAtIndexPath:indexPath];
         
         NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
-
+        
         //[context deleteObject:transactionToDelete]; // Actual Deletion
         transactionToDelete.isActive = NO;
         
@@ -610,7 +616,7 @@
             // Save succeeded
             NSLog(@"Transaction successfully deleted.");
         }
-
+        
     }
 }
 
@@ -632,9 +638,9 @@
     if (_fetchedResultsController) {
         return _fetchedResultsController;
     }
-
+    
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
-
+    
     NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Transaction"];
     
     // Add predicate to only fetch active transactions
