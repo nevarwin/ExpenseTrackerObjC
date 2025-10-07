@@ -37,6 +37,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSMutableArray* incomeUsedAmounts;
 @property (nonatomic, strong) NSMutableArray* expensesUsedAmounts;
 
+@property (nonatomic, strong) UIView *yearHeaderView;
+@property (nonatomic, strong) UILabel *monthLabel;
+@property (nonatomic, strong) UITextField *monthTextField;
+@property (nonatomic, strong) UILabel *yearLabel;
+@property (nonatomic, strong) UITextField *yearTextField;
+@property (nonatomic, strong) NSDateComponents *currentDateComponents;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -13,6 +13,8 @@
 #import "CoreDataManager.h"
 #import "AppDelegate.h"
 #import "UIViewController+Alerts.h"
+#import "PickerModalViewController.h"
+#import "CurrencyFormatterUtil.h"
 
 #define MAX_HEADER_TEXT_LENGTH 16
 
@@ -36,7 +38,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     [super viewDidLoad];
     // TODO: Add installment logic
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
-    self.title = self.isEditMode ? @"Edit Budget" : @"Add Budget";
+    self.title = self.isEditMode ? @"Budget" : @"Add Budget";
     
     
     self.income = [NSMutableArray array];
@@ -52,6 +54,14 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     
     self.headerLabelTextField.delegate = self;
     self.rightButton.enabled = self.headerLabelTextField.text.length == 0 ? NO : YES;
+    
+    if (self.isEditMode) {
+        [self setupYearHeaderView];
+        [self initializeCurrentDate];
+        self.yearHeaderView.hidden = !self.isEditMode;
+
+    }
+    
     [self setupHeaderView];
     [self setupTableView];
     [self selectEmptyScreen];
@@ -97,13 +107,150 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     }
 }
 
+- (void)didTapPreviousMonth {
+    self.currentDateComponents.month -= 1;
+    if (self.currentDateComponents.month < 1) {
+        self.currentDateComponents.month = 12;
+        self.currentDateComponents.year -= 1;
+    }
+    [self updateHeaderLabels];
+}
+
+- (void)didTapNextMonth {
+    self.currentDateComponents.month += 1;
+    if (self.currentDateComponents.month > 12) {
+        self.currentDateComponents.month = 1;
+        self.currentDateComponents.year += 1;
+    }
+    [self updateHeaderLabels];
+}
+
+- (void)showYearPicker {
+    NSInteger startYear = 2000;
+    NSInteger range = 50; // 2000–2049
+    
+    NSMutableArray *years = [NSMutableArray array];
+    for (NSInteger i = 0; i < range; i++) {
+        [years addObject:[NSString stringWithFormat:@"%ld", (long)(startYear + i)]];
+    }
+    
+    PickerModalViewController *vc = [[PickerModalViewController alloc] init];
+    vc.items = years;
+    vc.selectedIndex = self.currentDateComponents.year - startYear;
+    
+    __weak typeof(self) weakSelf = self;
+    vc.onDone = ^(NSInteger selectedIndex) {
+        weakSelf.currentDateComponents.year = startYear + selectedIndex;
+        [weakSelf updateHeaderLabels];
+        [self updateHeaderLabels];
+    };
+    
+    [self presentViewController:vc animated:YES completion:nil];
+}
+
+
+- (void)showMonthPicker {
+    NSArray *months = @[@"January",@"February",@"March",@"April",@"May",@"June",
+                        @"July",@"August",@"September",@"October",@"November",@"December"];
+    
+    PickerModalViewController *vc = [[PickerModalViewController alloc] init];
+    vc.items = months;
+    vc.selectedIndex = self.currentDateComponents.month - 1; // 1-based → 0-based
+    
+    __weak typeof(self) weakSelf = self;
+    vc.onDone = ^(NSInteger selectedIndex) {
+        weakSelf.currentDateComponents.month = selectedIndex + 1;
+        [weakSelf updateHeaderLabels];
+        [self updateHeaderLabels];
+    };
+    
+    [self presentViewController:vc animated:YES completion:nil];
+}
+
+
+- (void)initializeCurrentDate {
+    NSDate *today = [NSDate date];
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    self.currentDateComponents = [calendar components:NSCalendarUnitYear | NSCalendarUnitMonth fromDate:today];
+    [self updateHeaderLabels];
+}
+
+
+- (void)updateHeaderLabels {
+    NSArray *months = @[@"January",@"February",@"March",@"April",@"May",@"June",
+                        @"July",@"August",@"September",@"October",@"November",@"December"];
+    NSInteger monthIndex = self.currentDateComponents.month - 1;
+    self.monthLabel.text = months[monthIndex];
+    self.yearLabel.text = [NSString stringWithFormat:@"%ld", (long)self.currentDateComponents.year];
+}
+
+- (NSInteger)weekIndexForTodayInMonth:(NSInteger)month year:(NSInteger)year {
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    calendar.firstWeekday = 2; // Monday
+    
+    // First day of month
+    NSDateComponents *components = [[NSDateComponents alloc] init];
+    components.year = year;
+    components.month = month;
+    components.day = 1;
+    NSDate *startOfMonth = [calendar dateFromComponents:components];
+    
+    // Find first Monday *inside* the month
+    NSDateComponents *weekdayComponents = [calendar components:NSCalendarUnitWeekday fromDate:startOfMonth];
+    NSInteger weekday = weekdayComponents.weekday;
+    NSInteger daysToAdd = (weekday == 2) ? 0 : (9 - weekday) % 7;
+    NSDate *firstMonday = [calendar dateByAddingUnit:NSCalendarUnitDay
+                                               value:daysToAdd
+                                              toDate:startOfMonth
+                                             options:0];
+    
+    // Today
+    NSDate *today = [NSDate date];
+    NSDateComponents *todayComp = [calendar components:NSCalendarUnitYear|NSCalendarUnitMonth fromDate:today];
+    
+    // Only compute if it's the same month & year
+    if (todayComp.year == year && todayComp.month == month) {
+        NSInteger daysDiff = [calendar components:NSCalendarUnitDay
+                                         fromDate:firstMonday
+                                           toDate:today
+                                          options:0].day;
+        if (daysDiff >= 0) {
+            return daysDiff / 7; // week index (0-based)
+        }
+    }
+    return 0; // default to week 0 if not current month
+}
+
+- (UILabel *)createLabelWithText:(NSString *)text bold:(BOOL)bold {
+    UILabel *label = [[UILabel alloc] init];
+    label.translatesAutoresizingMaskIntoConstraints = NO;
+    label.text = text;
+    label.font = bold ? [UIFont systemFontOfSize:16 weight:UIFontWeightBold] : [UIFont systemFontOfSize:14];
+    label.textColor = [UIColor labelColor];
+    return label;
+}
+
+- (NSString *)expensesAmountLabel{
+    NSDecimalNumber *totalExpense = [self.expensesAmounts valueForKeyPath:@"@sum.self"];
+    NSString *formattedExpenses = [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:totalExpense];
+    return formattedExpenses;
+}
+
+- (NSString *)incomeAmountLabel{
+    NSDecimalNumber *totalIncome = [self.incomeAmounts valueForKeyPath:@"@sum.self"];
+    NSString *formattedIncome = [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:totalIncome];
+    return formattedIncome;
+}
+
+# pragma mark - SetUps
+
 - (void)setupHeaderView {
     // Create header container
     self.headerContainer = [[UIView alloc] init];
     _headerContainer.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:_headerContainer];
     
-    // Setup header label text field (left side)
+    // Budget name (top-left, big font)
     self.headerLabelTextField = [[UITextField alloc] init];
     self.headerLabelTextField.translatesAutoresizingMaskIntoConstraints = NO;
     self.headerLabelTextField.text = self.budget.name;
@@ -112,8 +259,30 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     self.headerLabelTextField.placeholder = @"Budget Name";
     [_headerContainer addSubview:self.headerLabelTextField];
     
+    // Labels
+    UILabel *remainingLabel = [self createLabelWithText:@"Remaining Amount" bold:NO];
+    UILabel *totalLabel     = [self createLabelWithText:@"Total Amount" bold:NO];
+    UILabel *expensesLabel     = [self createLabelWithText:@"Expenses" bold:NO];
+    UILabel *incomeLabel       = [self createLabelWithText:@"Income" bold:NO];
     
-    // Navigation bar buttons
+    // Values
+    UILabel *remainingValue = [self createLabelWithText:[NSString stringWithFormat:@"₱%@", self.budget.remainingAmount] bold:YES];
+    UILabel *totalValue     = [self createLabelWithText:[NSString stringWithFormat:@"₱%@", self.budget.totalAmount] bold:YES];
+    UILabel *expensesValue = [self createLabelWithText:[NSString stringWithFormat:@"%@", [self expensesAmountLabel]] bold:YES];
+    UILabel *incomeValue     = [self createLabelWithText:[NSString stringWithFormat:@"%@", [self incomeAmountLabel]] bold:YES];
+    
+    // Add to container
+    [_headerContainer addSubview:remainingLabel];
+    [_headerContainer addSubview:totalLabel];
+    [_headerContainer addSubview:expensesLabel];
+    [_headerContainer addSubview:incomeLabel];
+    
+    [_headerContainer addSubview:remainingValue];
+    [_headerContainer addSubview:totalValue];
+    [_headerContainer addSubview:expensesValue];
+    [_headerContainer addSubview:incomeValue];
+    
+    // Navigation bar button
     self.rightButton = [[UIBarButtonItem alloc]
                         initWithTitle:@"Save"
                         style:UIBarButtonItemStyleDone
@@ -121,18 +290,47 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
                         action:@selector(saveButtonTapped)];
     self.navigationItem.rightBarButtonItem = self.rightButton;
     
-    // Setup constraints for header container
+    // Constraints for header container
     [NSLayoutConstraint activateConstraints:@[
-        [_headerContainer.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
+        self.isEditMode ? [_headerContainer.topAnchor constraintEqualToAnchor:self.yearHeaderView.bottomAnchor] : [_headerContainer.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
         [_headerContainer.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
         [_headerContainer.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
-        [_headerContainer.heightAnchor constraintEqualToConstant:60]
     ]];
     
-    // Setup constraints for header label text field
+    // Constraints
     [NSLayoutConstraint activateConstraints:@[
+        // Title at the top
+        [self.headerLabelTextField.topAnchor constraintEqualToAnchor:_headerContainer.topAnchor constant:10],
         [self.headerLabelTextField.leadingAnchor constraintEqualToAnchor:_headerContainer.leadingAnchor],
-        [self.headerLabelTextField.centerYAnchor constraintEqualToAnchor:_headerContainer.centerYAnchor],
+        
+        // Remaining
+        [remainingLabel.topAnchor constraintEqualToAnchor:self.headerLabelTextField.bottomAnchor constant:16],
+        [remainingLabel.leadingAnchor constraintEqualToAnchor:_headerContainer.leadingAnchor],
+        
+        [remainingValue.centerYAnchor constraintEqualToAnchor:remainingLabel.centerYAnchor],
+        [remainingValue.trailingAnchor constraintEqualToAnchor:_headerContainer.trailingAnchor],
+        
+        // Total
+        [totalLabel.topAnchor constraintEqualToAnchor:remainingLabel.bottomAnchor constant:12],
+        [totalLabel.leadingAnchor constraintEqualToAnchor:_headerContainer.leadingAnchor],
+        
+        [totalValue.centerYAnchor constraintEqualToAnchor:totalLabel.centerYAnchor],
+        [totalValue.trailingAnchor constraintEqualToAnchor:_headerContainer.trailingAnchor],
+        
+        // Start Date
+        [expensesLabel.topAnchor constraintEqualToAnchor:totalLabel.bottomAnchor constant:12],
+        [expensesLabel.leadingAnchor constraintEqualToAnchor:_headerContainer.leadingAnchor],
+        
+        [expensesValue.centerYAnchor constraintEqualToAnchor:expensesLabel.centerYAnchor],
+        [expensesValue.trailingAnchor constraintEqualToAnchor:_headerContainer.trailingAnchor],
+        
+        // End Date
+        [incomeLabel.topAnchor constraintEqualToAnchor:expensesLabel.bottomAnchor constant:12],
+        [incomeLabel.leadingAnchor constraintEqualToAnchor:_headerContainer.leadingAnchor],
+        
+        [incomeValue.centerYAnchor constraintEqualToAnchor:incomeLabel.centerYAnchor],
+        [incomeValue.trailingAnchor constraintEqualToAnchor:_headerContainer.trailingAnchor],
+        [incomeValue.bottomAnchor constraintEqualToAnchor:_headerContainer.bottomAnchor constant:-10]
     ]];
 }
 
@@ -144,10 +342,85 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     [self.view addSubview:self.budgetDisplayTableView];
     
     [NSLayoutConstraint activateConstraints:@[
-        [self.budgetDisplayTableView.topAnchor constraintEqualToAnchor:_headerContainer.bottomAnchor],
+        [self.budgetDisplayTableView.topAnchor constraintEqualToAnchor:self.headerContainer.bottomAnchor],
         [self.budgetDisplayTableView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
         [self.budgetDisplayTableView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
         [self.budgetDisplayTableView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
+    ]];
+}
+
+- (void)setupYearHeaderView {
+    // --- Container for header ---
+    self.yearHeaderView = [[UIView alloc] init];
+    self.yearHeaderView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:self.yearHeaderView];
+    
+    [NSLayoutConstraint activateConstraints:@[
+        [self.yearHeaderView.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
+        [self.yearHeaderView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:16.0],
+        [self.yearHeaderView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-16.0],
+        [self.yearHeaderView.heightAnchor constraintEqualToConstant:40.0]
+    ]];
+    
+    // --- Left button ---
+    UIButton *leftButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [leftButton setTitle:@"◀︎" forState:UIControlStateNormal];
+    leftButton.titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightBold];
+    leftButton.translatesAutoresizingMaskIntoConstraints = NO;
+    [leftButton addTarget:self action:@selector(didTapPreviousMonth) forControlEvents:UIControlEventTouchUpInside];
+    [self.yearHeaderView addSubview:leftButton];
+    
+    // --- Right button ---
+    UIButton *rightButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [rightButton setTitle:@"▶︎" forState:UIControlStateNormal];
+    rightButton.titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightBold];
+    rightButton.translatesAutoresizingMaskIntoConstraints = NO;
+    [rightButton addTarget:self action:@selector(didTapNextMonth) forControlEvents:UIControlEventTouchUpInside];
+    [self.yearHeaderView addSubview:rightButton];
+    
+    // --- Month label ---
+    self.monthLabel = [[UILabel alloc] init];
+    self.monthLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    self.monthLabel.font = [UIFont systemFontOfSize:22 weight:UIFontWeightSemibold];
+    self.monthLabel.textAlignment = NSTextAlignmentCenter;
+    self.monthLabel.userInteractionEnabled = YES;
+    [self.yearHeaderView addSubview:self.monthLabel];
+    
+    UITapGestureRecognizer *monthTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showMonthPicker)];
+    [self.monthLabel addGestureRecognizer:monthTap];
+    
+    // --- Year label ---
+    self.yearLabel = [[UILabel alloc] init];
+    self.yearLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    self.yearLabel.font = [UIFont systemFontOfSize:22 weight:UIFontWeightSemibold];
+    self.yearLabel.textAlignment = NSTextAlignmentCenter;
+    self.yearLabel.userInteractionEnabled = YES;
+    [self.yearHeaderView addSubview:self.yearLabel];
+    
+    UITapGestureRecognizer *yearTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showYearPicker)];
+    [self.yearLabel addGestureRecognizer:yearTap];
+    
+    // --- Hidden textfields to show pickers ---
+    self.monthTextField = [[UITextField alloc] initWithFrame:CGRectZero];
+    self.yearTextField = [[UITextField alloc] initWithFrame:CGRectZero];
+    [self.view addSubview:self.monthTextField];
+    [self.view addSubview:self.yearTextField];
+    
+    // --- Layout ---
+    [NSLayoutConstraint activateConstraints:@[
+        [leftButton.centerYAnchor constraintEqualToAnchor:self.yearHeaderView.centerYAnchor],
+        [leftButton.leadingAnchor constraintEqualToAnchor:self.yearHeaderView.leadingAnchor],
+        [leftButton.widthAnchor constraintEqualToConstant:40],
+        
+        [rightButton.centerYAnchor constraintEqualToAnchor:self.yearHeaderView.centerYAnchor],
+        [rightButton.trailingAnchor constraintEqualToAnchor:self.yearHeaderView.trailingAnchor],
+        [rightButton.widthAnchor constraintEqualToConstant:40],
+        
+        [self.monthLabel.centerYAnchor constraintEqualToAnchor:self.yearHeaderView.centerYAnchor],
+        [self.monthLabel.trailingAnchor constraintEqualToAnchor:self.yearLabel.leadingAnchor constant:-8.0],
+        
+        [self.yearLabel.centerYAnchor constraintEqualToAnchor:self.yearHeaderView.centerYAnchor],
+        [self.yearLabel.centerXAnchor constraintEqualToAnchor:self.yearHeaderView.centerXAnchor constant:40.0]
     ]];
 }
 
@@ -342,17 +615,8 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     [titleLabel setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     [titleLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     
-    NSDecimalNumber *totalExpense = [self.expensesAmounts valueForKeyPath:@"@sum.self"];
-    NSDecimalNumber *totalIncome = [self.incomeAmounts valueForKeyPath:@"@sum.self"];
-    
-    NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
-    formatter.numberStyle = NSNumberFormatterCurrencyStyle;
-    
-    NSString *formattedExpenses = [formatter stringFromNumber:totalExpense];
-    NSString *formattedIncome = [formatter stringFromNumber:totalIncome];
-    
-    NSString *expensesTitleLabel = [NSString stringWithFormat:@"EXPENSES - %@", formattedExpenses];
-    NSString *incomeTitleLabel = [NSString stringWithFormat:@"INCOME - %@", formattedIncome];
+    NSString *expensesTitleLabel = [NSString stringWithFormat:@"EXPENSES - %@", [self expensesAmountLabel]];
+    NSString *incomeTitleLabel = [NSString stringWithFormat:@"INCOME - %@", [self incomeAmountLabel]];
     
     switch (section) {
         case 0:
@@ -474,7 +738,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         actionTitle = @"Update";
     }
     
-    
+    // TODO: Make the name unique and add validation, max characters
     NSString *title = (section == 0) ? @"Expense" : @"Income";
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
                                                                    message:@"Enter details"
