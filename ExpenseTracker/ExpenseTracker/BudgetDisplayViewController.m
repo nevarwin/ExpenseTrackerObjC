@@ -59,7 +59,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         [self setupYearHeaderView];
         [self initializeCurrentDate];
         self.yearHeaderView.hidden = !self.isEditMode;
-
     }
     
     [self setupHeaderView];
@@ -261,15 +260,15 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     
     // Labels
     UILabel *remainingLabel = [self createLabelWithText:@"Remaining Amount" bold:NO];
-    UILabel *totalLabel     = [self createLabelWithText:@"Total Amount" bold:NO];
-    UILabel *expensesLabel     = [self createLabelWithText:@"Expenses" bold:NO];
-    UILabel *incomeLabel       = [self createLabelWithText:@"Income" bold:NO];
+    UILabel *totalLabel = [self createLabelWithText:@"Total Amount" bold:NO];
+    UILabel *expensesLabel = [self createLabelWithText:@"Expenses" bold:NO];
+    UILabel *incomeLabel = [self createLabelWithText:@"Income" bold:NO];
     
     // Values
     UILabel *remainingValue = [self createLabelWithText:[NSString stringWithFormat:@"₱%@", self.budget.remainingAmount] bold:YES];
-    UILabel *totalValue     = [self createLabelWithText:[NSString stringWithFormat:@"₱%@", self.budget.totalAmount] bold:YES];
+    UILabel *totalValue = [self createLabelWithText:[NSString stringWithFormat:@"₱%@", self.budget.totalAmount] bold:YES];
     UILabel *expensesValue = [self createLabelWithText:[NSString stringWithFormat:@"%@", [self expensesAmountLabel]] bold:YES];
-    UILabel *incomeValue     = [self createLabelWithText:[NSString stringWithFormat:@"%@", [self incomeAmountLabel]] bold:YES];
+    UILabel *incomeValue = [self createLabelWithText:[NSString stringWithFormat:@"%@", [self incomeAmountLabel]] bold:YES];
     
     // Add to container
     [_headerContainer addSubview:remainingLabel];
