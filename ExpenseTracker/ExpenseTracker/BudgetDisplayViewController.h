@@ -44,6 +44,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) UITextField *yearTextField;
 @property (nonatomic, strong) NSDateComponents *currentDateComponents;
 
+@property (nonatomic, strong) UITableView *budgetInfoTableView;
+@property (nonatomic, strong) NSLayoutConstraint *budgetInfoTableViewHeightConstraint;
+
 @end
 
 NS_ASSUME_NONNULL_END
