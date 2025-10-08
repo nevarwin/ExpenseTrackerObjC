@@ -62,6 +62,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     }
     
     [self setupHeaderView];
+    [self setupBudgetInfoTableView];
     [self setupTableView];
     [self selectEmptyScreen];
     
@@ -80,6 +81,14 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     [self fetch];
     [self.navigationController setNavigationBarHidden:NO animated:NO];
 }
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    
+    // Adjust height based on content
+    self.budgetInfoTableViewHeightConstraint.constant = self.budgetInfoTableView.contentSize.height;
+}
+
 
 # pragma mark - Helper
 
@@ -270,8 +279,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     _headerContainer.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:_headerContainer];
     
-    // Budget name (top-left, big font)
-    // TODO: Redesign the UI
+    // Setup header label text field (left side)
     self.headerLabelTextField = [[UITextField alloc] init];
     self.headerLabelTextField.translatesAutoresizingMaskIntoConstraints = NO;
     self.headerLabelTextField.text = self.budget.name;
@@ -280,33 +288,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     self.headerLabelTextField.placeholder = @"Budget Name";
     [_headerContainer addSubview:self.headerLabelTextField];
     
-    // Labels
-    UILabel *remainingLabel = [self createLabelWithText:@"Remaining Budget" bold:NO];
-    UILabel *totalLabel = [self createLabelWithText:@"Total Used Budget" bold:NO];
-    UILabel *expensesLabel = [self createLabelWithText:@"Expenses" bold:NO];
-    UILabel *incomeLabel = [self createLabelWithText:@"Income" bold:NO];
-    
-    // Values
-    NSString *totalUsedBudget = [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:[self totalUsedBudget]];
-    NSString *incomeAmountLabel = [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:[self incomeAmountLabel]];
-    
-    UILabel *remainingValue = [self createLabelWithText:[NSString stringWithFormat:@"%@", [self totalBudget]] bold:YES];
-    UILabel *totalValue = [self createLabelWithText:[NSString stringWithFormat:@"%@", totalUsedBudget] bold:YES];
-    UILabel *expensesValue = [self createLabelWithText:[NSString stringWithFormat:@"%@", [self expensesAmountLabel]] bold:YES];
-    UILabel *incomeValue = [self createLabelWithText:[NSString stringWithFormat:@"%@", incomeAmountLabel] bold:YES];
-    
-    // Add to container
-    [_headerContainer addSubview:remainingLabel];
-    [_headerContainer addSubview:totalLabel];
-    [_headerContainer addSubview:expensesLabel];
-    [_headerContainer addSubview:incomeLabel];
-    
-    [_headerContainer addSubview:remainingValue];
-    [_headerContainer addSubview:totalValue];
-    [_headerContainer addSubview:expensesValue];
-    [_headerContainer addSubview:incomeValue];
-    
-    // Navigation bar button
+    // Navigation bar buttons
     self.rightButton = [[UIBarButtonItem alloc]
                         initWithTitle:@"Save"
                         style:UIBarButtonItemStyleDone
@@ -314,48 +296,37 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
                         action:@selector(saveButtonTapped)];
     self.navigationItem.rightBarButtonItem = self.rightButton;
     
-    // Constraints for header container
+    // Setup constraints for header container
     [NSLayoutConstraint activateConstraints:@[
-        self.isEditMode ? [_headerContainer.topAnchor constraintEqualToAnchor:self.yearHeaderView.bottomAnchor] : [_headerContainer.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
+        [_headerContainer.topAnchor constraintEqualToAnchor:self.yearHeaderView.bottomAnchor],
         [_headerContainer.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
         [_headerContainer.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
+        [_headerContainer.heightAnchor constraintEqualToConstant:60]
     ]];
     
-    // Constraints
+    // Setup constraints for header label text field
     [NSLayoutConstraint activateConstraints:@[
-        // Title at the top
-        [self.headerLabelTextField.topAnchor constraintEqualToAnchor:_headerContainer.topAnchor constant:10],
         [self.headerLabelTextField.leadingAnchor constraintEqualToAnchor:_headerContainer.leadingAnchor],
-        
-        // Remaining
-        [remainingLabel.topAnchor constraintEqualToAnchor:self.headerLabelTextField.bottomAnchor constant:16],
-        [remainingLabel.leadingAnchor constraintEqualToAnchor:_headerContainer.leadingAnchor],
-        
-        [remainingValue.centerYAnchor constraintEqualToAnchor:remainingLabel.centerYAnchor],
-        [remainingValue.trailingAnchor constraintEqualToAnchor:_headerContainer.trailingAnchor],
-        
-        // Total
-        [totalLabel.topAnchor constraintEqualToAnchor:remainingLabel.bottomAnchor constant:12],
-        [totalLabel.leadingAnchor constraintEqualToAnchor:_headerContainer.leadingAnchor],
-        
-        [totalValue.centerYAnchor constraintEqualToAnchor:totalLabel.centerYAnchor],
-        [totalValue.trailingAnchor constraintEqualToAnchor:_headerContainer.trailingAnchor],
-        
-        // Start Date
-        [expensesLabel.topAnchor constraintEqualToAnchor:totalLabel.bottomAnchor constant:12],
-        [expensesLabel.leadingAnchor constraintEqualToAnchor:_headerContainer.leadingAnchor],
-        
-        [expensesValue.centerYAnchor constraintEqualToAnchor:expensesLabel.centerYAnchor],
-        [expensesValue.trailingAnchor constraintEqualToAnchor:_headerContainer.trailingAnchor],
-        
-        // End Date
-        [incomeLabel.topAnchor constraintEqualToAnchor:expensesLabel.bottomAnchor constant:12],
-        [incomeLabel.leadingAnchor constraintEqualToAnchor:_headerContainer.leadingAnchor],
-        
-        [incomeValue.centerYAnchor constraintEqualToAnchor:incomeLabel.centerYAnchor],
-        [incomeValue.trailingAnchor constraintEqualToAnchor:_headerContainer.trailingAnchor],
-        [incomeValue.bottomAnchor constraintEqualToAnchor:_headerContainer.bottomAnchor constant:-10]
+        [self.headerLabelTextField.centerYAnchor constraintEqualToAnchor:_headerContainer.centerYAnchor],
     ]];
+}
+
+- (void)setupBudgetInfoTableView {
+    self.budgetInfoTableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStyleInsetGrouped];
+    self.budgetInfoTableView.translatesAutoresizingMaskIntoConstraints = NO;
+    self.budgetInfoTableView.delegate = self;
+    self.budgetInfoTableView.dataSource = self;
+    self.budgetInfoTableView.scrollEnabled = NO;
+    [self.view addSubview:self.budgetInfoTableView];
+    
+    [NSLayoutConstraint activateConstraints:@[
+        [self.budgetInfoTableView.topAnchor constraintEqualToAnchor:self.headerContainer.bottomAnchor],
+        [self.budgetInfoTableView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [self.budgetInfoTableView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+    ]];
+    // Create height constraint (initially 0)
+    self.budgetInfoTableViewHeightConstraint = [self.budgetInfoTableView.heightAnchor constraintEqualToConstant:0];
+    self.budgetInfoTableViewHeightConstraint.active = YES;
 }
 
 - (void)setupTableView {
@@ -366,10 +337,10 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     [self.view addSubview:self.budgetDisplayTableView];
     
     [NSLayoutConstraint activateConstraints:@[
-        [self.budgetDisplayTableView.topAnchor constraintEqualToAnchor:self.headerContainer.bottomAnchor],
+        [self.budgetDisplayTableView.topAnchor constraintEqualToAnchor:self.budgetInfoTableView.bottomAnchor],
         [self.budgetDisplayTableView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
         [self.budgetDisplayTableView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
-        [self.budgetDisplayTableView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
+        [self.budgetDisplayTableView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:-16.0]
     ]];
 }
 
@@ -481,21 +452,29 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 #pragma mark - UITableViewDelegate
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    if (tableView == self.budgetInfoTableView) return 1;
     return 2;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (section == 0) return self.expenses.count;
-    if (section == 1) return self.income.count;
+    if (tableView == self.budgetDisplayTableView){
+        if (section == 0) return self.expenses.count;
+        if (section == 1) return self.income.count;
+    }
+    if (tableView == self.budgetInfoTableView) return 4;
     return 0;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (tableView == self.budgetInfoTableView) return;
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
     [self plusButtonTapped:nil indexPath:indexPath];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (tableView == self.budgetInfoTableView) {
+        return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"TextFieldCell"];
+    }
     if (indexPath.section == 0) {
         // Expense attributes
         NSString *expenseName = (indexPath.row < self.expenses.count) ? self.expenses[indexPath.row] : @"";
@@ -628,6 +607,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
+    if (tableView == self.budgetInfoTableView) return nil;
     UIView *headerView = [[UIView alloc] init];
     headerView.backgroundColor = [UIColor clearColor];
     
@@ -708,6 +688,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section {
+    if (tableView == self.budgetInfoTableView) return nil;
     NSInteger lastSection = [tableView numberOfSections] - 1;
     
     if (section != lastSection) {
@@ -736,6 +717,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
+    if (tableView == self.budgetInfoTableView) return 0.01f;
     NSInteger lastSection = [tableView numberOfSections] - 1;
     if (section == lastSection) {
         return 50;
@@ -744,6 +726,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (tableView == self.budgetInfoTableView) return 40;
     return 80;
 }
 
