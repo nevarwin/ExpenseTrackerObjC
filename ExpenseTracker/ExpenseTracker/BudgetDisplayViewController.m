@@ -105,7 +105,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         [usedAmounts addObject:[NSDecimalNumber zero]];
     }
 }
-
+// TODO: Update the fetching based on the month and year
 - (void)didTapPreviousMonth {
     self.currentDateComponents.month -= 1;
     if (self.currentDateComponents.month < 1) {
@@ -235,11 +235,32 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     return formattedExpenses;
 }
 
-- (NSString *)incomeAmountLabel{
+- (NSDecimalNumber *)incomeAmountLabel{
+    NSDecimalNumber *totalIncomeUsed = [self.incomeUsedAmounts valueForKeyPath:@"@sum.self"];
     NSDecimalNumber *totalIncome = [self.incomeAmounts valueForKeyPath:@"@sum.self"];
-    NSString *formattedIncome = [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:totalIncome];
-    return formattedIncome;
+    NSDecimalNumber *toDisplay = [totalIncomeUsed isEqualToNumber:[NSDecimalNumber zero]] ? totalIncome : totalIncomeUsed;
+    return toDisplay;
 }
+
+- (NSDecimalNumber *)sumOfArray:(NSArray<NSDecimalNumber *> *)numbers {
+    NSDecimalNumber *total = [NSDecimalNumber zero];
+    for (NSDecimalNumber *num in numbers) {
+        total = [total decimalNumberByAdding:num ?: [NSDecimalNumber zero]];
+    }
+    return total;
+}
+
+- (NSDecimalNumber *)totalUsedBudget {
+    NSDecimalNumber *expenseUsedTotal = [self sumOfArray:self.expensesUsedAmounts];
+    return expenseUsedTotal;
+}
+
+- (NSString *)totalBudget {
+    NSDecimalNumber *netTotal = [[self incomeAmountLabel] decimalNumberBySubtracting:[self totalUsedBudget]];
+    return [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:netTotal];
+}
+
+
 
 # pragma mark - SetUps
 
@@ -250,6 +271,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     [self.view addSubview:_headerContainer];
     
     // Budget name (top-left, big font)
+    // TODO: Redesign the UI
     self.headerLabelTextField = [[UITextField alloc] init];
     self.headerLabelTextField.translatesAutoresizingMaskIntoConstraints = NO;
     self.headerLabelTextField.text = self.budget.name;
@@ -259,16 +281,19 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     [_headerContainer addSubview:self.headerLabelTextField];
     
     // Labels
-    UILabel *remainingLabel = [self createLabelWithText:@"Remaining Amount" bold:NO];
-    UILabel *totalLabel = [self createLabelWithText:@"Total Amount" bold:NO];
+    UILabel *remainingLabel = [self createLabelWithText:@"Remaining Budget" bold:NO];
+    UILabel *totalLabel = [self createLabelWithText:@"Total Used Budget" bold:NO];
     UILabel *expensesLabel = [self createLabelWithText:@"Expenses" bold:NO];
     UILabel *incomeLabel = [self createLabelWithText:@"Income" bold:NO];
     
     // Values
-    UILabel *remainingValue = [self createLabelWithText:[NSString stringWithFormat:@"₱%@", self.budget.remainingAmount] bold:YES];
-    UILabel *totalValue = [self createLabelWithText:[NSString stringWithFormat:@"₱%@", self.budget.totalAmount] bold:YES];
+    NSString *totalUsedBudget = [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:[self totalUsedBudget]];
+    NSString *incomeAmountLabel = [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:[self incomeAmountLabel]];
+    
+    UILabel *remainingValue = [self createLabelWithText:[NSString stringWithFormat:@"%@", [self totalBudget]] bold:YES];
+    UILabel *totalValue = [self createLabelWithText:[NSString stringWithFormat:@"%@", totalUsedBudget] bold:YES];
     UILabel *expensesValue = [self createLabelWithText:[NSString stringWithFormat:@"%@", [self expensesAmountLabel]] bold:YES];
-    UILabel *incomeValue = [self createLabelWithText:[NSString stringWithFormat:@"%@", [self incomeAmountLabel]] bold:YES];
+    UILabel *incomeValue = [self createLabelWithText:[NSString stringWithFormat:@"%@", incomeAmountLabel] bold:YES];
     
     // Add to container
     [_headerContainer addSubview:remainingLabel];
@@ -859,10 +884,12 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     
     if (budgetName.length == 0) {
         [self showAlertWithTitle:@"Invalid budget name" message:@"Please enter a valid budget name."];
+        return;
     }
     
     if (self.expenses.count == 0 || self.income.count == 0) {
         [self showAlertWithTitle:@"Invalid expense or income" message:@"Please enter a valid expense or income."];
+        return;
     }
     
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
