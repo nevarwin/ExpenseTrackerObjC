@@ -317,6 +317,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     self.budgetInfoTableView.delegate = self;
     self.budgetInfoTableView.dataSource = self;
     self.budgetInfoTableView.scrollEnabled = NO;
+    self.budgetInfoTableView.allowsSelection = NO;
     [self.view addSubview:self.budgetInfoTableView];
     
     [NSLayoutConstraint activateConstraints:@[
@@ -473,7 +474,36 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     if (tableView == self.budgetInfoTableView) {
-        return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"TextFieldCell"];
+        static NSString *cellIdentifier = @"BudgetInfoCell";
+        UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
+        
+        if (!cell){
+            cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:cellIdentifier];
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        }
+        
+        switch (indexPath.row) {
+            case 0:
+                cell.textLabel.text = @"Remaining Budget";
+                cell.detailTextLabel.text = [self totalBudget];
+                break;
+            case 1:
+                cell.textLabel.text = @"Total Used Budget";
+                cell.detailTextLabel.text = [[[CurrencyFormatterUtil currencyFormatter] stringFromNumber:[self totalUsedBudget]] copy];
+                break;
+            case 2:
+                cell.textLabel.text = @"Expenses";
+                cell.detailTextLabel.text = [self expensesAmountLabel];
+                break;
+            case 3:
+                cell.textLabel.text = @"Income";
+                cell.detailTextLabel.text = [[[CurrencyFormatterUtil currencyFormatter] stringFromNumber:[self incomeAmountLabel]] copy];
+                break;
+            default:
+                break;
+        }
+        
+        return cell;
     }
     if (indexPath.section == 0) {
         // Expense attributes
