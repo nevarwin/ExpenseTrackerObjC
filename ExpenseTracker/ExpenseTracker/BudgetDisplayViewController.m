@@ -637,7 +637,8 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     [titleLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     
     NSString *expensesTitleLabel = [NSString stringWithFormat:@"EXPENSES - %@", [self expensesAmountLabel]];
-    NSString *incomeTitleLabel = [NSString stringWithFormat:@"INCOME - %@", [self incomeAmountLabel]];
+    NSString *incomeTitleLabel = [NSString stringWithFormat:@"INCOME - %@",
+                                  [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:[self incomeAmountLabel]]];
     
     switch (section) {
         case 0:
