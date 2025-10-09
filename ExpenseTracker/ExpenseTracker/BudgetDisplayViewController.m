@@ -702,6 +702,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
             [self.incomeUsedAmounts removeObjectAtIndex:indexPath.row];
         }
     }
+    [self.budgetInfoTableView reloadData];
     [self.budgetDisplayTableView reloadData];
 }
 
@@ -868,6 +869,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         }
         
         NSIndexSet *indexSet = [NSIndexSet indexSetWithIndex:section];
+        [self.budgetInfoTableView reloadData];
         [self.budgetDisplayTableView reloadSections:indexSet withRowAnimation:UITableViewRowAnimationAutomatic];
     }];
     
