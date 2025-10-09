@@ -9,6 +9,7 @@
 #import "Budget+CoreDataClass.h"
 #import <HealthKit/HealthKit.h>
 #import "Category+CoreDataClass.h"
+#import "Transaction+CoreDataClass.h"
 #import "BudgetAllocation+CoreDataClass.h"
 #import "CoreDataManager.h"
 #import "AppDelegate.h"
@@ -264,6 +265,42 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     NSDecimalNumber *netTotal = [[self incomeAmountLabel] decimalNumberBySubtracting:[self totalUsedBudget]];
     return [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:netTotal];
 }
+
+- (NSArray<Category *> *)categoriesWithTransactionsForCurrentMonth {
+    // Convert to NSArray
+    NSArray *allTransactions = [self.budget.transactions allObjects];
+    
+    // Build start and end of month
+    NSDateComponents *components = [[NSDateComponents alloc] init];
+    components.year = self.currentDateComponents.year;
+    components.month = self.currentDateComponents.month;
+    
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    NSDate *startOfMonth = [calendar dateFromComponents:components];
+    
+    NSDateComponents *nextMonthComponents = [[NSDateComponents alloc] init];
+    nextMonthComponents.month = 1;
+    NSDate *endOfMonth = [calendar dateByAddingComponents:nextMonthComponents toDate:startOfMonth options:0];
+    
+    // Filter transactions for current month
+    NSPredicate *datePredicate = [NSPredicate predicateWithFormat:@"date >= %@ AND date < %@", startOfMonth, endOfMonth];
+    NSArray *filteredTransactions = [allTransactions filteredArrayUsingPredicate:datePredicate];
+    
+    // Sort by transaction date
+    NSSortDescriptor *sortByDate = [NSSortDescriptor sortDescriptorWithKey:@"date" ascending:YES];
+    NSArray *sortedTransactions = [filteredTransactions sortedArrayUsingDescriptors:@[sortByDate]];
+    
+    // Collect categories from transactions, preserving order
+    NSMutableOrderedSet<Category *> *orderedCategories = [NSMutableOrderedSet orderedSet];
+    for (Transaction *txn in sortedTransactions) {
+        if (txn.category) {
+            [orderedCategories addObject:txn.category];
+        }
+    }
+    
+    return [orderedCategories array];
+}
+
 
 
 
