@@ -78,7 +78,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    [self fetch];
+    [self.budgetDisplayTableView reloadData];
     [self.navigationController setNavigationBarHidden:NO animated:NO];
 }
 
@@ -91,10 +91,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 
 
 # pragma mark - Helper
-
-- (void)fetch{
-    [self.budgetDisplayTableView reloadData];
-}
 
 // Helper method to process a category
 - (void)processCategory:(Category *)category isIncome:(BOOL)isIncome {
@@ -274,19 +270,13 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 # pragma mark - SetUps
 
 - (void)setupHeaderView {
-    // Create header container
-    self.headerContainer = [[UIView alloc] init];
-    _headerContainer.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:_headerContainer];
-    
-    // Setup header label text field (left side)
     self.headerLabelTextField = [[UITextField alloc] init];
     self.headerLabelTextField.translatesAutoresizingMaskIntoConstraints = NO;
     self.headerLabelTextField.text = self.budget.name;
     self.headerLabelTextField.font = [UIFont systemFontOfSize:34 weight:UIFontWeightBold];
     self.headerLabelTextField.textColor = [UIColor labelColor];
     self.headerLabelTextField.placeholder = @"Budget Name";
-    [_headerContainer addSubview:self.headerLabelTextField];
+    [self.view addSubview:self.headerLabelTextField];
     
     // Navigation bar buttons
     self.rightButton = [[UIBarButtonItem alloc]
@@ -296,19 +286,15 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
                         action:@selector(saveButtonTapped)];
     self.navigationItem.rightBarButtonItem = self.rightButton;
     
-    // Setup constraints for header container
+    CGFloat horizontalPadding = 20.0;
     [NSLayoutConstraint activateConstraints:@[
-        [_headerContainer.topAnchor constraintEqualToAnchor:self.yearHeaderView.bottomAnchor],
-        [_headerContainer.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
-        [_headerContainer.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
-        [_headerContainer.heightAnchor constraintEqualToConstant:60]
+        self.isEditMode ? [self.headerLabelTextField.topAnchor constraintEqualToAnchor:self.yearHeaderView.bottomAnchor constant:8] : [self.headerLabelTextField.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
+        [self.headerLabelTextField.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:horizontalPadding],
+        [self.headerLabelTextField.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-horizontalPadding]
     ]];
     
-    // Setup constraints for header label text field
-    [NSLayoutConstraint activateConstraints:@[
-        [self.headerLabelTextField.leadingAnchor constraintEqualToAnchor:_headerContainer.leadingAnchor],
-        [self.headerLabelTextField.centerYAnchor constraintEqualToAnchor:_headerContainer.centerYAnchor],
-    ]];
+    [self.headerLabelTextField setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisVertical];
+    [self.headerLabelTextField setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisVertical];
 }
 
 - (void)setupBudgetInfoTableView {
@@ -321,7 +307,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     [self.view addSubview:self.budgetInfoTableView];
     
     [NSLayoutConstraint activateConstraints:@[
-        [self.budgetInfoTableView.topAnchor constraintEqualToAnchor:self.headerContainer.bottomAnchor],
+        [self.budgetInfoTableView.topAnchor constraintEqualToAnchor:self.headerLabelTextField.bottomAnchor],
         [self.budgetInfoTableView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
         [self.budgetInfoTableView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
     ]];
