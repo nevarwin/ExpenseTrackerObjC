@@ -304,6 +304,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     self.budgetInfoTableView.dataSource = self;
     self.budgetInfoTableView.scrollEnabled = NO;
     self.budgetInfoTableView.allowsSelection = NO;
+    self.budgetInfoTableView.editing = NO;
     [self.view addSubview:self.budgetInfoTableView];
     
     [NSLayoutConstraint activateConstraints:@[
@@ -683,6 +684,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 
 // Deleting via swipe gesture
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (tableView == self.budgetInfoTableView) return;
     if (editingStyle != UITableViewCellEditingStyleDelete) {
         NSLog(@"editingStyle: %ld", (long)editingStyle);
         return;
@@ -745,6 +747,14 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     if (tableView == self.budgetInfoTableView) return 40;
     return 80;
 }
+
+- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (tableView == self.budgetInfoTableView) {
+        return NO;
+    }
+    return YES;
+}
+
 
 
 #pragma mark - Actions
