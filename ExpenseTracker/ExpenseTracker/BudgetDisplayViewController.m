@@ -95,6 +95,13 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 
 // Helper method to process a category
 - (void)processCategory:(Category *)category isIncome:(BOOL)isIncome {
+    
+    NSSet<Transaction *> *transactions = category.transactions;
+
+    for (Transaction *transaction in transactions) {
+        NSLog(@"Transaction: %@", transaction.amount);
+    }
+
     NSMutableArray *names = isIncome ? self.income : self.expenses;
     NSMutableArray *amounts = isIncome ? self.incomeAmounts : self.expensesAmounts;
     NSMutableArray *usedAmounts = isIncome ? self.incomeUsedAmounts : self.expensesUsedAmounts;
@@ -244,7 +251,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 - (NSDecimalNumber *)incomeAmountLabel{
     NSDecimalNumber *totalIncomeUsed = [self.incomeUsedAmounts valueForKeyPath:@"@sum.self"];
     NSDecimalNumber *totalIncome = [self.incomeAmounts valueForKeyPath:@"@sum.self"];
-    NSDecimalNumber *toDisplay = [totalIncomeUsed isEqualToNumber:[NSDecimalNumber zero]] ? totalIncome : totalIncomeUsed;
+    NSDecimalNumber *toDisplay = ([totalIncomeUsed isEqualToNumber:[NSDecimalNumber zero]] || [totalIncome compare:totalIncomeUsed] == NSOrderedDescending) ? totalIncome : totalIncomeUsed;
     return toDisplay;
 }
 
