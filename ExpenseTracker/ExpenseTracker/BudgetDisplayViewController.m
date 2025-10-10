@@ -49,18 +49,16 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     self.incomeUsedAmounts = [NSMutableArray array];
     self.expensesUsedAmounts = [NSMutableArray array];
     
-    for (Category *category in self.budget.category) {
-        [self processCategory:category isIncome:category.isIncome];
-    }
-    
-    self.headerLabelTextField.delegate = self;
-    self.rightButton.enabled = self.headerLabelTextField.text.length == 0 ? NO : YES;
-    
     if (self.isEditMode) {
         [self setupYearHeaderView];
         [self initializeCurrentDate];
         self.yearHeaderView.hidden = !self.isEditMode;
     }
+    
+    [self fetchCategory];
+    
+    self.headerLabelTextField.delegate = self;
+    self.rightButton.enabled = self.headerLabelTextField.text.length == 0 ? NO : YES;
     
     [self setupHeaderView];
     [self setupBudgetInfoTableView];
@@ -93,31 +91,60 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 
 # pragma mark - Helper
 
-// Helper method to process a category
-- (void)processCategory:(Category *)category isIncome:(BOOL)isIncome {
-    
-    NSSet<Transaction *> *transactions = category.transactions;
-
-    for (Transaction *transaction in transactions) {
-        NSLog(@"Transaction: %@", transaction.amount);
+- (void)fetchCategory{
+    for (Category *category in self.budget.category) {
+        [self processCategory:category
+                     isIncome:category.isIncome
+                        month:self.currentDateComponents.month
+                         year:self.currentDateComponents.year];
     }
+}
+
+- (void)processCategory:(Category *)category
+               isIncome:(BOOL)isIncome
+                  month:(NSInteger)month
+                   year:(NSInteger)year
+{
+    // Filter only active transactions within the budget period
+//    NSLog(@"[category.transactions allObjects]: %@", [category.transactions allObjects]);
+    NSArray<Transaction *> *activeTransactions =
+    [[category.transactions allObjects] filteredArrayUsingPredicate:
+     [NSPredicate predicateWithBlock:^BOOL(Transaction *transaction, NSDictionary *bindings) {
+        
+        if (!transaction.isActive) {
+            return NO;
+        }
+        
+        // Extract month + year from transaction.date
+        NSDateComponents *components = [[NSCalendar currentCalendar]
+                                        components:(NSCalendarUnitMonth | NSCalendarUnitYear)
+                                        fromDate:transaction.date];
+        
+        NSInteger transactionMonth = components.month;
+        NSInteger transactionYear  = components.year;
+        
+        return (transactionMonth == month || transactionYear == year);
+    }]];
 
     NSMutableArray *names = isIncome ? self.income : self.expenses;
     NSMutableArray *amounts = isIncome ? self.incomeAmounts : self.expensesAmounts;
     NSMutableArray *usedAmounts = isIncome ? self.incomeUsedAmounts : self.expensesUsedAmounts;
     
     [names addObject:category.name];
-    if (category.allocations.count > 0) {
-        for (BudgetAllocation *allocation in category.allocations) {
-            [amounts addObject:allocation.allocatedAmount ?: [NSDecimalNumber zero]];
-            [usedAmounts addObject:allocation.usedAmount ?: [NSDecimalNumber zero]];
+    NSLog(@"activeTransactions: %@", activeTransactions);
+    
+    for (Transaction *transaction in activeTransactions) {
+        Category *activeCategory = transaction.category;
+        
+        if (activeCategory.allocations.count > 0) {
+            for (BudgetAllocation *allocation in activeCategory.allocations) {
+                [amounts addObject:allocation.allocatedAmount ?: [NSDecimalNumber zero]];
+                [usedAmounts addObject:allocation.usedAmount ?: [NSDecimalNumber zero]];
+            }
         }
-    } else {
-        // Add default zero if no allocations
-        [amounts addObject:[NSDecimalNumber zero]];
-        [usedAmounts addObject:[NSDecimalNumber zero]];
     }
 }
+
 // TODO: Update the fetching based on the month and year
 - (void)didTapPreviousMonth {
     self.currentDateComponents.month -= 1;
@@ -125,7 +152,10 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         self.currentDateComponents.month = 12;
         self.currentDateComponents.year -= 1;
     }
+    [self fetchCategory];
     [self updateHeaderLabels];
+    [self budgetDisplayTableView];
+    [self budgetInfoTableView];
 }
 
 - (void)didTapNextMonth {
@@ -134,7 +164,10 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         self.currentDateComponents.month = 1;
         self.currentDateComponents.year += 1;
     }
+    [self fetchCategory];
     [self updateHeaderLabels];
+    [self budgetDisplayTableView];
+    [self budgetInfoTableView];
 }
 
 - (void)showYearPicker {
@@ -154,7 +187,10 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     vc.onDone = ^(NSInteger selectedIndex) {
         weakSelf.currentDateComponents.year = startYear + selectedIndex;
         [weakSelf updateHeaderLabels];
+        [self fetchCategory];
         [self updateHeaderLabels];
+        [self budgetDisplayTableView];
+        [self budgetInfoTableView];
     };
     
     [self presentViewController:vc animated:YES completion:nil];
@@ -173,7 +209,10 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     vc.onDone = ^(NSInteger selectedIndex) {
         weakSelf.currentDateComponents.month = selectedIndex + 1;
         [weakSelf updateHeaderLabels];
+        [self fetchCategory];
         [self updateHeaderLabels];
+        [self budgetDisplayTableView];
+        [self budgetInfoTableView];
     };
     
     [self presentViewController:vc animated:YES completion:nil];
@@ -272,44 +311,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     NSDecimalNumber *netTotal = [[self incomeAmountLabel] decimalNumberBySubtracting:[self totalUsedBudget]];
     return [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:netTotal];
 }
-
-- (NSArray<Category *> *)categoriesWithTransactionsForCurrentMonth {
-    // Convert to NSArray
-    NSArray *allTransactions = [self.budget.transactions allObjects];
-    
-    // Build start and end of month
-    NSDateComponents *components = [[NSDateComponents alloc] init];
-    components.year = self.currentDateComponents.year;
-    components.month = self.currentDateComponents.month;
-    
-    NSCalendar *calendar = [NSCalendar currentCalendar];
-    NSDate *startOfMonth = [calendar dateFromComponents:components];
-    
-    NSDateComponents *nextMonthComponents = [[NSDateComponents alloc] init];
-    nextMonthComponents.month = 1;
-    NSDate *endOfMonth = [calendar dateByAddingComponents:nextMonthComponents toDate:startOfMonth options:0];
-    
-    // Filter transactions for current month
-    NSPredicate *datePredicate = [NSPredicate predicateWithFormat:@"date >= %@ AND date < %@", startOfMonth, endOfMonth];
-    NSArray *filteredTransactions = [allTransactions filteredArrayUsingPredicate:datePredicate];
-    
-    // Sort by transaction date
-    NSSortDescriptor *sortByDate = [NSSortDescriptor sortDescriptorWithKey:@"date" ascending:YES];
-    NSArray *sortedTransactions = [filteredTransactions sortedArrayUsingDescriptors:@[sortByDate]];
-    
-    // Collect categories from transactions, preserving order
-    NSMutableOrderedSet<Category *> *orderedCategories = [NSMutableOrderedSet orderedSet];
-    for (Transaction *txn in sortedTransactions) {
-        if (txn.category) {
-            [orderedCategories addObject:txn.category];
-        }
-    }
-    
-    return [orderedCategories array];
-}
-
-
-
 
 # pragma mark - SetUps
 
