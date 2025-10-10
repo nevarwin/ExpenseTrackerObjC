@@ -216,6 +216,8 @@ replacementString:(NSString *)string {
     transaction.category = category;
     transaction.category.isIncome = type;
     
+    [category addTransactionsObject:transaction];
+    
     NSError *error = nil;
     if (![context save:&error]) {
         NSLog(@"Failed to save transaction: %@", error);
