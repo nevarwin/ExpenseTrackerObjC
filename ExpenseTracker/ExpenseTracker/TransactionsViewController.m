@@ -246,7 +246,7 @@ replacementString:(NSString *)string {
         [subview removeFromSuperview];
         
     }
-    
+    // TODO: add a description text field
     switch (indexPath.row) {
         case 0: // Date
             cell.textLabel.text = @"Date";

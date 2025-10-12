@@ -91,13 +91,23 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 
 # pragma mark - Helper
 
-- (void)fetchCategory{
+- (void)fetchCategory {
+    [self.income removeAllObjects];
+    [self.expenses removeAllObjects];
+    [self.incomeAmounts removeAllObjects];
+    [self.expensesAmounts removeAllObjects];
+    [self.incomeUsedAmounts removeAllObjects];
+    [self.expensesUsedAmounts removeAllObjects];
+
     for (Category *category in self.budget.category) {
         [self processCategory:category
                      isIncome:category.isIncome
                         month:self.currentDateComponents.month
                          year:self.currentDateComponents.year];
     }
+
+    [self.budgetInfoTableView reloadData];
+    [self.budgetDisplayTableView reloadData];
 }
 
 - (void)processCategory:(Category *)category
@@ -106,7 +116,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
                    year:(NSInteger)year
 {
     // Filter only active transactions within the budget period
-//    NSLog(@"[category.transactions allObjects]: %@", [category.transactions allObjects]);
     NSArray<Transaction *> *activeTransactions =
     [[category.transactions allObjects] filteredArrayUsingPredicate:
      [NSPredicate predicateWithBlock:^BOOL(Transaction *transaction, NSDictionary *bindings) {
@@ -123,7 +132,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         NSInteger transactionMonth = components.month;
         NSInteger transactionYear  = components.year;
         
-        return (transactionMonth == month || transactionYear == year);
+        return (transactionMonth == month && transactionYear == year);
     }]];
 
     NSMutableArray *names = isIncome ? self.income : self.expenses;
@@ -131,7 +140,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     NSMutableArray *usedAmounts = isIncome ? self.incomeUsedAmounts : self.expensesUsedAmounts;
     
     [names addObject:category.name];
-    NSLog(@"activeTransactions: %@", activeTransactions);
     
     for (Transaction *transaction in activeTransactions) {
         Category *activeCategory = transaction.category;
