@@ -22,6 +22,7 @@
 @property (nonatomic, strong) UIBarButtonItem *rightButton;
 @property (nonatomic, strong) UIDatePicker *datePicker;
 @property (nonatomic, strong) UITextField *amountTextField;
+@property (nonatomic, strong) UITextField *descriptionTextField;
 
 @property (nonatomic, assign) NSManagedObjectID* selectedBudgetIndex;
 @property (nonatomic, strong) NSArray *budgetValues;

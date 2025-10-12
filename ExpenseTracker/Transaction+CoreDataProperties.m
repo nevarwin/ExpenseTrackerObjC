@@ -15,6 +15,7 @@
 }
 
 @dynamic amount;
+@dynamic desc;
 @dynamic createdAt;
 @dynamic date;
 @dynamic isActive;

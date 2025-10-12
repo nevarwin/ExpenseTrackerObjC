@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSFetchRequest<Transaction *> *)fetchRequest NS_SWIFT_NAME(fetchRequest());
 
 @property (nullable, nonatomic, copy) NSDecimalNumber *amount;
+@property (nullable, nonatomic, copy) NSString *desc;
 @property (nullable, nonatomic, copy) NSDate *createdAt;
 @property (nullable, nonatomic, copy) NSDate *date;
 @property (nonatomic) BOOL isActive;
