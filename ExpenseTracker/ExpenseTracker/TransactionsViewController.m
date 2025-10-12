@@ -20,7 +20,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.amountTextField.delegate = self;
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
     
     self.title = @"Transaction";
@@ -68,6 +67,9 @@
     self.amountTextField.placeholder = @"Enter amount";
     self.amountTextField.keyboardType = UIKeyboardTypeDecimalPad;
     self.amountTextField.delegate = self;
+    self.descriptionTextField = [[UITextField alloc] init];
+    self.descriptionTextField.placeholder = @"Enter description";
+    self.descriptionTextField.delegate = self;
     self.typeValues = @[@"Expense", @"Income"];
     self.typePicker = [[UIPickerView alloc] init];
     self.typePicker.delegate = self;
@@ -113,19 +115,22 @@ replacementString:(NSString *)string {
         // Amount
         self.amountTextField.text = [NSString stringWithFormat:@"%@", self.existingTransaction.amount];
         
+        // Description
+        self.descriptionTextField.text = self.existingTransaction.desc;
+        
         // Date
         [self.datePicker setDate:self.existingTransaction.date];
         
         // Type
         self.selectedTypeIndex = self.existingTransaction.category.isIncome;
-        UIButton *typeButton = [self buttonForRow:3];
+        UIButton *typeButton = [self buttonForRow:4];
         typeButton.enabled = YES;
         [typeButton setTitle:self.typeValues[self.selectedTypeIndex] forState:UIControlStateNormal];
         
         // Budget
         self.budgetValues = [self getBudgetValues:context error:&error];
         self.selectedBudgetIndex = self.existingTransaction.budget.objectID;
-        UIButton *budgetButton = [self buttonForRow:2];
+        UIButton *budgetButton = [self buttonForRow:3];
         if (self.existingTransaction.budget.objectID) {
             [budgetButton setTitle:self.existingTransaction.budget.name forState:UIControlStateNormal];
         }
@@ -136,7 +141,7 @@ replacementString:(NSString *)string {
         
         self.selectedCategoryIndex = self.existingTransaction.category.objectID;
         
-        UIButton *categoryButton = [self buttonForRow:4];
+        UIButton *categoryButton = [self buttonForRow:5];
         categoryButton.enabled = YES;
         if (self.existingTransaction.category.objectID) {
             [categoryButton setTitle:self.existingTransaction.category.name forState:UIControlStateNormal];
@@ -199,6 +204,7 @@ replacementString:(NSString *)string {
 }
 
 - (void)saveTransactionWithAmount:(NSDecimalNumber *)amount
+                             desc:(NSString *)desc
                              date:(NSDate *)date
                            budget:(Budget *)budget
                          category:(Category *)category
@@ -211,6 +217,7 @@ replacementString:(NSString *)string {
                                   inManagedObjectContext:context];
     
     transaction.amount = amount;
+    transaction.desc = desc;
     transaction.date = date;
     transaction.budget = budget;
     transaction.category = category;
@@ -234,7 +241,7 @@ replacementString:(NSString *)string {
 #pragma mark - UITableViewDataSource
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView { return 1; }
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section { return 5; }
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section { return 6; }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     static NSString *cellId = @"FormCell";
@@ -281,7 +288,23 @@ replacementString:(NSString *)string {
             ]];
             break;
         }
-        case 2: // Budget
+        case 2: // Description
+        {
+            cell.textLabel.text = @"Description";
+            [cell.contentView addSubview:self.descriptionTextField];
+
+            self.descriptionTextField.translatesAutoresizingMaskIntoConstraints = NO;
+            self.descriptionTextField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
+            self.descriptionTextField.textAlignment = NSTextAlignmentRight;
+            self.descriptionTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
+            [NSLayoutConstraint activateConstraints:@[
+                [self.descriptionTextField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
+                [self.descriptionTextField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+                [self.descriptionTextField.widthAnchor constraintEqualToConstant:120]
+            ]];
+            break;
+        }
+        case 3: // Budget
         {
             cell.textLabel.text = @"Budget";
             UIButton *typeButton = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -298,7 +321,7 @@ replacementString:(NSString *)string {
             ]];
             break;
         }
-        case 3: // Type
+        case 4: // Type
         {
             cell.textLabel.text = @"Type";
             UIButton *typeButton = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -315,7 +338,7 @@ replacementString:(NSString *)string {
             ]];
             break;
         }
-        case 4: // Category
+        case 5: // Category
             cell.textLabel.text = @"Category";
             UIButton *typeButton = [UIButton buttonWithType:UIButtonTypeSystem];
             [typeButton setTitle:@"Select Category" forState:UIControlStateNormal];
@@ -379,8 +402,8 @@ replacementString:(NSString *)string {
                 [sender setTitle:self.budgetValues[selectedRow] forState:UIControlStateNormal];
                 
                 [self.tableView reloadRowsAtIndexPaths:@[
-                    [NSIndexPath indexPathForRow:3 inSection:0],
-                    [NSIndexPath indexPathForRow:4 inSection:0]
+                    [NSIndexPath indexPathForRow:4 inSection:0],
+                    [NSIndexPath indexPathForRow:5 inSection:0]
                 ] withRowAnimation:UITableViewRowAnimationAutomatic];
                 break;
             }
@@ -390,7 +413,7 @@ replacementString:(NSString *)string {
                 
                 self.category = [self getCategoryValues:context error:&error isIncome:self.selectedTypeIndex];
                 [self.tableView reloadRowsAtIndexPaths:@[
-                    [NSIndexPath indexPathForRow:4 inSection:0]
+                    [NSIndexPath indexPathForRow:5 inSection:0]
                 ] withRowAnimation:UITableViewRowAnimationAutomatic];
                 break;
             }
@@ -429,8 +452,8 @@ replacementString:(NSString *)string {
             self.selectedBudgetIndex = selectedBudget[@"objectID"];
             [sender setTitle:selectedBudget[@"name"] forState:UIControlStateNormal];
             [self.tableView reloadRowsAtIndexPaths:@[
-                [NSIndexPath indexPathForRow:3 inSection:0],
-                [NSIndexPath indexPathForRow:4 inSection:0]
+                [NSIndexPath indexPathForRow:4 inSection:0],
+                [NSIndexPath indexPathForRow:5 inSection:0]
             ] withRowAnimation:UITableViewRowAnimationAutomatic];
         };
     } else if (sender.tag == 1) {
@@ -441,7 +464,7 @@ replacementString:(NSString *)string {
             [sender setTitle:self.typeValues[selectedIndex] forState:UIControlStateNormal];
             self.category = [self getCategoryValues:context error:nil isIncome:self.selectedTypeIndex];
             [self.tableView reloadRowsAtIndexPaths:@[
-                [NSIndexPath indexPathForRow:4 inSection:0]
+                [NSIndexPath indexPathForRow:5 inSection:0]
             ] withRowAnimation:UITableViewRowAnimationAutomatic];
         };
     } else if (sender.tag == 2) {
@@ -506,6 +529,7 @@ replacementString:(NSString *)string {
     formatter.numberStyle = NSNumberFormatterDecimalStyle;
     NSNumber *amountNumber = [formatter numberFromString:self.amountTextField.text];
     NSDecimalNumber *amount = [NSDecimalNumber decimalNumberWithDecimal:amountNumber.decimalValue];
+    NSString *desc = self.descriptionTextField.text ?: @"";
     
     NSInteger type = self.selectedTypeIndex;
     NSDate *date = self.datePicker.date;
@@ -550,6 +574,7 @@ replacementString:(NSString *)string {
     // --- Step 5: Save Transaction ---
     void (^saveBlock)(void) = ^{
         [self saveTransactionWithAmount:amount
+                                   desc:desc
                                    date:date
                                  budget:newBudget
                                category:newCategory
