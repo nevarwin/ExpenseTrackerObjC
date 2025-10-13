@@ -16,6 +16,7 @@
 #import "UIViewController+Alerts.h"
 #import "PickerModalViewController.h"
 #import "CurrencyFormatterUtil.h"
+#import "CategoryAlert.h"
 
 #define MAX_HEADER_TEXT_LENGTH 16
 
@@ -35,12 +36,12 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 
 @implementation BudgetDisplayViewController
 
+# pragma mark - viewDidLoad
 - (void)viewDidLoad {
     [super viewDidLoad];
     // TODO: Add installment logic
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
     self.title = self.isEditMode ? @"Budget" : @"Add Budget";
-    
     
     self.income = [NSMutableArray array];
     self.expenses = [NSMutableArray array];
@@ -98,14 +99,14 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     [self.expensesAmounts removeAllObjects];
     [self.incomeUsedAmounts removeAllObjects];
     [self.expensesUsedAmounts removeAllObjects];
-
+    
     for (Category *category in self.budget.category) {
         [self processCategory:category
                      isIncome:category.isIncome
                         month:self.currentDateComponents.month
                          year:self.currentDateComponents.year];
     }
-
+    
     [self.budgetInfoTableView reloadData];
     [self.budgetDisplayTableView reloadData];
 }
@@ -134,7 +135,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         
         return (transactionMonth == month && transactionYear == year);
     }]];
-
+    // TODO: Bug in amount/value
     NSMutableArray *names = isIncome ? self.income : self.expenses;
     NSMutableArray *amounts = isIncome ? self.incomeAmounts : self.expensesAmounts;
     NSMutableArray *usedAmounts = isIncome ? self.incomeUsedAmounts : self.expensesUsedAmounts;
@@ -320,6 +321,13 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     return [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:netTotal];
 }
 
+- (NSNumber *)safeNumberFrom:(id)value {
+    if ([value isKindOfClass:[NSNumber class]]) return value;
+    if ([value isKindOfClass:[NSDecimalNumber class]]) return value;
+    return @([[value description] doubleValue]);
+}
+
+
 # pragma mark - SetUps
 
 - (void)setupHeaderView {
@@ -473,22 +481,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     return newLength <= MAXLENGTH || returnKey;
 }
 
-- (void)textFieldChanged:(UITextField *)textField {
-    UITableViewCell *cell = (UITableViewCell *)textField.superview.superview;
-    NSIndexPath *indexPath = [self.budgetDisplayTableView indexPathForCell:cell];
-    NSString *attributeKey = textField.accessibilityIdentifier;
-    
-    if (attributeKey) {
-        if (indexPath.section == 0) {
-            self.expensesAmounts[indexPath.row] = textField.text;
-        } else {
-            self.incomeAmounts[indexPath.row] = textField.text;
-        }
-    } else {
-        self.budget.name = textField.text ?: @"";
-    }
-}
-
 
 #pragma mark - UITableViewDelegate
 
@@ -591,37 +583,19 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     cell.textLabel.text = placeholder;
     cell.detailTextLabel.textColor = [UIColor systemGrayColor];
     
-    NSInteger tag = 100;
-    UITextField *textField = [cell.contentView viewWithTag:tag];
+    // TODO: change UI color
+    self.rightLabel = [[UILabel alloc] init];
+    self.rightLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    self.rightLabel.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
+    self.rightLabel.text = [value stringValue];
+    self.rightLabel.textAlignment = NSTextAlignmentRight;
+    self.rightLabel.textColor = [UIColor systemTealColor];
+    [cell.contentView addSubview:self.rightLabel];
     
-    if (!textField) {
-        textField = [[UITextField alloc] init];
-        textField.tag = tag;
-        textField.translatesAutoresizingMaskIntoConstraints = NO;
-        textField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
-        textField.textAlignment = NSTextAlignmentRight;
-        textField.textColor = [UIColor systemTealColor];
-        textField.delegate = self;
-        [textField addTarget:self action:@selector(textFieldChanged:) forControlEvents:UIControlEventEditingChanged];
-        
-        UILabel *pesoLabel = [[UILabel alloc] init];
-        pesoLabel.text = @"₱";
-        pesoLabel.font = textField.font;
-        pesoLabel.textAlignment = NSTextAlignmentLeft;
-        pesoLabel.textColor = [UIColor systemTealColor];
-        [pesoLabel sizeToFit];
-        
-        textField.leftView = pesoLabel;
-        textField.leftViewMode = UITextFieldViewModeAlways;
-        
-        [cell.contentView addSubview:textField];
-        
-        [NSLayoutConstraint activateConstraints:@[
-            [textField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
-            [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
-            [textField.widthAnchor constraintEqualToConstant:80]
-        ]];
-    }
+    [NSLayoutConstraint activateConstraints:@[
+        [self.rightLabel.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+        [self.rightLabel.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16]
+    ]];
     
     // Convert both to NSNumber for safe comparison
     NSNumber *usedAmountNum = ([usedAmount isKindOfClass:[NSNumber class]]) ? usedAmount : @([[usedAmount description] doubleValue]);
@@ -664,13 +638,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     // Use multiline in label
     cell.detailTextLabel.numberOfLines = 0; // allow wrapping
     cell.detailTextLabel.attributedText = attributedCombinedText;
-    
-    // Configure text field
-    textField.text = ETStringFromNumberOrString(value, @"");
-    
-    textField.placeholder = placeholder;
-    textField.keyboardType = keyboardType;
-    textField.accessibilityIdentifier = (indexPath.section == 0) ? @"expenseAmount" : @"incomeAmount";
     
     return cell;
 }
@@ -813,7 +780,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 
 
 #pragma mark - Actions
-
+// TODO: Refactor UI for installment
 - (void)plusButtonTapped:(UIButton *)sender indexPath:(NSIndexPath *)indexPath {
     NSInteger section = sender.tag;
     NSInteger row = NSNotFound;
@@ -937,6 +904,19 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     [self presentViewController:alert animated:YES completion:nil];
 }
 
+//- (void)plusButtonTapped:(UIButton *)sender indexPath:(NSIndexPath *)indexPath {
+//    CategoryAlert *alertVC = [[CategoryAlert alloc] init];
+//    alertVC.modalPresentationStyle = UIModalPresentationPageSheet;
+//    
+//    if (@available(iOS 15.0, *)) {
+//        UISheetPresentationController *sheet = alertVC.sheetPresentationController;
+//        sheet.detents = @[ [UISheetPresentationControllerDetent mediumDetent] ];
+//        sheet.prefersGrabberVisible = YES;
+//    }
+//    
+//    [self presentViewController:alertVC animated:YES completion:nil];
+//
+//}
 
 - (void)saveButtonTapped {
     NSString *budgetName = self.headerLabelTextField.text;

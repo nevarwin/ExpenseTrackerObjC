@@ -47,6 +47,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) UITableView *budgetInfoTableView;
 @property (nonatomic, strong) NSLayoutConstraint *budgetInfoTableViewHeightConstraint;
 
+@property (nonatomic, strong) UILabel *rightLabel;
 @end
 
 NS_ASSUME_NONNULL_END
