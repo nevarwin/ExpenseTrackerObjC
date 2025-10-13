@@ -116,6 +116,11 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
                   month:(NSInteger)month
                    year:(NSInteger)year
 {
+    // TODO: Bug in amount/value
+    NSMutableArray *names = isIncome ? self.income : self.expenses;
+    NSMutableArray *amounts = isIncome ? self.incomeAmounts : self.expensesAmounts;
+    NSMutableArray *usedAmounts = isIncome ? self.incomeUsedAmounts : self.expensesUsedAmounts;
+    
     // Filter only active transactions within the budget period
     NSArray<Transaction *> *activeTransactions =
     [[category.transactions allObjects] filteredArrayUsingPredicate:
@@ -135,10 +140,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         
         return (transactionMonth == month && transactionYear == year);
     }]];
-    // TODO: Bug in amount/value
-    NSMutableArray *names = isIncome ? self.income : self.expenses;
-    NSMutableArray *amounts = isIncome ? self.incomeAmounts : self.expensesAmounts;
-    NSMutableArray *usedAmounts = isIncome ? self.incomeUsedAmounts : self.expensesUsedAmounts;
     
     [names addObject:category.name];
     
@@ -154,7 +155,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     }
 }
 
-// TODO: Update the fetching based on the month and year
 - (void)didTapPreviousMonth {
     self.currentDateComponents.month -= 1;
     if (self.currentDateComponents.month < 1) {
@@ -583,13 +583,11 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     cell.textLabel.text = placeholder;
     cell.detailTextLabel.textColor = [UIColor systemGrayColor];
     
-    // TODO: change UI color
     self.rightLabel = [[UILabel alloc] init];
     self.rightLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    self.rightLabel.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
-    self.rightLabel.text = [value stringValue];
+    self.rightLabel.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightBold];
+    self.rightLabel.text = [NSString stringWithFormat:@"₱%@", [value stringValue]];
     self.rightLabel.textAlignment = NSTextAlignmentRight;
-    self.rightLabel.textColor = [UIColor systemTealColor];
     [cell.contentView addSubview:self.rightLabel];
     
     [NSLayoutConstraint activateConstraints:@[
