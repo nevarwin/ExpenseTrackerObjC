@@ -16,7 +16,7 @@
 #import "UIViewController+Alerts.h"
 #import "PickerModalViewController.h"
 #import "CurrencyFormatterUtil.h"
-#import "CategoryAlert.h"
+#import "CategoryViewController.h"
 
 #define MAX_HEADER_TEXT_LENGTH 16
 
@@ -778,143 +778,18 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 
 
 #pragma mark - Actions
-// TODO: Refactor UI for installment
 - (void)plusButtonTapped:(UIButton *)sender indexPath:(NSIndexPath *)indexPath {
-    NSInteger section = sender.tag;
-    NSInteger row = NSNotFound;
-    NSString *actionTitle = @"Add";
+    CategoryViewController *alertVC = [[CategoryViewController alloc] init];
+    alertVC.modalPresentationStyle = UIModalPresentationPageSheet;
     
-    if ([indexPath isKindOfClass:[NSIndexPath class]]) {
-        NSIndexPath *correctIndexPath = (NSIndexPath *)indexPath;
-        row = correctIndexPath.row;
-        section = correctIndexPath.section;
-        actionTitle = @"Update";
+    if (@available(iOS 15.0, *)) {
+        UISheetPresentationController *sheet = alertVC.sheetPresentationController;
+        sheet.detents = @[ [UISheetPresentationControllerDetent mediumDetent] ];
+        sheet.prefersGrabberVisible = YES;
     }
     
-    // TODO: Make the name unique and add validation, max characters
-    NSString *title = (section == 0) ? @"Expense" : @"Income";
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
-                                                                   message:@"Enter details"
-                                                            preferredStyle:UIAlertControllerStyleAlert];
-    
-    [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
-        textField.placeholder = @"Enter name";
-        if (row != NSNotFound) {
-            if (section == 0) {
-                if (row < self.expenses.count) {
-                    textField.text = self.expenses[row];
-                }
-            } else if (section == 1) {
-                if (row < self.income.count) {
-                    textField.text = self.income[row];
-                }
-            }
-        }
-    }];
-    
-    [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
-        UILabel *pesoLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 16, 20)];
-        pesoLabel.text = @"₱";
-        pesoLabel.font = textField.font;
-        pesoLabel.textAlignment = NSTextAlignmentLeft;
-        pesoLabel.textColor = [UIColor systemTealColor];
-        
-        textField.leftView = pesoLabel;
-        textField.leftViewMode = UITextFieldViewModeAlways;
-        textField.placeholder = @"Enter amount";
-        textField.keyboardType = UIKeyboardTypeDecimalPad;
-        if (row != NSNotFound) {
-            if (section == 0) {
-                if (row < self.expensesAmounts.count) {
-                    id value = self.expensesAmounts[row];
-                    if ([value isKindOfClass:[NSDecimalNumber class]]) {
-                        textField.text = [(NSDecimalNumber *)value stringValue];
-                    } else if ([value isKindOfClass:[NSString class]]) {
-                        textField.text = (NSString *)value;
-                    } else {
-                        textField.text = @"";
-                    }
-                }
-            } else if (section == 1) {
-                if (row < self.incomeAmounts.count) {
-                    id value = self.incomeAmounts[row];
-                    if ([value isKindOfClass:[NSDecimalNumber class]]) {
-                        textField.text = [(NSDecimalNumber *)value stringValue];
-                    } else if ([value isKindOfClass:[NSString class]]) {
-                        textField.text = (NSString *)value;
-                    } else {
-                        textField.text = @"";
-                    }
-                }
-            }
-        }
-    }];
-    
-    UIAlertAction *ok = [UIAlertAction actionWithTitle:actionTitle
-                                                 style:UIAlertActionStyleDefault
-                                               handler:^(UIAlertAction * _Nonnull action) {
-        UITextField *nameField = alert.textFields.firstObject;
-        UITextField *amountField = alert.textFields[1];
-        
-        NSString *name = nameField.text;
-        NSString *amount = amountField.text;
-        
-        if (name.length <= 0 || amount.length <= 0) {
-            [self showAlertWithTitle:@"Warning" message:@"All fields are required."];
-            return;
-        }
-        
-        if ([actionTitle isEqual:@"Update"]) {
-            if (row == NSNotFound) {
-                return;
-            }
-            if (section == 0) {
-                if (row < self.expenses.count) self.expenses[row] = name;
-                if (row < self.expensesAmounts.count) self.expensesAmounts[row] = amount;
-            } else {
-                if (row < self.income.count) self.income[row] = name;
-                if (row < self.incomeAmounts.count) self.incomeAmounts[row] = amount;
-            }
-        } else {
-            if (section == 0) {
-                [self.expenses addObject:name ?: @""];
-                [self.expensesAmounts addObject:amount ?: @""];
-                [self.expensesUsedAmounts addObject:[NSDecimalNumber zero]];
-            } else {
-                [self.income addObject:name ?: @""];
-                [self.incomeAmounts addObject:amount ?: @""];
-                [self.incomeUsedAmounts addObject:[NSDecimalNumber zero]];
-            }
-        }
-        
-        NSIndexSet *indexSet = [NSIndexSet indexSetWithIndex:section];
-        [self.budgetInfoTableView reloadData];
-        [self.budgetDisplayTableView reloadSections:indexSet withRowAnimation:UITableViewRowAnimationAutomatic];
-    }];
-    
-    UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel"
-                                                     style:UIAlertActionStyleCancel
-                                                   handler:nil];
-    
-    [alert addAction:cancel];
-    [alert addAction:ok];
-    
-    [self presentViewController:alert animated:YES completion:nil];
+    [self presentViewController:alertVC animated:YES completion:nil];
 }
-
-//- (void)plusButtonTapped:(UIButton *)sender indexPath:(NSIndexPath *)indexPath {
-//    CategoryAlert *alertVC = [[CategoryAlert alloc] init];
-//    alertVC.modalPresentationStyle = UIModalPresentationPageSheet;
-//    
-//    if (@available(iOS 15.0, *)) {
-//        UISheetPresentationController *sheet = alertVC.sheetPresentationController;
-//        sheet.detents = @[ [UISheetPresentationControllerDetent mediumDetent] ];
-//        sheet.prefersGrabberVisible = YES;
-//    }
-//    
-//    [self presentViewController:alertVC animated:YES completion:nil];
-//
-//}
 
 - (void)saveButtonTapped {
     NSString *budgetName = self.headerLabelTextField.text;

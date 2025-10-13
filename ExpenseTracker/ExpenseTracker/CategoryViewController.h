@@ -6,23 +6,24 @@
 //
 #import <UIKit/UIKit.h>
 
-#ifndef CategoryAlert_h
-#define CategoryAlert_h
+#ifndef CategoryViewController_h
+#define CategoryViewController_h
 
-@interface CategoryAlert : UIViewController
+@interface CategoryViewController : UIViewController
 
 // TableViews
 @property (nonatomic, strong) UITableView *categoryInfoTableView;
-@property (nonatomic, strong) UITableView *installmentInfoTableView;
 
 // UI Controls
 @property (nonatomic, strong) UITextField *categoryTextField;
 @property (nonatomic, strong) UISwitch *installmentSwitch;
 @property (nonatomic, strong) UIDatePicker *startDatePicker;
 @property (nonatomic, strong) UITextField *monthsTextField;
-@property (nonatomic, strong) UILabel *monthlyLabel;
-@property (nonatomic, strong) UILabel *totalLabel;
+@property (nonatomic, strong) UITextField *amountTextField;
+@property (nonatomic, strong) UITextField *monthlyTextField;
+@property (nonatomic, assign) BOOL installmentEnabled;
+
 @end
 
 
-#endif /* CategoryAlert_h */
+#endif /* CategoryViewController_h */
