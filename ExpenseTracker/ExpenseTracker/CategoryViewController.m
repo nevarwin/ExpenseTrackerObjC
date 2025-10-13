@@ -24,25 +24,28 @@
     self.monthsTextField.delegate = self;
     self.monthlyTextField.delegate = self;
     
-    UIButton *doneButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [doneButton setTitle:@"Done" forState:UIControlStateNormal];
-    doneButton.translatesAutoresizingMaskIntoConstraints = NO;
+    self.title = @"Category";
+    NSString *rightButtonTitle = self.isEditMode ? @"Update" : @"Add";
+    self.leftButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(leftButtonTapped)];
+    self.rightButton = [[UIBarButtonItem alloc] initWithTitle:rightButtonTitle style:UIBarButtonItemStyleDone target:self action:@selector(rightButtonTapped)];
+    self.navigationItem.leftBarButtonItem = self.leftButton;
+    self.navigationItem.rightBarButtonItem = self.rightButton;
     
-    [doneButton addTarget:self action:@selector(doneTapped) forControlEvents:UIControlEventTouchUpInside];
-    doneButton.titleLabel.font = [UIFont systemFontOfSize:22 weight:UIFontWeightSemibold];
-    [self.view addSubview:doneButton];
-    
-    [NSLayoutConstraint activateConstraints:@[
-        [doneButton.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor],
-        [doneButton.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor]
-    ]];
 }
 
-- (void)doneTapped {
+# pragma mark - Actions
+- (void)leftButtonTapped {
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
+- (void)rightButtonTapped {
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
 
+- (void)toggleInstallment:(UISwitch *)sender {
+    self.installmentEnabled = sender.isOn;
+    [self.categoryInfoTableView reloadData];
+}
 #pragma mark - Setup Table
 - (void)setupTableViews {
     self.categoryInfoTableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStyleInsetGrouped];
@@ -98,6 +101,7 @@
             break;
         }
         case 1:
+            // TODO: add limit to text field
             cell.textLabel.text = @"Category Name";
             if (!self.categoryTextField) {
                 self.categoryTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 100, 30)];
@@ -145,12 +149,6 @@
             break;
     }
     return cell;
-}
-
-# pragma mark - Toogle Installment
-- (void)toggleInstallment:(UISwitch *)sender {
-    self.installmentEnabled = sender.isOn;
-    [self.categoryInfoTableView reloadData];
 }
 
 @end

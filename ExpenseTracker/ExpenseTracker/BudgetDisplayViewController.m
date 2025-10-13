@@ -779,16 +779,12 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 
 #pragma mark - Actions
 - (void)plusButtonTapped:(UIButton *)sender indexPath:(NSIndexPath *)indexPath {
-    CategoryViewController *alertVC = [[CategoryViewController alloc] init];
-    alertVC.modalPresentationStyle = UIModalPresentationPageSheet;
-    
-    if (@available(iOS 15.0, *)) {
-        UISheetPresentationController *sheet = alertVC.sheetPresentationController;
-        sheet.detents = @[ [UISheetPresentationControllerDetent mediumDetent] ];
-        sheet.prefersGrabberVisible = YES;
-    }
-    
-    [self presentViewController:alertVC animated:YES completion:nil];
+    // Present CategoryViewController for adding a new category
+    CategoryViewController *categoryVC = [[CategoryViewController alloc] init];
+    categoryVC.isEditMode = NO;
+
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:categoryVC];
+    [self presentViewController:nav animated:YES completion:nil];
 }
 
 - (void)saveButtonTapped {
@@ -947,5 +943,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 }
 
 @end
+
 
 

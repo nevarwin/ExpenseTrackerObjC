@@ -23,6 +23,10 @@
 @property (nonatomic, strong) UITextField *monthlyTextField;
 @property (nonatomic, assign) BOOL installmentEnabled;
 
+@property (nonatomic, assign) BOOL isEditMode;
+@property (nonatomic, strong) UIBarButtonItem *leftButton;
+@property (nonatomic, strong) UIBarButtonItem *rightButton;
+
 @end
 
 
