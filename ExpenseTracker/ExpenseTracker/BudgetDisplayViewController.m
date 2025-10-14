@@ -782,6 +782,16 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     // Present CategoryViewController for adding a new category
     CategoryViewController *categoryVC = [[CategoryViewController alloc] init];
     categoryVC.isEditMode = NO;
+    
+    categoryVC.isIncome = sender.tag;
+    
+    categoryVC.onCategoryAdded = ^(Category *category) {
+        NSLog(@"New category received: %@", category.name);
+        NSLog(@"New category installmentSwitch: %d", category.isInstallment);
+        NSLog(@"New category installmentMonths: %d", category.installmentMonths);
+        NSLog(@"New category installmentStartDate: %@", category.installmentStartDate);
+        NSLog(@"New category isIncome: %d", category.isIncome);
+    };
 
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:categoryVC];
     [self presentViewController:nav animated:YES completion:nil];
