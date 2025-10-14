@@ -9,6 +9,8 @@
 #import "CategoryViewController.h"
 #import "CoreDataManager.h"
 #import "Category+CoreDataClass.h"
+#import "BudgetAllocation+CoreDataClass.h"
+#import "Budget+CoreDataClass.h"
 
 @interface CategoryViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate>
 
@@ -50,9 +52,25 @@
     newCategory.installmentMonths = (int16_t)[self.monthsTextField.text integerValue];
     newCategory.isIncome = self.isIncome;
     
+    if (self.currentBudget) {
+        BudgetAllocation *allocation = [NSEntityDescription insertNewObjectForEntityForName:@"BudgetAllocation"
+                                                                     inManagedObjectContext:context];
+        
+        NSDecimalNumber *amountDecimal = [NSDecimalNumber decimalNumberWithString:self.amountTextField.text];
+        if ([amountDecimal isEqualToNumber:[NSDecimalNumber notANumber]]) {
+            amountDecimal = [NSDecimalNumber zero];
+        }
+        allocation.allocatedAmount = amountDecimal;
+        allocation.category = newCategory;
+        allocation.budget = self.currentBudget;
+        
+        // optional reverse relationship
+        [self.currentBudget addAllocationsObject:allocation];
+    }
     if (self.onCategoryAdded) {
         self.onCategoryAdded(newCategory);
     }
+    
     
     [self dismissViewControllerAnimated:YES completion:nil];
 }
@@ -168,3 +186,4 @@
 }
 
 @end
+

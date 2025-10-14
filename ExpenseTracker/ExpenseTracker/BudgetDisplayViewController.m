@@ -784,6 +784,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     categoryVC.isEditMode = NO;
     
     categoryVC.isIncome = sender.tag;
+    categoryVC.currentBudget = self.budget;
     
     categoryVC.onCategoryAdded = ^(Category *category) {
         NSLog(@"New category received: %@", category.name);
@@ -791,7 +792,15 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         NSLog(@"New category installmentMonths: %d", category.installmentMonths);
         NSLog(@"New category installmentStartDate: %@", category.installmentStartDate);
         NSLog(@"New category isIncome: %d", category.isIncome);
+        
+        category.isIncome ? [self.income addObject:category.name ?: @"New Income"] : [self.expenses addObject:category.name ?: @"New Expense"];
+        
+        NSLog(@"self.income: %@", self.income);
+        NSLog(@"self.expenses: %@", self.expenses);
+        
+        [self.budgetDisplayTableView reloadData];
     };
+    
 
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:categoryVC];
     [self presentViewController:nav animated:YES completion:nil];
