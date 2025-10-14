@@ -7,6 +7,8 @@
 
 #import <Foundation/Foundation.h>
 #import "CategoryViewController.h"
+#import "CoreDataManager.h"
+#import "Category+CoreDataClass.h"
 
 @interface CategoryViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate>
 
@@ -39,6 +41,19 @@
 }
 
 - (void)rightButtonTapped {
+    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+    Category *newCategory = [NSEntityDescription insertNewObjectForEntityForName:@"Category"
+                                                          inManagedObjectContext:context];
+    newCategory.name = self.categoryTextField.text;
+    newCategory.isInstallment = self.installmentSwitch.isOn;
+    newCategory.installmentStartDate = self.startDatePicker.date;
+    newCategory.installmentMonths = (int16_t)[self.monthsTextField.text integerValue];
+    newCategory.isIncome = self.isIncome;
+    
+    if (self.onCategoryAdded) {
+        self.onCategoryAdded(newCategory);
+    }
+    
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
@@ -89,7 +104,7 @@
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:categoryCellId];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
     }
-    
+    // TODO: add validation to text fields
     switch (indexPath.row) {
         case 0: {
             cell.textLabel.text = @"Pay in Installments";
@@ -114,6 +129,7 @@
             cell.textLabel.text = _installmentEnabled ? @"Total Amount" : @"Allocated Amount";
             if (!self.amountTextField) {
                 self.amountTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 100, 30)];
+                self.amountTextField.keyboardType = UIKeyboardTypeNumberPad;
                 self.amountTextField.placeholder = @"₱0.00";
                 self.amountTextField.textAlignment = NSTextAlignmentRight;
             }

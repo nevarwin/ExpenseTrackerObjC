@@ -5,6 +5,7 @@
 //  Created by raven on 10/13/25.
 //
 #import <UIKit/UIKit.h>
+#import "Category+CoreDataClass.h"
 
 #ifndef CategoryViewController_h
 #define CategoryViewController_h
@@ -26,6 +27,9 @@
 @property (nonatomic, assign) BOOL isEditMode;
 @property (nonatomic, strong) UIBarButtonItem *leftButton;
 @property (nonatomic, strong) UIBarButtonItem *rightButton;
+
+@property (nonatomic, copy) void (^onCategoryAdded)(Category *category);
+@property (nonatomic, assign) BOOL isIncome;
 
 @end
 
