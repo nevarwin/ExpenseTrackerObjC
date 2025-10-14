@@ -6,6 +6,7 @@
 //
 #import <UIKit/UIKit.h>
 #import "Category+CoreDataClass.h"
+#import "Budget+CoreDataClass.h"
 
 #ifndef CategoryViewController_h
 #define CategoryViewController_h
@@ -30,6 +31,7 @@
 
 @property (nonatomic, copy) void (^onCategoryAdded)(Category *category);
 @property (nonatomic, assign) BOOL isIncome;
+@property (nonatomic, strong) Budget *currentBudget;
 
 @end
 
