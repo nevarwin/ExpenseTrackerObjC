@@ -20,16 +20,6 @@
 
 #define MAX_HEADER_TEXT_LENGTH 16
 
-static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultString) {
-    if ([obj isKindOfClass:[NSString class]]) {
-        return (NSString *)obj;
-    }
-    if ([obj isKindOfClass:[NSDecimalNumber class]] || [obj isKindOfClass:[NSNumber class]]) {
-        return [(NSNumber *)obj stringValue];
-    }
-    return defaultString;
-}
-
 @interface BudgetDisplayViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate>
 
 @end
@@ -93,10 +83,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 # pragma mark - Helper
 
 - (void)fetchCategory {
-    [self.income removeAllObjects];
-    [self.expenses removeAllObjects];
-    [self.incomeAmounts removeAllObjects];
-    [self.expensesAmounts removeAllObjects];
     [self.incomeUsedAmounts removeAllObjects];
     [self.expensesUsedAmounts removeAllObjects];
     
@@ -116,9 +102,13 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
                   month:(NSInteger)month
                    year:(NSInteger)year
 {
-    // TODO: Bug in amount/value
+    // FIXME: Bug in amount/value
+    NSLog(@"processCategory");
+    NSLog(@"self.income: %@", self.income);
+    NSLog(@"self.expense: %@", self.expenses);
+    NSLog(@"self.expensesAmounts: %@", self.expensesAmounts);
+    NSLog(@"self.incomeAmounts: %@", self.incomeAmounts);
     NSMutableArray *names = isIncome ? self.income : self.expenses;
-    NSMutableArray *amounts = isIncome ? self.incomeAmounts : self.expensesAmounts;
     NSMutableArray *usedAmounts = isIncome ? self.incomeUsedAmounts : self.expensesUsedAmounts;
     
     // Filter only active transactions within the budget period
@@ -148,7 +138,6 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         
         if (activeCategory.allocations.count > 0) {
             for (BudgetAllocation *allocation in activeCategory.allocations) {
-                [amounts addObject:allocation.allocatedAmount ?: [NSDecimalNumber zero]];
                 [usedAmounts addObject:allocation.usedAmount ?: [NSDecimalNumber zero]];
             }
         }
@@ -501,6 +490,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     if (tableView == self.budgetInfoTableView) return;
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    NSLog(@"indexPath: %@", indexPath);
     [self plusButtonTapped:nil indexPath:indexPath];
 }
 
@@ -586,7 +576,7 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     self.rightLabel = [[UILabel alloc] init];
     self.rightLabel.translatesAutoresizingMaskIntoConstraints = NO;
     self.rightLabel.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightBold];
-    self.rightLabel.text = [NSString stringWithFormat:@"₱%@", [value stringValue]];
+    self.rightLabel.text = [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:value];
     self.rightLabel.textAlignment = NSTextAlignmentRight;
     [cell.contentView addSubview:self.rightLabel];
     
@@ -596,45 +586,20 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
     ]];
     
     // Convert both to NSNumber for safe comparison
-    NSNumber *usedAmountNum = ([usedAmount isKindOfClass:[NSNumber class]]) ? usedAmount : @([[usedAmount description] doubleValue]);
-    NSNumber *valueNum = ([value isKindOfClass:[NSNumber class]]) ? value : @([[value description] doubleValue]);
+    NSNumber *usedAmountNum = [self safeNumberFrom:usedAmount];
+    NSNumber *valueNum = [self safeNumberFrom:value];
     NSNumber *remainingAmount = @([valueNum doubleValue] - [usedAmountNum doubleValue]);
     
-    // Format the strings
-    NSString *usedAmountString = ETStringFromNumberOrString(usedAmount, @"0");
-    NSString *remainingAmountString = ETStringFromNumberOrString(remainingAmount, @"0");
-    
     // Full texts
-    NSString *usedAmountText = [NSString stringWithFormat:@"Used Amount: %@", usedAmountString];
-    NSString *remainingAmountText = [NSString stringWithFormat:@"Remaining Amount: %@", remainingAmountString];
+    NSString *usedAmountText = [NSString stringWithFormat:@"Used Amount: %@", [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:usedAmountNum]];
+    NSString *remainingAmountText = [NSString stringWithFormat:@"Remaining Amount: %@", [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:remainingAmount]];
     
     // Build one combined string with a newline
     NSString *combinedText = [NSString stringWithFormat:@"%@\n%@", usedAmountText, remainingAmountText];
     NSMutableAttributedString *attributedCombinedText = [[NSMutableAttributedString alloc] initWithString:combinedText];
     
-    // Find ranges
-    NSRange usedRange = [combinedText rangeOfString:usedAmountString];
-    NSRange remainingRange = [combinedText rangeOfString:remainingAmountString];
-    
-    // Decide color for used amount
-    UIColor *amountColor = ([usedAmountNum compare:valueNum] == NSOrderedDescending) ?
-    [UIColor colorWithRed:220.0/255.0
-                    green:53.0/255.0
-                     blue:69.0/255.0
-                    alpha:1.0] :
-    (([usedAmountNum isEqualToNumber:@0]) ?
-     [UIColor systemGrayColor] :
-     [UIColor colorWithRed:40.0/255.0
-                     green:167.0/255.0
-                      blue:69.0/255.0
-                     alpha:1.0]);
-    
-    // Apply colors
-    [attributedCombinedText addAttribute:NSForegroundColorAttributeName value:[UIColor labelColor] range:usedRange];
-    [attributedCombinedText addAttribute:NSForegroundColorAttributeName value:amountColor range:remainingRange];
-    
     // Use multiline in label
-    cell.detailTextLabel.numberOfLines = 0; // allow wrapping
+    cell.detailTextLabel.numberOfLines = 0;
     cell.detailTextLabel.attributedText = attributedCombinedText;
     
     return cell;
@@ -780,33 +745,37 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
 #pragma mark - Actions
 - (void)plusButtonTapped:(UIButton *)sender indexPath:(NSIndexPath *)indexPath {
     // Present CategoryViewController for adding a new category
+    NSLog(@"is this called?");
     CategoryViewController *categoryVC = [[CategoryViewController alloc] init];
     categoryVC.isEditMode = NO;
     
     categoryVC.isIncome = sender.tag;
     categoryVC.currentBudget = self.budget;
     
-    categoryVC.onCategoryAdded = ^(Category *category) {
+    categoryVC.onCategoryAdded = ^(Category *category, NSDecimalNumber* amount) {
         NSLog(@"New category received: %@", category.name);
         NSLog(@"New category installmentSwitch: %d", category.isInstallment);
         NSLog(@"New category installmentMonths: %d", category.installmentMonths);
         NSLog(@"New category installmentStartDate: %@", category.installmentStartDate);
         NSLog(@"New category isIncome: %d", category.isIncome);
+        NSLog(@"New category monthlyPayment: %@", category.monthlyPayment);
+        NSLog(@"amount amount amount: %@", amount);
         
         category.isIncome ? [self.income addObject:category.name ?: @"New Income"] : [self.expenses addObject:category.name ?: @"New Expense"];
-        
-        NSLog(@"self.income: %@", self.income);
-        NSLog(@"self.expenses: %@", self.expenses);
-        
+        category.isIncome ? [self.incomeAmounts addObject:amount ?: [NSDecimalNumber zero]] : [self.expensesAmounts addObject:amount ?: [NSDecimalNumber zero]];
+
         [self.budgetDisplayTableView reloadData];
     };
-    
 
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:categoryVC];
     [self presentViewController:nav animated:YES completion:nil];
 }
 
 - (void)saveButtonTapped {
+    NSLog(@"self.income: %@", self.income);
+    NSLog(@"self.expense: %@", self.expenses);
+    NSLog(@"self.expensesAmounts: %@", self.expensesAmounts);
+    NSLog(@"self.incomeAmounts: %@", self.incomeAmounts);
     NSString *budgetName = self.headerLabelTextField.text;
     NSDecimalNumber *totalAmount = [NSDecimalNumber decimalNumberWithString:@"0"];
     
@@ -842,26 +811,9 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         
         BudgetAllocation *expenseAllocation = [NSEntityDescription insertNewObjectForEntityForName:@"BudgetAllocation" inManagedObjectContext:context];
         
-        id value = self.expensesAmounts[i];
-        if ([value isKindOfClass:[NSDecimalNumber class]]) {
-            expenseAllocation.allocatedAmount = value;
-        } else if ([value isKindOfClass:[NSString class]]) {
-            expenseAllocation.allocatedAmount = [NSDecimalNumber decimalNumberWithString:(NSString *)value];
-        } else {
-            expenseAllocation.allocatedAmount = [NSDecimalNumber zero];
-        }
-        
-        id usedAmount = self.expensesUsedAmounts[i];
-        if ([usedAmount isKindOfClass:[NSDecimalNumber class]]) {
-            expenseAllocation.usedAmount = usedAmount;
-        } else if ([usedAmount isKindOfClass:[NSString class]]) {
-            expenseAllocation.usedAmount = [NSDecimalNumber decimalNumberWithString:(NSString *)usedAmount];
-        } else {
-            expenseAllocation.usedAmount = [NSDecimalNumber zero];
-        }
-        
+        expenseAllocation.allocatedAmount = self.expensesAmounts[i];
+//        expenseAllocation.usedAmount = self.expensesUsedAmounts[i];
         expenseAllocation.createdAt = [NSDate date];
-        
         expenseCategory.allocations = [NSSet setWithObject:expenseAllocation];
         [categoriesSet addObject:expenseCategory];
     }
@@ -874,24 +826,8 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         
         BudgetAllocation *incomeAllocation = [NSEntityDescription insertNewObjectForEntityForName:@"BudgetAllocation" inManagedObjectContext:context];
         
-        id value = self.incomeAmounts[i];
-        if ([value isKindOfClass:[NSDecimalNumber class]]) {
-            incomeAllocation.allocatedAmount = value;
-        } else if ([value isKindOfClass:[NSString class]]) {
-            incomeAllocation.allocatedAmount = [NSDecimalNumber decimalNumberWithString:(NSString *)value];
-        } else {
-            incomeAllocation.allocatedAmount = [NSDecimalNumber zero];
-        }
-        
-        id usedAmount = self.incomeUsedAmounts[i];
-        if ([usedAmount isKindOfClass:[NSDecimalNumber class]]) {
-            incomeAllocation.usedAmount = usedAmount;
-        } else if ([usedAmount isKindOfClass:[NSString class]]) {
-            incomeAllocation.usedAmount = [NSDecimalNumber decimalNumberWithString:(NSString *)usedAmount];
-        } else {
-            incomeAllocation.usedAmount = [NSDecimalNumber zero];
-        }
-        
+        incomeAllocation.allocatedAmount = self.incomeAmounts[i];
+//        incomeAllocation.usedAmount = self.incomeUsedAmounts[i];
         incomeAllocation.createdAt = [NSDate date];
         
         incomeCategory.allocations = [NSSet setWithObject:incomeAllocation];
@@ -915,6 +851,8 @@ static inline NSString *ETStringFromNumberOrString(id obj, NSString *defaultStri
         [alert addAction:ok];
         
         [self presentViewController:alert animated:YES completion:nil];
+    } else {
+        NSLog(@"budget saved: %@", budget);
     }
     AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
     NSPersistentContainer *persistentContainer = appDelegate.persistentContainer;
