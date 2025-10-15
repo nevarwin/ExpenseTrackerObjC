@@ -46,6 +46,18 @@
         self.yearHeaderView.hidden = !self.isEditMode;
     }
     
+    NSLog(@"is this called");
+    for (Category *category in self.budget.category) {
+        NSMutableArray *names = category.isIncome ? self.income : self.expenses;
+        NSMutableArray *amounts = category.isIncome ? self.incomeAmounts : self.expensesAmounts;
+        
+        [names addObject:category.name];
+        
+        for (BudgetAllocation *allocation in category.allocations) {
+            [amounts addObject:allocation.allocatedAmount ?: [NSDecimalNumber zero]];
+        }
+    }
+    
     [self fetchCategory];
     
     self.headerLabelTextField.delegate = self;
@@ -87,6 +99,7 @@
     [self.expensesUsedAmounts removeAllObjects];
     
     for (Category *category in self.budget.category) {
+        NSLog(@"Category: %@", category);
         [self processCategory:category
                      isIncome:category.isIncome
                         month:self.currentDateComponents.month
@@ -103,12 +116,12 @@
                    year:(NSInteger)year
 {
     // FIXME: Bug in amount/value
-    NSLog(@"processCategory");
-    NSLog(@"self.income: %@", self.income);
-    NSLog(@"self.expense: %@", self.expenses);
-    NSLog(@"self.expensesAmounts: %@", self.expensesAmounts);
-    NSLog(@"self.incomeAmounts: %@", self.incomeAmounts);
-    NSMutableArray *names = isIncome ? self.income : self.expenses;
+    //    NSLog(@"processCategory");
+    //    NSLog(@"self.income: %@", self.income);
+    //    NSLog(@"self.expense: %@", self.expenses);
+    //    NSLog(@"self.expensesAmounts: %@", self.expensesAmounts);
+    //    NSLog(@"self.incomeAmounts: %@", self.incomeAmounts);
+    
     NSMutableArray *usedAmounts = isIncome ? self.incomeUsedAmounts : self.expensesUsedAmounts;
     
     // Filter only active transactions within the budget period
@@ -131,11 +144,8 @@
         return (transactionMonth == month && transactionYear == year);
     }]];
     
-    [names addObject:category.name];
-    
     for (Transaction *transaction in activeTransactions) {
         Category *activeCategory = transaction.category;
-        
         if (activeCategory.allocations.count > 0) {
             for (BudgetAllocation *allocation in activeCategory.allocations) {
                 [usedAmounts addObject:allocation.usedAmount ?: [NSDecimalNumber zero]];
@@ -152,8 +162,6 @@
     }
     [self fetchCategory];
     [self updateHeaderLabels];
-    [self budgetDisplayTableView];
-    [self budgetInfoTableView];
 }
 
 - (void)didTapNextMonth {
@@ -164,8 +172,6 @@
     }
     [self fetchCategory];
     [self updateHeaderLabels];
-    [self budgetDisplayTableView];
-    [self budgetInfoTableView];
 }
 
 - (void)showYearPicker {
@@ -187,8 +193,8 @@
         [weakSelf updateHeaderLabels];
         [self fetchCategory];
         [self updateHeaderLabels];
-        [self budgetDisplayTableView];
-        [self budgetInfoTableView];
+        [self.budgetDisplayTableView reloadData];
+        [self.budgetInfoTableView reloadData];
     };
     
     [self presentViewController:vc animated:YES completion:nil];
@@ -209,8 +215,8 @@
         [weakSelf updateHeaderLabels];
         [self fetchCategory];
         [self updateHeaderLabels];
-        [self budgetDisplayTableView];
-        [self budgetInfoTableView];
+        [self.budgetDisplayTableView reloadData];
+        [self.budgetInfoTableView reloadData];
     };
     
     [self presentViewController:vc animated:YES completion:nil];
@@ -763,10 +769,11 @@
         
         category.isIncome ? [self.income addObject:category.name ?: @"New Income"] : [self.expenses addObject:category.name ?: @"New Expense"];
         category.isIncome ? [self.incomeAmounts addObject:amount ?: [NSDecimalNumber zero]] : [self.expensesAmounts addObject:amount ?: [NSDecimalNumber zero]];
-
+        category.isInstallment = category.isInstallment;
+        
         [self.budgetDisplayTableView reloadData];
     };
-
+    
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:categoryVC];
     [self presentViewController:nav animated:YES completion:nil];
 }
@@ -812,7 +819,7 @@
         BudgetAllocation *expenseAllocation = [NSEntityDescription insertNewObjectForEntityForName:@"BudgetAllocation" inManagedObjectContext:context];
         
         expenseAllocation.allocatedAmount = self.expensesAmounts[i];
-//        expenseAllocation.usedAmount = self.expensesUsedAmounts[i];
+        //        expenseAllocation.usedAmount = self.expensesUsedAmounts[i];
         expenseAllocation.createdAt = [NSDate date];
         expenseCategory.allocations = [NSSet setWithObject:expenseAllocation];
         [categoriesSet addObject:expenseCategory];
@@ -827,7 +834,7 @@
         BudgetAllocation *incomeAllocation = [NSEntityDescription insertNewObjectForEntityForName:@"BudgetAllocation" inManagedObjectContext:context];
         
         incomeAllocation.allocatedAmount = self.incomeAmounts[i];
-//        incomeAllocation.usedAmount = self.incomeUsedAmounts[i];
+        //        incomeAllocation.usedAmount = self.incomeUsedAmounts[i];
         incomeAllocation.createdAt = [NSDate date];
         
         incomeCategory.allocations = [NSSet setWithObject:incomeAllocation];
