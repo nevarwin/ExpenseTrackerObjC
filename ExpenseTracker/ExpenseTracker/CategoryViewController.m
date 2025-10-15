@@ -51,24 +51,13 @@
     newCategory.installmentStartDate = self.startDatePicker.date;
     newCategory.installmentMonths = (int16_t)[self.monthsTextField.text integerValue];
     newCategory.isIncome = self.isIncome;
-    
-    if (self.currentBudget) {
-        BudgetAllocation *allocation = [NSEntityDescription insertNewObjectForEntityForName:@"BudgetAllocation"
-                                                                     inManagedObjectContext:context];
-        
-        NSDecimalNumber *amountDecimal = [NSDecimalNumber decimalNumberWithString:self.amountTextField.text];
-        if ([amountDecimal isEqualToNumber:[NSDecimalNumber notANumber]]) {
-            amountDecimal = [NSDecimalNumber zero];
-        }
-        allocation.allocatedAmount = amountDecimal;
-        allocation.category = newCategory;
-        allocation.budget = self.currentBudget;
-        
-        // optional reverse relationship
-        [self.currentBudget addAllocationsObject:allocation];
-    }
+    newCategory.monthlyPayment = [NSDecimalNumber decimalNumberWithString:self.monthlyTextField.text];
+
     if (self.onCategoryAdded) {
-        self.onCategoryAdded(newCategory);
+        NSString *amountText = self.amountTextField.text;
+        NSDecimalNumber *amountDecimalValue = [NSDecimalNumber decimalNumberWithString:amountText];
+        
+        self.onCategoryAdded(newCategory, amountDecimalValue);
     }
     
     
