@@ -90,16 +90,42 @@
 }
 
 
-#pragma mark - UITextFieldDelegate
-- (BOOL)textField:(UITextField *)textField
-shouldChangeCharactersInRange:(NSRange)range
-replacementString:(NSString *)string {
+# pragma mark - UITextFieldDelegate
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
+    if (textField == self.descriptionTextField) {
+        NSString *newString = [textField.text stringByReplacingCharactersInRange:range withString:string];
+        
+        if (newString.length > 36 && self.presentedViewController == nil) {
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Limit Reached"
+                                                                           message:@"You can only enter up to 36 characters."
+                                                                    preferredStyle:UIAlertControllerStyleAlert];
+            
+            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK"
+                                                               style:UIAlertActionStyleDefault
+                                                             handler:nil];
+            [alert addAction:okAction];
+            
+            [self presentViewController:alert animated:YES completion:nil];
+            
+            return NO;
+        }
+    }
+    
     if (textField == self.amountTextField) {
         NSString *newString = [textField.text stringByReplacingCharactersInRange:range withString:string];
-        NSString *digitsOnly = [[newString componentsSeparatedByCharactersInSet:
-                                 [[NSCharacterSet decimalDigitCharacterSet] invertedSet]]
-                                componentsJoinedByString:@""];
-        if (digitsOnly.length > 8) {
+        
+        if (newString.length > 8 && self.presentedViewController == nil) {
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Limit Reached"
+                                                                           message:@"You can only enter up to 8 digits."
+                                                                    preferredStyle:UIAlertControllerStyleAlert];
+            
+            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK"
+                                                               style:UIAlertActionStyleDefault
+                                                             handler:nil];
+            [alert addAction:okAction];
+            
+            [self presentViewController:alert animated:YES completion:nil];
+            
             return NO;
         }
     }
@@ -280,7 +306,6 @@ replacementString:(NSString *)string {
             self.amountTextField.translatesAutoresizingMaskIntoConstraints = NO;
             self.amountTextField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
             self.amountTextField.textAlignment = NSTextAlignmentRight;
-            self.amountTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
             [NSLayoutConstraint activateConstraints:@[
                 [self.amountTextField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
                 [self.amountTextField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
@@ -296,11 +321,10 @@ replacementString:(NSString *)string {
             self.descriptionTextField.translatesAutoresizingMaskIntoConstraints = NO;
             self.descriptionTextField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
             self.descriptionTextField.textAlignment = NSTextAlignmentRight;
-            self.descriptionTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
             [NSLayoutConstraint activateConstraints:@[
                 [self.descriptionTextField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
                 [self.descriptionTextField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
-                [self.descriptionTextField.widthAnchor constraintEqualToConstant:120]
+                [self.descriptionTextField.widthAnchor constraintEqualToConstant:200]
             ]];
             break;
         }

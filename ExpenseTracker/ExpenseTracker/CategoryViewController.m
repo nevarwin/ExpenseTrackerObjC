@@ -24,9 +24,6 @@
     [self setupTableViews];
     
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
-    self.categoryTextField.delegate = self;
-    self.monthsTextField.delegate = self;
-    self.monthlyTextField.delegate = self;
     
     self.title = @"Category";
     NSString *rightButtonTitle = self.isEditMode ? @"Update" : @"Add";
@@ -123,12 +120,12 @@
             break;
         }
         case 1:
-            // TODO: add limit to text field
             cell.textLabel.text = @"Category Name";
             if (!self.categoryTextField) {
                 self.categoryTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 100, 30)];
                 self.categoryTextField.placeholder = @"e.g. Needs";
                 self.categoryTextField.textAlignment = NSTextAlignmentRight;
+                self.categoryTextField.delegate = self;
             }
             cell.accessoryView = self.categoryTextField;
             break;
@@ -139,6 +136,7 @@
                 self.amountTextField.keyboardType = UIKeyboardTypeNumberPad;
                 self.amountTextField.placeholder = @"₱0.00";
                 self.amountTextField.textAlignment = NSTextAlignmentRight;
+                self.amountTextField.delegate = self;
             }
             cell.accessoryView = self.amountTextField;
             break;
@@ -157,6 +155,7 @@
                 self.monthsTextField.keyboardType = UIKeyboardTypeNumberPad;
                 self.monthsTextField.placeholder = @"e.g. 6";
                 self.monthsTextField.textAlignment = NSTextAlignmentRight;
+                self.monthsTextField.delegate = self;
             }
             cell.accessoryView = self.monthsTextField;
             break;
@@ -167,11 +166,75 @@
                 self.monthlyTextField.keyboardType = UIKeyboardTypeNumberPad;
                 self.monthlyTextField.placeholder = @"₱0.00";
                 self.monthlyTextField.textAlignment = NSTextAlignmentRight;
+                self.monthlyTextField.delegate = self;
             }
             cell.accessoryView = self.monthlyTextField;
             break;
     }
     return cell;
+}
+
+# pragma mark - UITextFieldDelegate
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
+    if (textField == self.categoryTextField) {
+        NSString *newString = [textField.text stringByReplacingCharactersInRange:range withString:string];
+        
+        if (newString.length > 16 && self.presentedViewController == nil) {
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Limit Reached"
+                                                                           message:@"You can only enter up to 16 characters."
+                                                                    preferredStyle:UIAlertControllerStyleAlert];
+            
+            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK"
+                                                               style:UIAlertActionStyleDefault
+                                                             handler:nil];
+            [alert addAction:okAction];
+            
+            [self presentViewController:alert animated:YES completion:nil];
+            
+            return NO;
+        }
+    }
+    
+    if (textField == self.monthsTextField){
+        NSString *newString = [textField.text stringByReplacingCharactersInRange:range withString:string];
+        NSInteger value = [newString integerValue];
+        
+        if (string.length == 0) {
+            return YES;
+        }
+        
+        if (newString.length == 0) {
+            return YES;
+        }
+        
+        if (value <= 0) {
+            textField.text = @"1";
+            return NO;
+        } else if (value > 12) {
+            textField.text = @"12";
+            return NO;
+        }
+    }
+    
+    if (textField == self.amountTextField || textField == self.monthlyTextField) {
+        NSString *newString = [textField.text stringByReplacingCharactersInRange:range withString:string];
+        
+        if (newString.length > 8 && self.presentedViewController == nil) {
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Limit Reached"
+                                                                           message:@"You can only enter up to 8 digits."
+                                                                    preferredStyle:UIAlertControllerStyleAlert];
+            
+            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK"
+                                                               style:UIAlertActionStyleDefault
+                                                             handler:nil];
+            [alert addAction:okAction];
+            
+            [self presentViewController:alert animated:YES completion:nil];
+            
+            return NO;
+        }
+    }
+    return YES;
 }
 
 @end
