@@ -43,20 +43,43 @@
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     Category *newCategory = [NSEntityDescription insertNewObjectForEntityForName:@"Category"
                                                           inManagedObjectContext:context];
-    newCategory.name = self.categoryTextField.text;
-    newCategory.isInstallment = self.installmentSwitch.isOn;
-    newCategory.installmentStartDate = self.startDatePicker.date;
-    newCategory.installmentMonths = (int16_t)[self.monthsTextField.text integerValue];
-    newCategory.isIncome = self.isIncome;
-    newCategory.monthlyPayment = [NSDecimalNumber decimalNumberWithString:self.monthlyTextField.text];
-
-    if (self.onCategoryAdded) {
-        NSString *amountText = self.amountTextField.text;
-        NSDecimalNumber *amountDecimalValue = [NSDecimalNumber decimalNumberWithString:amountText];
+    
+    
+    BOOL isInstallment = _installmentSwitch.isOn;
+    
+    // Validate fields if installment is on
+    if (isInstallment) {
+        BOOL allFieldsFilled = (self.startDatePicker != nil &&
+                                self.monthsTextField.text.length != 0 &&
+                                self.monthlyTextField.text.length != 0);
         
-        self.onCategoryAdded(newCategory, amountDecimalValue);
+        if (!allFieldsFilled) {
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Missing Fields"
+                                                                           message:@"Please fill in all installment fields."
+                                                                    preferredStyle:UIAlertControllerStyleAlert];
+            UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
+                                                         style:UIAlertActionStyleDefault
+                                                       handler:nil];
+            [alert addAction:ok];
+            [self presentViewController:alert animated:YES completion:nil];
+            return;
+        }
     }
     
+    newCategory.isIncome = self.isIncome;
+    newCategory.isInstallment = isInstallment;
+    newCategory.name = self.categoryTextField.text;
+    
+    if (isInstallment) {
+        newCategory.installmentStartDate = self.startDatePicker.date;
+        newCategory.installmentMonths = (int16_t)[self.monthsTextField.text integerValue];
+        newCategory.monthlyPayment = [NSDecimalNumber decimalNumberWithString:self.monthlyTextField.text];
+    }
+    
+    if (self.onCategoryAdded) {
+        NSDecimalNumber *amountDecimalValue = [NSDecimalNumber decimalNumberWithString:self.amountTextField.text];
+        self.onCategoryAdded(newCategory, amountDecimalValue);
+    }
     
     [self dismissViewControllerAnimated:YES completion:nil];
 }
@@ -65,6 +88,8 @@
     self.installmentEnabled = sender.isOn;
     [self.categoryInfoTableView reloadData];
 }
+
+
 #pragma mark - Setup Table
 - (void)setupTableViews {
     self.categoryInfoTableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStyleInsetGrouped];
@@ -90,10 +115,14 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (self.installmentEnabled) {
-        return 6;
+    if (!self.isIncome){
+        if (self.installmentEnabled) {
+            return 6;
+        } else {
+            return 3;
+        }
     } else {
-        return 3;
+        return 2;
     }
 }
 
@@ -108,18 +137,9 @@
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:categoryCellId];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
     }
-    // TODO: add validation to text fields
+    
     switch (indexPath.row) {
-        case 0: {
-            cell.textLabel.text = @"Pay in Installments";
-            if (!self.installmentSwitch) {
-                self.installmentSwitch = [[UISwitch alloc] init];
-                [self.installmentSwitch addTarget:self action:@selector(toggleInstallment:) forControlEvents:UIControlEventValueChanged];
-            }
-            cell.accessoryView = self.installmentSwitch;
-            break;
-        }
-        case 1:
+        case 0:
             cell.textLabel.text = @"Category Name";
             if (!self.categoryTextField) {
                 self.categoryTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 100, 30)];
@@ -129,7 +149,7 @@
             }
             cell.accessoryView = self.categoryTextField;
             break;
-        case 2:
+        case 1:
             cell.textLabel.text = _installmentEnabled ? @"Total Amount" : @"Allocated Amount";
             if (!self.amountTextField) {
                 self.amountTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 100, 30)];
@@ -140,6 +160,15 @@
             }
             cell.accessoryView = self.amountTextField;
             break;
+        case 2: {
+            cell.textLabel.text = @"Pay in Installments";
+            if (!self.installmentSwitch) {
+                self.installmentSwitch = [[UISwitch alloc] init];
+                [self.installmentSwitch addTarget:self action:@selector(toggleInstallment:) forControlEvents:UIControlEventValueChanged];
+            }
+            cell.accessoryView = self.installmentSwitch;
+            break;
+        }
         case 3:
             cell.textLabel.text = @"Start Date";
             if (!self.startDatePicker) {
