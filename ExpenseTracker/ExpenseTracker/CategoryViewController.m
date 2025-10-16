@@ -35,6 +35,15 @@
 }
 
 # pragma mark - Actions
+- (void)computeMonthlyAmount {
+    NSInteger months = [self.monthsTextField.text integerValue];
+    double amount = [self.amountTextField.text doubleValue];
+    
+    double monthlyAmount = amount / months;
+    
+    self.monthlyTextField.text = [NSString stringWithFormat:@"%.2f", monthlyAmount];
+}
+
 - (void)leftButtonTapped {
     [self dismissViewControllerAnimated:YES completion:nil];
 }
@@ -46,7 +55,7 @@
     
     
     BOOL isInstallment = _installmentSwitch.isOn;
-    
+    NSLog(@"isInstallment: %d", isInstallment);
     // Validate fields if installment is on
     if (isInstallment) {
         BOOL allFieldsFilled = (self.startDatePicker != nil &&
@@ -73,6 +82,7 @@
     if (isInstallment) {
         newCategory.installmentStartDate = self.startDatePicker.date;
         newCategory.installmentMonths = (int16_t)[self.monthsTextField.text integerValue];
+        NSLog(@"self.monthlyTextField.text: %@", self.monthlyTextField.text);
         newCategory.monthlyPayment = [NSDecimalNumber decimalNumberWithString:self.monthlyTextField.text];
     }
     
@@ -157,6 +167,9 @@
                 self.amountTextField.placeholder = @"₱0.00";
                 self.amountTextField.textAlignment = NSTextAlignmentRight;
                 self.amountTextField.delegate = self;
+                [self.amountTextField addTarget:self
+                                                 action:@selector(textFieldDidChange:)
+                                       forControlEvents:UIControlEventEditingChanged];
             }
             cell.accessoryView = self.amountTextField;
             break;
@@ -185,6 +198,10 @@
                 self.monthsTextField.placeholder = @"e.g. 6";
                 self.monthsTextField.textAlignment = NSTextAlignmentRight;
                 self.monthsTextField.delegate = self;
+                
+                [self.monthsTextField addTarget:self
+                                                 action:@selector(textFieldDidChange:)
+                                       forControlEvents:UIControlEventEditingChanged];
             }
             cell.accessoryView = self.monthsTextField;
             break;
@@ -196,6 +213,7 @@
                 self.monthlyTextField.placeholder = @"₱0.00";
                 self.monthlyTextField.textAlignment = NSTextAlignmentRight;
                 self.monthlyTextField.delegate = self;
+                self.monthlyTextField.userInteractionEnabled = NO;
             }
             cell.accessoryView = self.monthlyTextField;
             break;
@@ -204,6 +222,16 @@
 }
 
 # pragma mark - UITextFieldDelegate
+- (void)textFieldDidEndEditing:(UITextField *)textField {
+    if (textField == self.amountTextField || textField == self.monthlyTextField) {
+        [self computeMonthlyAmount];
+    }
+}
+
+- (void)textFieldDidChange:(UITextField *)textField {
+    [self computeMonthlyAmount];
+}
+
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
     if (textField == self.categoryTextField) {
         NSString *newString = [textField.text stringByReplacingCharactersInRange:range withString:string];
