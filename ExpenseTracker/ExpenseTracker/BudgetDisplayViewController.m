@@ -60,7 +60,6 @@
     
     [self fetchCategory];
     
-    self.headerLabelTextField.delegate = self;
     self.rightButton.enabled = self.headerLabelTextField.text.length == 0 ? NO : YES;
     
     [self setupHeaderView];
@@ -327,6 +326,7 @@
 
 - (void)setupHeaderView {
     self.headerLabelTextField = [[UITextField alloc] init];
+    self.headerLabelTextField.delegate = self;
     self.headerLabelTextField.translatesAutoresizingMaskIntoConstraints = NO;
     self.headerLabelTextField.text = self.budget.name;
     self.headerLabelTextField.font = [UIFont systemFontOfSize:34 weight:UIFontWeightBold];
@@ -874,13 +874,37 @@
     self.budgetDisplayTableView.scrollIndicatorInsets = UIEdgeInsetsZero;
 }
 
-// UITextFieldDelegate
+
+# pragma mark - UITextFieldDelegate
 - (void)textFieldDidBeginEditing:(UITextField *)textField {
     UITableViewCell *cell = (UITableViewCell *)textField.superview.superview;
     NSIndexPath *indexPath = [self.budgetDisplayTableView indexPathForCell:cell];
     [self.budgetDisplayTableView scrollToRowAtIndexPath:indexPath
                                        atScrollPosition:UITableViewScrollPositionMiddle
                                                animated:YES];
+}
+
+
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
+    if (textField == self.headerLabelTextField) {
+        NSString *newString = [textField.text stringByReplacingCharactersInRange:range withString:string];
+        
+        if (newString.length > 16 && self.presentedViewController == nil) {
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Limit Reached"
+                                                                           message:@"You can only enter up to 16 characters."
+                                                                    preferredStyle:UIAlertControllerStyleAlert];
+            
+            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK"
+                                                               style:UIAlertActionStyleDefault
+                                                             handler:nil];
+            [alert addAction:okAction];
+            
+            [self presentViewController:alert animated:YES completion:nil];
+            
+            return NO;
+        }
+    }
+    return YES;
 }
 
 - (void)selectEmptyScreen {
