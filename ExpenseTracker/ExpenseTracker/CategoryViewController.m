@@ -9,7 +9,6 @@
 #import "CategoryViewController.h"
 #import "CoreDataManager.h"
 #import "Category+CoreDataClass.h"
-#import "BudgetAllocation+CoreDataClass.h"
 #import "Budget+CoreDataClass.h"
 
 @interface CategoryViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate>

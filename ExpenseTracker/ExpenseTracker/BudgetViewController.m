@@ -8,7 +8,6 @@
 #import "AppDelegate.h"
 #import "Budget+CoreDataClass.h"
 #import "Transaction+CoreDataClass.h"
-#import "BudgetAllocation+CoreDataClass.h"
 #import "Category+CoreDataClass.h"
 #import "BudgetDisplayViewController.h"
 #import "CoreDataManager.h"
@@ -189,7 +188,7 @@
     NSDecimalNumber *totalExpense = [NSDecimalNumber zero];
     
     for (Category *category in budget.category) {
-        NSDecimalNumber *categoryTotal = [category.allocations valueForKeyPath:@"@sum.allocatedAmount"];
+        NSDecimalNumber *categoryTotal = [category.allocatedAmount valueForKeyPath:@"@sum.allocatedAmount"];
         if (category.isIncome) {
             totalIncome = [totalIncome decimalNumberByAdding:categoryTotal];
         } else {
