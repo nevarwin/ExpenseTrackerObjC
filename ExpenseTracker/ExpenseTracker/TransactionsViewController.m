@@ -5,7 +5,6 @@
 #import "CoreDataManager.h"
 #import "Budget+CoreDataClass.h"
 #import "Category+CoreDataClass.h"
-#import "BudgetAllocation+CoreDataClass.h"
 #import "Transaction+CoreDataClass.h"
 #import "PickerModalViewController.h"
 #import "UIViewController+Alerts.h"
@@ -279,7 +278,6 @@
         [subview removeFromSuperview];
         
     }
-    // TODO: add a description text field
     switch (indexPath.row) {
         case 0: // Date
             cell.textLabel.text = @"Date";
@@ -569,30 +567,19 @@
         Budget *oldBudget = self.existingTransaction.budget;
         Category *oldCategory = self.existingTransaction.category;
         
-        for (BudgetAllocation *allocation in oldCategory.allocations) {
-            if ([allocation.budget.objectID isEqual:oldBudget.objectID]) {
-                NSDecimalNumber *usedAmount = allocation.usedAmount ?: [NSDecimalNumber zero];
-                allocation.usedAmount = [usedAmount decimalNumberBySubtracting:self.existingTransaction.amount];
-                break;
-            }
-        }
+        NSDecimalNumber *usedAmount = oldCategory.usedAmount ?: [NSDecimalNumber zero];
+        oldCategory.usedAmount = [usedAmount decimalNumberBySubtracting:self.existingTransaction.amount];
     }
     
     // --- Step 4: Apply New Transaction Amount ---
-    for (BudgetAllocation *allocation in newCategory.allocations) {
-        allocation.budget = newBudget;
-        if ([allocation.budget.objectID isEqual:newBudget.objectID]) {
-            NSDecimalNumber *usedAmount = allocation.usedAmount ?: [NSDecimalNumber zero];
-            NSDecimalNumber *totalUsedAmount = [usedAmount decimalNumberByAdding:amount];
-            
-            if ([totalUsedAmount compare:allocation.allocatedAmount] != NSOrderedDescending) {
-                allocation.usedAmount = totalUsedAmount;
-            } else {
-                allocation.usedAmount = totalUsedAmount;
-                amountOverflow = YES;
-            }
-            break;
-        }
+    NSDecimalNumber *usedAmount = newCategory.usedAmount ?: [NSDecimalNumber zero];
+    NSDecimalNumber *totalUsedAmount = [usedAmount decimalNumberByAdding:amount];
+    
+    if ([totalUsedAmount compare:newCategory.allocatedAmount] != NSOrderedDescending) {
+        newCategory.usedAmount = totalUsedAmount;
+    } else {
+        newCategory.usedAmount = totalUsedAmount;
+        amountOverflow = YES;
     }
     
     // --- Step 5: Save Transaction ---

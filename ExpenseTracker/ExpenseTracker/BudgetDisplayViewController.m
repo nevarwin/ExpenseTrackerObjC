@@ -10,7 +10,6 @@
 #import <HealthKit/HealthKit.h>
 #import "Category+CoreDataClass.h"
 #import "Transaction+CoreDataClass.h"
-#import "BudgetAllocation+CoreDataClass.h"
 #import "CoreDataManager.h"
 #import "AppDelegate.h"
 #import "UIViewController+Alerts.h"
@@ -52,10 +51,7 @@
         NSMutableArray *amounts = category.isIncome ? self.incomeAmounts : self.expensesAmounts;
         
         [names addObject:category.name];
-        
-        for (BudgetAllocation *allocation in category.allocations) {
-            [amounts addObject:allocation.allocatedAmount ?: [NSDecimalNumber zero]];
-        }
+        [amounts addObject:category.allocatedAmount ?: [NSDecimalNumber zero]];
     }
     
     [self fetchCategory];
@@ -145,10 +141,8 @@
     
     for (Transaction *transaction in activeTransactions) {
         Category *activeCategory = transaction.category;
-        if (activeCategory.allocations.count > 0) {
-            for (BudgetAllocation *allocation in activeCategory.allocations) {
-                [usedAmounts addObject:allocation.usedAmount ?: [NSDecimalNumber zero]];
-            }
+        if (activeCategory > 0) {
+            [usedAmounts addObject:activeCategory.usedAmount ?: [NSDecimalNumber zero]];
         }
     }
 }
@@ -803,12 +797,8 @@
         expenseCategory.isIncome = NO;
         expenseCategory.createdAt = [NSDate date];
         
-        BudgetAllocation *expenseAllocation = [NSEntityDescription insertNewObjectForEntityForName:@"BudgetAllocation" inManagedObjectContext:context];
-        
-        expenseAllocation.allocatedAmount = self.expensesAmounts[i];
-        //        expenseAllocation.usedAmount = self.expensesUsedAmounts[i];
-        expenseAllocation.createdAt = [NSDate date];
-        expenseCategory.allocations = [NSSet setWithObject:expenseAllocation];
+        expenseCategory.allocatedAmount = self.expensesAmounts[i];
+        //        expenseCategory.usedAmount = self.expensesUsedAmounts[i];
         [categoriesSet addObject:expenseCategory];
     }
     
@@ -818,13 +808,8 @@
         incomeCategory.isIncome = YES;
         incomeCategory.createdAt = [NSDate date];
         
-        BudgetAllocation *incomeAllocation = [NSEntityDescription insertNewObjectForEntityForName:@"BudgetAllocation" inManagedObjectContext:context];
-        
-        incomeAllocation.allocatedAmount = self.incomeAmounts[i];
-        //        incomeAllocation.usedAmount = self.incomeUsedAmounts[i];
-        incomeAllocation.createdAt = [NSDate date];
-        
-        incomeCategory.allocations = [NSSet setWithObject:incomeAllocation];
+        incomeCategory.allocatedAmount = self.incomeAmounts[i];
+        //        incomeCategory.usedAmount = self.incomeUsedAmounts[i];
         [categoriesSet addObject:incomeCategory];
     }
     

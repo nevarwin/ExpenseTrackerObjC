@@ -8,7 +8,6 @@
 #import "ViewController.h"
 #import "Transaction+CoreDataClass.h"
 #import "Category+CoreDataClass.h"
-#import "BudgetAllocation+CoreDataClass.h"
 #import "TransactionsViewController.h"
 #import "AppDelegate.h"
 #import "CoreDataManager.h"
@@ -590,13 +589,11 @@
         
         NSSet *categories = [NSSet setWithObject:transactionToDelete.category];
         for (Category *category in categories){
-            for (BudgetAllocation *allocation in category.allocations){
-                previousAmount = allocation.usedAmount;
-                allocation.usedAmount = [previousAmount decimalNumberBySubtracting:transactionToDelete.amount];
-                
-                if ([allocation.usedAmount compare:[NSDecimalNumber zero]] == NSOrderedAscending) {
-                    allocation.usedAmount = [NSDecimalNumber zero];
-                }
+            previousAmount = category.usedAmount;
+            category.usedAmount = [previousAmount decimalNumberBySubtracting:transactionToDelete.amount];
+            
+            if ([category.usedAmount compare:[NSDecimalNumber zero]] == NSOrderedAscending) {
+                category.usedAmount = [NSDecimalNumber zero];
             }
         }
         
@@ -607,9 +604,7 @@
             // Save failed
             transactionToDelete.isActive = YES;
             for (Category *category in categories){
-                for (BudgetAllocation *allocation in category.allocations){
-                    allocation.usedAmount = previousAmount;
-                }
+                category.usedAmount = previousAmount;
             }
             NSLog(@"Error deleting transaction: %@, %@", error, error.userInfo);
         } else {
