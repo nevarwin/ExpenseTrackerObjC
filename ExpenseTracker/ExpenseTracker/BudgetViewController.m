@@ -188,11 +188,11 @@
     NSDecimalNumber *totalExpense = [NSDecimalNumber zero];
     
     for (Category *category in budget.category) {
-        NSDecimalNumber *categoryTotal = [category.allocatedAmount valueForKeyPath:@"@sum.allocatedAmount"];
+        NSDecimalNumber *categoryAmount = category.allocatedAmount ?: [NSDecimalNumber zero];
         if (category.isIncome) {
-            totalIncome = [totalIncome decimalNumberByAdding:categoryTotal];
+            totalIncome = [totalIncome decimalNumberByAdding:categoryAmount];
         } else {
-            totalExpense = [totalExpense decimalNumberByAdding:categoryTotal];
+            totalExpense = [totalExpense decimalNumberByAdding:categoryAmount];
         }
     }
     

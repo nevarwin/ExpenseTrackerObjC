@@ -21,13 +21,17 @@
 #pragma mark - viewDidLoad
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
+    self.title = @"Category";
     [self setupTableViews];
     [self setupNavigationButtons];
+    [self setupTableCells];
     
-    self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
-    
-    self.title = @"Category";
-    
+    if(_isEditMode){
+        NSLog(@"is edit mode?");
+        [self setupEditMode];
+    }
+
 }
 
 # pragma mark - Actions
@@ -130,6 +134,63 @@
     self.navigationItem.rightBarButtonItem = self.rightButton;
 }
 
+- (void)setupTableCells{
+    if (!self.categoryTextField) {
+        self.categoryTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 100, 30)];
+        self.categoryTextField.placeholder = @"e.g. Needs";
+        self.categoryTextField.textAlignment = NSTextAlignmentRight;
+        self.categoryTextField.delegate = self;
+    }
+    if (!self.amountTextField) {
+        self.amountTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 100, 30)];
+        self.amountTextField.keyboardType = UIKeyboardTypeNumberPad;
+        self.amountTextField.placeholder = @"₱0.00";
+        self.amountTextField.textAlignment = NSTextAlignmentRight;
+        self.amountTextField.delegate = self;
+        [self.amountTextField addTarget:self
+                                 action:@selector(textFieldDidChange:)
+                       forControlEvents:UIControlEventEditingChanged];
+    }
+    if (!self.installmentSwitch) {
+        self.installmentSwitch = [[UISwitch alloc] init];
+        [self.installmentSwitch addTarget:self action:@selector(toggleInstallment:) forControlEvents:UIControlEventValueChanged];
+    }
+    if (!self.startDatePicker) {
+        self.startDatePicker = [[UIDatePicker alloc] init];
+        self.startDatePicker.preferredDatePickerStyle = UIDatePickerStyleAutomatic;
+    }
+    if (!self.monthsTextField) {
+        self.monthsTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 100, 30)];
+        self.monthsTextField.keyboardType = UIKeyboardTypeNumberPad;
+        self.monthsTextField.placeholder = @"e.g. 6";
+        self.monthsTextField.textAlignment = NSTextAlignmentRight;
+        self.monthsTextField.delegate = self;
+        
+        [self.monthsTextField addTarget:self
+                                 action:@selector(textFieldDidChange:)
+                       forControlEvents:UIControlEventEditingChanged];
+    }
+    if (!self.monthlyTextField) {
+        self.monthlyTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 100, 30)];
+        self.monthlyTextField.keyboardType = UIKeyboardTypeNumberPad;
+        self.monthlyTextField.placeholder = @"₱0.00";
+        self.monthlyTextField.textAlignment = NSTextAlignmentRight;
+        self.monthlyTextField.delegate = self;
+        self.monthlyTextField.userInteractionEnabled = NO;
+    }
+}
+
+- (void)setupEditMode {
+    for (Category *category in self.budget.category) {
+        self.categoryTextField.text = category.name;
+        self.installmentSwitch.on = category.isInstallment;
+        self.amountTextField.text = [category.allocatedAmount stringValue];
+        self.startDatePicker.date = category.installmentStartDate;
+        self.monthsTextField.text = [[NSNumber numberWithShort:category.installmentMonths] stringValue];
+        self.monthlyTextField.text = [category.monthlyPayment stringValue];
+    }
+}
+
 #pragma mark - UITableViewDataSource
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 1;
@@ -159,26 +220,10 @@
     switch (indexPath.row) {
         case 0:
             cell.textLabel.text = @"Category Name";
-            if (!self.categoryTextField) {
-                self.categoryTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 100, 30)];
-                self.categoryTextField.placeholder = @"e.g. Needs";
-                self.categoryTextField.textAlignment = NSTextAlignmentRight;
-                self.categoryTextField.delegate = self;
-            }
             cell.accessoryView = self.categoryTextField;
             break;
         case 1:
             cell.textLabel.text = _installmentEnabled ? @"Total Amount" : @"Allocated Amount";
-            if (!self.amountTextField) {
-                self.amountTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 100, 30)];
-                self.amountTextField.keyboardType = UIKeyboardTypeNumberPad;
-                self.amountTextField.placeholder = @"₱0.00";
-                self.amountTextField.textAlignment = NSTextAlignmentRight;
-                self.amountTextField.delegate = self;
-                [self.amountTextField addTarget:self
-                                                 action:@selector(textFieldDidChange:)
-                                       forControlEvents:UIControlEventEditingChanged];
-            }
             cell.accessoryView = self.amountTextField;
             break;
         case 2: {
@@ -208,8 +253,8 @@
                 self.monthsTextField.delegate = self;
                 
                 [self.monthsTextField addTarget:self
-                                                 action:@selector(textFieldDidChange:)
-                                       forControlEvents:UIControlEventEditingChanged];
+                                         action:@selector(textFieldDidChange:)
+                               forControlEvents:UIControlEventEditingChanged];
             }
             cell.accessoryView = self.monthsTextField;
             break;

@@ -31,7 +31,9 @@
 
 @property (nonatomic, copy) void (^onCategoryAdded)(Category *category, NSDecimalNumber *amount);
 @property (nonatomic, assign) BOOL isIncome;
-@property (nonatomic, strong) Budget *currentBudget;
+
+@property (nonatomic, strong) Budget *budget;
+
 
 @end
 
