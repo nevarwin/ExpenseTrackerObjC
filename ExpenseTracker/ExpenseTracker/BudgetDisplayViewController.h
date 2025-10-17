@@ -28,14 +28,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong) NSManagedObjectContext *managedObjectContext;
 
-@property (nonatomic, strong) NSMutableArray* income;
-@property (nonatomic, strong) NSMutableArray* expenses;
-
-@property (nonatomic, strong) NSMutableArray* incomeAmounts;
-@property (nonatomic, strong) NSMutableArray* expensesAmounts;
-
-@property (nonatomic, strong) NSMutableArray* incomeUsedAmounts;
-@property (nonatomic, strong) NSMutableArray* expensesUsedAmounts;
+@property (nonatomic, strong) NSMutableArray<Category *> *incomeCategories;
+@property (nonatomic, strong) NSMutableArray<Category *> *expenseCategories;
 
 @property (nonatomic, strong) UIView *yearHeaderView;
 @property (nonatomic, strong) UILabel *monthLabel;

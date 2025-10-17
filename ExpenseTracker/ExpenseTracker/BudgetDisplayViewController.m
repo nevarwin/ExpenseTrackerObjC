@@ -16,6 +16,7 @@
 #import "PickerModalViewController.h"
 #import "CurrencyFormatterUtil.h"
 #import "CategoryViewController.h"
+#import "UIViewController+Alerts.h"
 
 #define MAX_HEADER_TEXT_LENGTH 16
 
@@ -32,32 +33,17 @@
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
     self.title = self.isEditMode ? @"Budget" : @"Add Budget";
     
-    self.income = [NSMutableArray array];
-    self.expenses = [NSMutableArray array];
-    self.incomeAmounts = [NSMutableArray array];
-    self.expensesAmounts = [NSMutableArray array];
-    self.incomeUsedAmounts = [NSMutableArray array];
-    self.expensesUsedAmounts = [NSMutableArray array];
-    
     if (self.isEditMode) {
         [self setupYearHeaderView];
         [self initializeCurrentDate];
         self.yearHeaderView.hidden = !self.isEditMode;
     }
-    
-    NSLog(@"is this called");
-    for (Category *category in self.budget.category) {
-        NSMutableArray *names = category.isIncome ? self.income : self.expenses;
-        NSMutableArray *amounts = category.isIncome ? self.incomeAmounts : self.expensesAmounts;
-        
-        [names addObject:category.name];
-        [amounts addObject:category.allocatedAmount ?: [NSDecimalNumber zero]];
-    }
-    
-    [self fetchCategory];
+    self.expenseCategories = [NSMutableArray array];
+    self.incomeCategories = [NSMutableArray array];
     
     self.rightButton.enabled = self.headerLabelTextField.text.length == 0 ? NO : YES;
     
+    [self fetchCategory];
     [self setupHeaderView];
     [self setupBudgetInfoTableView];
     [self setupTableView];
@@ -90,11 +76,7 @@
 # pragma mark - Helper
 
 - (void)fetchCategory {
-    [self.incomeUsedAmounts removeAllObjects];
-    [self.expensesUsedAmounts removeAllObjects];
-    
     for (Category *category in self.budget.category) {
-        NSLog(@"Category: %@", category);
         [self processCategory:category
                      isIncome:category.isIncome
                         month:self.currentDateComponents.month
@@ -111,13 +93,14 @@
                    year:(NSInteger)year
 {
     // FIXME: Bug in amount/value
+    // FIXME: Display the categories
     //    NSLog(@"processCategory");
     //    NSLog(@"self.income: %@", self.income);
     //    NSLog(@"self.expense: %@", self.expenses);
     //    NSLog(@"self.expensesAmounts: %@", self.expensesAmounts);
     //    NSLog(@"self.incomeAmounts: %@", self.incomeAmounts);
     
-    NSMutableArray *usedAmounts = isIncome ? self.incomeUsedAmounts : self.expensesUsedAmounts;
+//    NSMutableArray *usedAmounts = isIncome ? self.incomeUsedAmounts : self.expensesUsedAmounts;
     
     // Filter only active transactions within the budget period
     NSArray<Transaction *> *activeTransactions =
@@ -142,7 +125,7 @@
     for (Transaction *transaction in activeTransactions) {
         Category *activeCategory = transaction.category;
         if (activeCategory > 0) {
-            [usedAmounts addObject:activeCategory.usedAmount ?: [NSDecimalNumber zero]];
+//            [usedAmounts addObject:activeCategory.usedAmount ?: [NSDecimalNumber zero]];
         }
     }
 }
@@ -278,29 +261,37 @@
     return label;
 }
 
-- (NSString *)expensesAmountLabel{
-    NSDecimalNumber *totalExpense = [self.expensesAmounts valueForKeyPath:@"@sum.self"];
+- (NSString *)expensesAmountLabel {
+    NSDecimalNumber *totalExpense = [NSDecimalNumber zero];
+    
+    for (Category *expense in self.expenseCategories) {
+        totalExpense = [totalExpense decimalNumberByAdding:expense.allocatedAmount ?: [NSDecimalNumber zero]];
+    }
+    
     NSString *formattedExpenses = [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:totalExpense];
     return formattedExpenses;
 }
 
 - (NSDecimalNumber *)incomeAmountLabel{
-    NSDecimalNumber *totalIncomeUsed = [self.incomeUsedAmounts valueForKeyPath:@"@sum.self"];
-    NSDecimalNumber *totalIncome = [self.incomeAmounts valueForKeyPath:@"@sum.self"];
+    NSDecimalNumber *totalIncomeUsed = [NSDecimalNumber zero];
+    NSDecimalNumber *totalIncome = [NSDecimalNumber zero];
+    
+    for (Category *income in self.incomeCategories) {
+        totalIncomeUsed = [totalIncomeUsed decimalNumberByAdding:income.usedAmount ?: [NSDecimalNumber zero]];
+        totalIncome = [totalIncome decimalNumberByAdding:income.allocatedAmount ?: [NSDecimalNumber zero]];
+    }
+    
     NSDecimalNumber *toDisplay = ([totalIncomeUsed isEqualToNumber:[NSDecimalNumber zero]] || [totalIncome compare:totalIncomeUsed] == NSOrderedDescending) ? totalIncome : totalIncomeUsed;
     return toDisplay;
 }
 
-- (NSDecimalNumber *)sumOfArray:(NSArray<NSDecimalNumber *> *)numbers {
-    NSDecimalNumber *total = [NSDecimalNumber zero];
-    for (NSDecimalNumber *num in numbers) {
-        total = [total decimalNumberByAdding:num ?: [NSDecimalNumber zero]];
-    }
-    return total;
-}
-
 - (NSDecimalNumber *)totalUsedBudget {
-    NSDecimalNumber *expenseUsedTotal = [self sumOfArray:self.expensesUsedAmounts];
+    NSDecimalNumber *expenseUsedTotal = [NSDecimalNumber zero];
+    
+    for (Category *expense in self.expenseCategories) {
+        expenseUsedTotal = [expenseUsedTotal decimalNumberByAdding:expense.usedAmount ?: [NSDecimalNumber zero]];
+    }
+    
     return expenseUsedTotal;
 }
 
@@ -467,8 +458,8 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (tableView == self.budgetDisplayTableView){
-        if (section == 0) return self.expenses.count;
-        if (section == 1) return self.income.count;
+        if (section == 0) return self.expenseCategories.count;
+        if (section == 1) return self.incomeCategories.count;
     }
     if (tableView == self.budgetInfoTableView) return 4;
     return 0;
@@ -477,7 +468,7 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     if (tableView == self.budgetInfoTableView) return;
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    NSLog(@"indexPath: %@", indexPath);
+    //    NSLog(@"indexPath: %@", indexPath);
     [self plusButtonTapped:nil indexPath:indexPath];
 }
 
@@ -516,9 +507,15 @@
     }
     if (indexPath.section == 0) {
         // Expense attributes
-        NSString *expenseName = (indexPath.row < self.expenses.count) ? self.expenses[indexPath.row] : @"";
-        NSDecimalNumber *expenseAmount = (indexPath.row < self.expensesAmounts.count) ? self.expensesAmounts[indexPath.row] : [NSDecimalNumber zero];
-        NSDecimalNumber *expenseUsedAmount = (indexPath.row < self.expensesUsedAmounts.count) ? self.expensesUsedAmounts[indexPath.row] : [NSDecimalNumber zero];
+        Category *expenseCategory = (indexPath.row < self.expenseCategories.count)
+        ? self.expenseCategories[indexPath.row]
+        : nil;
+        
+        NSLog(@"expenseCategory: %@", expenseCategory);
+        
+        NSString *expenseName = expenseCategory.name ?: @"";
+        NSDecimalNumber *expenseAmount = expenseCategory.allocatedAmount ?: [NSDecimalNumber zero];
+        NSDecimalNumber *expenseUsedAmount = expenseCategory.usedAmount ?: [NSDecimalNumber zero];
         
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
@@ -529,10 +526,14 @@
         ];
     } else if (indexPath.section == 1) {
         // Income attributes
-        NSString *incomeName = (indexPath.row < self.income.count) ? self.income[indexPath.row] : @"";
-        NSDecimalNumber *incomeAmount = (indexPath.row < self.incomeAmounts.count) ? self.incomeAmounts[indexPath.row] : [NSDecimalNumber zero];
-        NSDecimalNumber *incomeUsedAmount = (indexPath.row < self.incomeUsedAmounts.count) ? self.incomeUsedAmounts[indexPath.row] : [NSDecimalNumber zero];
+        Category *incomeCategory = (indexPath.row < self.incomeCategories.count)
+        ? self.incomeCategories[indexPath.row]
+        : nil;
         
+        NSString *incomeName = incomeCategory.name ?: @"";
+        NSDecimalNumber *incomeAmount = incomeCategory.allocatedAmount ?: [NSDecimalNumber zero];
+        NSDecimalNumber *incomeUsedAmount = incomeCategory.usedAmount ?: [NSDecimalNumber zero];
+
         return [self configuredTextFieldCellForTableView:tableView
                                                indexPath:indexPath
                                              placeholder:incomeName
@@ -661,17 +662,17 @@
         return;
     }
     if(indexPath.section == 0){
-        [self.expenses removeObjectAtIndex:indexPath.row];
-        [self.expensesAmounts removeObjectAtIndex:indexPath.row];
-        if (indexPath.row < self.expensesUsedAmounts.count) {
-            [self.expensesUsedAmounts removeObjectAtIndex:indexPath.row];
-        }
+//        [self.expenses removeObjectAtIndex:indexPath.row];
+//        [self.expensesAmounts removeObjectAtIndex:indexPath.row];
+//        if (indexPath.row < self.expensesUsedAmounts.count) {
+//            [self.expensesUsedAmounts removeObjectAtIndex:indexPath.row];
+//        }
     } else {
-        [self.income removeObjectAtIndex:indexPath.row];
-        [self.incomeAmounts removeObjectAtIndex:indexPath.row];
-        if (indexPath.row < self.incomeUsedAmounts.count) {
-            [self.incomeUsedAmounts removeObjectAtIndex:indexPath.row];
-        }
+//        [self.income removeObjectAtIndex:indexPath.row];
+//        [self.incomeAmounts removeObjectAtIndex:indexPath.row];
+//        if (indexPath.row < self.incomeUsedAmounts.count) {
+//            [self.incomeUsedAmounts removeObjectAtIndex:indexPath.row];
+//        }
     }
     [self.budgetInfoTableView reloadData];
     [self.budgetDisplayTableView reloadData];
@@ -732,25 +733,33 @@
 #pragma mark - Actions
 - (void)plusButtonTapped:(UIButton *)sender indexPath:(NSIndexPath *)indexPath {
     // Present CategoryViewController for adding a new category
-    NSLog(@"is this called?");
     CategoryViewController *categoryVC = [[CategoryViewController alloc] init];
-    categoryVC.isEditMode = NO;
+    
+    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+    Category *newCategory = [NSEntityDescription insertNewObjectForEntityForName:@"Category"
+                                                          inManagedObjectContext:context];
     
     categoryVC.isIncome = sender.tag;
-    categoryVC.currentBudget = self.budget;
+    categoryVC.budget = self.budget;
+    categoryVC.isEditMode = self.isEditMode;
     
     categoryVC.onCategoryAdded = ^(Category *category, NSDecimalNumber* amount) {
-        NSLog(@"New category received: %@", category.name);
-        NSLog(@"New category installmentSwitch: %d", category.isInstallment);
-        NSLog(@"New category installmentMonths: %d", category.installmentMonths);
-        NSLog(@"New category installmentStartDate: %@", category.installmentStartDate);
-        NSLog(@"New category isIncome: %d", category.isIncome);
-        NSLog(@"New category monthlyPayment: %@", category.monthlyPayment);
-        NSLog(@"amount amount amount: %@", amount);
+        newCategory.name = category.name;
+        newCategory.isInstallment = category.isInstallment;
+        newCategory.installmentMonths = category.installmentMonths;
+        newCategory.installmentStartDate = category.installmentStartDate;
+        newCategory.isIncome = category.isIncome;
+        newCategory.monthlyPayment = category.monthlyPayment;
+        newCategory.allocatedAmount = amount;
         
-        category.isIncome ? [self.income addObject:category.name ?: @"New Income"] : [self.expenses addObject:category.name ?: @"New Expense"];
-        category.isIncome ? [self.incomeAmounts addObject:amount ?: [NSDecimalNumber zero]] : [self.expensesAmounts addObject:amount ?: [NSDecimalNumber zero]];
-        category.isInstallment = category.isInstallment;
+        if (category.isIncome) {
+            [self.incomeCategories addObject:newCategory];
+        } else {
+            [self.expenseCategories addObject:newCategory];
+        }
+        
+        NSLog(@"incomeCategories: %@", self.incomeCategories);
+        NSLog(@"expenseCategories: %@", self.expenseCategories);
         
         [self.budgetDisplayTableView reloadData];
     };
@@ -760,76 +769,57 @@
 }
 
 - (void)saveButtonTapped {
-    NSLog(@"self.income: %@", self.income);
-    NSLog(@"self.expense: %@", self.expenses);
-    NSLog(@"self.expensesAmounts: %@", self.expensesAmounts);
-    NSLog(@"self.incomeAmounts: %@", self.incomeAmounts);
+    //    NSLog(@"self.income: %@", self.income);
+    //    NSLog(@"self.expense: %@", self.expenses);
+    //    NSLog(@"self.expensesAmounts: %@", self.expensesAmounts);
+    //    NSLog(@"self.incomeAmounts: %@", self.incomeAmounts);
     NSString *budgetName = self.headerLabelTextField.text;
     NSDecimalNumber *totalAmount = [NSDecimalNumber decimalNumberWithString:@"0"];
     
-    for (NSDecimalNumber *amount in self.incomeAmounts){
-        totalAmount = [totalAmount decimalNumberByAdding:amount];
+    for (Category *income in self.incomeCategories){
+        totalAmount = [totalAmount decimalNumberByAdding:income.allocatedAmount];
     }
-    
     
     if (budgetName.length == 0) {
         [self showAlertWithTitle:@"Invalid budget name" message:@"Please enter a valid budget name."];
         return;
     }
     
-    if (self.expenses.count == 0 || self.income.count == 0) {
+    if (self.expenseCategories.count == 0 || self.incomeCategories.count == 0) {
         [self showAlertWithTitle:@"Invalid expense or income" message:@"Please enter a valid expense or income."];
         return;
     }
     
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     Budget *budget = self.isEditMode ? self.budget : [NSEntityDescription insertNewObjectForEntityForName:@"Budget" inManagedObjectContext:context];
+    NSDate *dateNow = [NSDate date];
     
     budget.name = budgetName;
-    budget.createdAt = [NSDate date];
+    budget.createdAt = dateNow;
     budget.totalAmount = totalAmount;
     
     NSMutableSet *categoriesSet = [NSMutableSet set];
     
-    for (NSInteger i = 0; i < self.expenses.count; i++) {
-        Category *expenseCategory = [NSEntityDescription insertNewObjectForEntityForName:@"Category" inManagedObjectContext:context];
-        expenseCategory.name = self.expenses[i];
-        expenseCategory.isIncome = NO;
-        expenseCategory.createdAt = [NSDate date];
-        
-        expenseCategory.allocatedAmount = self.expensesAmounts[i];
-        //        expenseCategory.usedAmount = self.expensesUsedAmounts[i];
-        [categoriesSet addObject:expenseCategory];
+    // Add expense categories
+    for (Category *category in self.expenseCategories) {
+        [categoriesSet addObject:category];
     }
     
-    for (NSInteger i = 0; i < self.income.count; i++) {
-        Category *incomeCategory = [NSEntityDescription insertNewObjectForEntityForName:@"Category" inManagedObjectContext:context];
-        incomeCategory.name = self.income[i];
-        incomeCategory.isIncome = YES;
-        incomeCategory.createdAt = [NSDate date];
-        
-        incomeCategory.allocatedAmount = self.incomeAmounts[i];
-        //        incomeCategory.usedAmount = self.incomeUsedAmounts[i];
-        [categoriesSet addObject:incomeCategory];
+    // Add income categories
+    for (Category *category in self.incomeCategories) {
+        [categoriesSet addObject:category];
     }
     
+    // Assign to budget
     budget.category = categoriesSet;
     
     // Save context
     NSError *error = nil;
     if (![context save:&error]) {
         NSLog(@"Failed to save context: %@", error.localizedDescription);
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"An error occured!"
-                                                                       message:@"Failed to save data."
-                                                                preferredStyle:UIAlertControllerStyleAlert];
-        
-        UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
-                                                     style:UIAlertActionStyleDefault
-                                                   handler:nil];
-        
-        [alert addAction:ok];
-        
-        [self presentViewController:alert animated:YES completion:nil];
+        [self showAlertWithTitle:@"An error occured!"
+                         message:@"Failed to save data."];
+        return;
     } else {
         NSLog(@"budget saved: %@", budget);
     }
@@ -875,17 +865,8 @@
         NSString *newString = [textField.text stringByReplacingCharactersInRange:range withString:string];
         
         if (newString.length > 16 && self.presentedViewController == nil) {
-            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Limit Reached"
-                                                                           message:@"You can only enter up to 16 characters."
-                                                                    preferredStyle:UIAlertControllerStyleAlert];
-            
-            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK"
-                                                               style:UIAlertActionStyleDefault
-                                                             handler:nil];
-            [alert addAction:okAction];
-            
-            [self presentViewController:alert animated:YES completion:nil];
-            
+            [self showAlertWithTitle:@"Limit Reached"
+                             message:@"ou can only enter up to 16 characters."];
             return NO;
         }
     }
