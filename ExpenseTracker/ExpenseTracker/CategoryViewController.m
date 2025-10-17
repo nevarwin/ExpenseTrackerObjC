@@ -10,6 +10,7 @@
 #import "CoreDataManager.h"
 #import "Category+CoreDataClass.h"
 #import "Budget+CoreDataClass.h"
+#import "UIViewController+Alerts.h"
 
 @interface CategoryViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate>
 
@@ -21,15 +22,11 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self setupTableViews];
+    [self setupNavigationButtons];
     
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
     
     self.title = @"Category";
-    NSString *rightButtonTitle = self.isEditMode ? @"Update" : @"Add";
-    self.leftButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(leftButtonTapped)];
-    self.rightButton = [[UIBarButtonItem alloc] initWithTitle:rightButtonTitle style:UIBarButtonItemStyleDone target:self action:@selector(rightButtonTapped)];
-    self.navigationItem.leftBarButtonItem = self.leftButton;
-    self.navigationItem.rightBarButtonItem = self.rightButton;
     
 }
 
@@ -54,7 +51,21 @@
     
     
     BOOL isInstallment = _installmentSwitch.isOn;
-    NSLog(@"isInstallment: %d", isInstallment);
+    
+    NSDecimalNumber *amount = [NSDecimalNumber decimalNumberWithString:self.amountTextField.text];
+    
+    if ([self.categoryTextField.text isEqualToString:@""] || [self.amountTextField.text isEqualToString:@""]) {
+        [self showAlertWithTitle:@"Missing Fields"
+                         message:@"Category name and allocated amount are required."];
+        return;
+    }
+    
+    if ([amount isEqualToNumber:[NSDecimalNumber zero]]) {
+        [self showAlertWithTitle:@"Invalid input"
+                         message:@"Please fill in allocated amount with valid number."];
+        return;
+    }
+    
     // Validate fields if installment is on
     if (isInstallment) {
         BOOL allFieldsFilled = (self.startDatePicker != nil &&
@@ -62,14 +73,7 @@
                                 self.monthlyTextField.text.length != 0);
         
         if (!allFieldsFilled) {
-            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Missing Fields"
-                                                                           message:@"Please fill in all installment fields."
-                                                                    preferredStyle:UIAlertControllerStyleAlert];
-            UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
-                                                         style:UIAlertActionStyleDefault
-                                                       handler:nil];
-            [alert addAction:ok];
-            [self presentViewController:alert animated:YES completion:nil];
+            [self showAlertWithTitle:@"Missing Fields" message:@"Please fill in all installment fields."];
             return;
         }
     }
@@ -118,6 +122,14 @@
     ]];
 }
 
+- (void)setupNavigationButtons {
+    NSString *rightButtonTitle = self.isEditMode ? @"Update" : @"Add";
+    self.leftButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(leftButtonTapped)];
+    self.rightButton = [[UIBarButtonItem alloc] initWithTitle:rightButtonTitle style:UIBarButtonItemStyleDone target:self action:@selector(rightButtonTapped)];
+    self.navigationItem.leftBarButtonItem = self.leftButton;
+    self.navigationItem.rightBarButtonItem = self.rightButton;
+}
+
 #pragma mark - UITableViewDataSource
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 1;
@@ -135,9 +147,6 @@
     }
 }
 
-- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    return @"CREATE CATEGORY";
-}
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     static NSString *categoryCellId = @"CategoryInfoCell";
