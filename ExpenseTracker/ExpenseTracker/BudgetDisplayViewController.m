@@ -32,16 +32,24 @@
     // TODO: Add installment logic
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
     self.title = self.isEditMode ? @"Budget" : @"Add Budget";
+    self.expenseCategories = [NSMutableArray array];
+    self.incomeCategories = [NSMutableArray array];
+    self.rightButton.enabled = self.headerLabelTextField.text.length == 0 ? NO : YES;
     
     if (self.isEditMode) {
         [self setupYearHeaderView];
         [self initializeCurrentDate];
         self.yearHeaderView.hidden = !self.isEditMode;
+        
+        for (Category *category in self.budget.category) {
+            if(category.isIncome){
+                [self.incomeCategories addObject:category];
+            } else {
+                [self.expenseCategories addObject:category];
+                
+            }
+        }
     }
-    self.expenseCategories = [NSMutableArray array];
-    self.incomeCategories = [NSMutableArray array];
-    
-    self.rightButton.enabled = self.headerLabelTextField.text.length == 0 ? NO : YES;
     
     [self fetchCategory];
     [self setupHeaderView];
@@ -468,8 +476,7 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     if (tableView == self.budgetInfoTableView) return;
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    //    NSLog(@"indexPath: %@", indexPath);
-    [self plusButtonTapped:nil indexPath:indexPath];
+    [self updateCategoryCell:nil indexPath:indexPath];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -511,7 +518,7 @@
         ? self.expenseCategories[indexPath.row]
         : nil;
         
-        NSLog(@"expenseCategory: %@", expenseCategory);
+        NSLog(@"expenseCategory name: %@, amount: %@", expenseCategory.name, expenseCategory.allocatedAmount);
         
         NSString *expenseName = expenseCategory.name ?: @"";
         NSDecimalNumber *expenseAmount = expenseCategory.allocatedAmount ?: [NSDecimalNumber zero];
@@ -635,7 +642,7 @@
         UIButton *plusButton = [UIButton buttonWithType:UIButtonTypeContactAdd];
         plusButton.translatesAutoresizingMaskIntoConstraints = NO;
         plusButton.tag = section;
-        [plusButton addTarget:self action:@selector(plusButtonTapped:indexPath:) forControlEvents:UIControlEventTouchUpInside];
+        [plusButton addTarget:self action:@selector(plusButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
         [headerView addSubview:plusButton];
         
         [constraints addObjectsFromArray:@[
@@ -662,17 +669,9 @@
         return;
     }
     if(indexPath.section == 0){
-//        [self.expenses removeObjectAtIndex:indexPath.row];
-//        [self.expensesAmounts removeObjectAtIndex:indexPath.row];
-//        if (indexPath.row < self.expensesUsedAmounts.count) {
-//            [self.expensesUsedAmounts removeObjectAtIndex:indexPath.row];
-//        }
+        [self.expenseCategories removeObjectAtIndex:indexPath.row];
     } else {
-//        [self.income removeObjectAtIndex:indexPath.row];
-//        [self.incomeAmounts removeObjectAtIndex:indexPath.row];
-//        if (indexPath.row < self.incomeUsedAmounts.count) {
-//            [self.incomeUsedAmounts removeObjectAtIndex:indexPath.row];
-//        }
+        [self.incomeCategories removeObjectAtIndex:indexPath.row];
     }
     [self.budgetInfoTableView reloadData];
     [self.budgetDisplayTableView reloadData];
@@ -731,7 +730,7 @@
 
 
 #pragma mark - Actions
-- (void)plusButtonTapped:(UIButton *)sender indexPath:(NSIndexPath *)indexPath {
+- (void)plusButtonTapped:(UIButton *)sender {
     // Present CategoryViewController for adding a new category
     CategoryViewController *categoryVC = [[CategoryViewController alloc] init];
     
@@ -741,22 +740,57 @@
     
     categoryVC.isIncome = sender.tag;
     categoryVC.budget = self.budget;
-    categoryVC.isEditMode = self.isEditMode;
+    categoryVC.isEditMode = NO;
     
-    categoryVC.onCategoryAdded = ^(Category *category, NSDecimalNumber* amount) {
+    categoryVC.onCategoryAdded = ^(Category *category) {
         newCategory.name = category.name;
         newCategory.isInstallment = category.isInstallment;
         newCategory.installmentMonths = category.installmentMonths;
         newCategory.installmentStartDate = category.installmentStartDate;
         newCategory.isIncome = category.isIncome;
         newCategory.monthlyPayment = category.monthlyPayment;
-        newCategory.allocatedAmount = amount;
+        newCategory.allocatedAmount = category.allocatedAmount;
+        newCategory.createdAt = category.createdAt;
         
         if (category.isIncome) {
             [self.incomeCategories addObject:newCategory];
         } else {
             [self.expenseCategories addObject:newCategory];
         }
+        
+        [self.budgetDisplayTableView reloadData];
+    };
+    
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:categoryVC];
+    [self presentViewController:nav animated:YES completion:nil];
+}
+
+- (void)updateCategoryCell:(UIButton *)sender indexPath:(NSIndexPath *)indexPath {
+    Category *categoryToEdit;
+    if (indexPath.section == 0) {
+        categoryToEdit = self.expenseCategories[indexPath.row];
+    } else if (indexPath.section == 1) {
+        categoryToEdit = self.incomeCategories[indexPath.row];
+    } else {
+        return;
+    }
+    
+    CategoryViewController *categoryVC = [[CategoryViewController alloc] init];
+
+    categoryVC.categoryToEdit = categoryToEdit;
+    categoryVC.isIncome = sender.tag;
+    categoryVC.budget = self.budget;
+    categoryVC.isEditMode = YES;
+    
+    categoryVC.onCategoryAdded = ^(Category *category) {
+        categoryToEdit.name = category.name;
+        categoryToEdit.isInstallment = category.isInstallment;
+        categoryToEdit.installmentMonths = category.installmentMonths;
+        categoryToEdit.installmentStartDate = category.installmentStartDate;
+        categoryToEdit.isIncome = category.isIncome;
+        categoryToEdit.monthlyPayment = category.monthlyPayment;
+        categoryToEdit.allocatedAmount = category.allocatedAmount;
+        categoryToEdit.createdAt = category.createdAt;
         
         NSLog(@"incomeCategories: %@", self.incomeCategories);
         NSLog(@"expenseCategories: %@", self.expenseCategories);

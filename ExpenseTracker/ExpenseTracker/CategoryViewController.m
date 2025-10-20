@@ -85,17 +85,18 @@
     newCategory.isIncome = self.isIncome;
     newCategory.isInstallment = isInstallment;
     newCategory.name = self.categoryTextField.text;
+    newCategory.createdAt = [NSDate date];
+    newCategory.allocatedAmount = [NSDecimalNumber decimalNumberWithString:self.amountTextField.text];
     
     if (isInstallment) {
         newCategory.installmentStartDate = self.startDatePicker.date;
         newCategory.installmentMonths = (int16_t)[self.monthsTextField.text integerValue];
-        NSLog(@"self.monthlyTextField.text: %@", self.monthlyTextField.text);
         newCategory.monthlyPayment = [NSDecimalNumber decimalNumberWithString:self.monthlyTextField.text];
+        newCategory.allocatedAmount = [NSDecimalNumber decimalNumberWithString:self.amountTextField.text];
     }
     
     if (self.onCategoryAdded) {
-        NSDecimalNumber *amountDecimalValue = [NSDecimalNumber decimalNumberWithString:self.amountTextField.text];
-        self.onCategoryAdded(newCategory, amountDecimalValue);
+        self.onCategoryAdded(newCategory);
     }
     
     [self dismissViewControllerAnimated:YES completion:nil];
@@ -181,14 +182,12 @@
 }
 
 - (void)setupEditMode {
-    for (Category *category in self.budget.category) {
-        self.categoryTextField.text = category.name;
-        self.installmentSwitch.on = category.isInstallment;
-        self.amountTextField.text = [category.allocatedAmount stringValue];
-        self.startDatePicker.date = category.installmentStartDate;
-        self.monthsTextField.text = [[NSNumber numberWithShort:category.installmentMonths] stringValue];
-        self.monthlyTextField.text = [category.monthlyPayment stringValue];
-    }
+    self.categoryTextField.text = self.categoryToEdit.name;
+    self.installmentSwitch.on = self.categoryToEdit.isInstallment;
+    self.amountTextField.text = [self.categoryToEdit.allocatedAmount stringValue];
+    self.startDatePicker.date = self.categoryToEdit.installmentStartDate;
+    self.monthsTextField.text = [[NSNumber numberWithShort:self.categoryToEdit.installmentMonths] stringValue];
+    self.monthlyTextField.text = [self.categoryToEdit.monthlyPayment stringValue];
 }
 
 #pragma mark - UITableViewDataSource

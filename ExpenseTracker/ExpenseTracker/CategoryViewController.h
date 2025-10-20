@@ -29,10 +29,11 @@
 @property (nonatomic, strong) UIBarButtonItem *leftButton;
 @property (nonatomic, strong) UIBarButtonItem *rightButton;
 
-@property (nonatomic, copy) void (^onCategoryAdded)(Category *category, NSDecimalNumber *amount);
+@property (nonatomic, copy) void (^onCategoryAdded)(Category *category);
 @property (nonatomic, assign) BOOL isIncome;
 
 @property (nonatomic, strong) Budget *budget;
+@property (nonatomic, strong) Category *categoryToEdit;
 
 
 @end
