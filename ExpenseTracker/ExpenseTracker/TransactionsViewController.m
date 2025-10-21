@@ -534,8 +534,7 @@
 - (void)rightButtonTapped {
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     NSError *error = nil;
-    
-    // --- Step 1: Validation ---
+    // TODO: Improve UI based on category's
     if ([self.amountTextField.text isEqualToString:@""] ||
         [self.amountTextField.text isEqualToString:@"0"] ||
         self.selectedBudgetIndex == nil ||
@@ -546,7 +545,6 @@
         return;
     }
     
-    // --- Step 2: Parse Inputs ---
     NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
     formatter.numberStyle = NSNumberFormatterDecimalStyle;
     NSNumber *amountNumber = [formatter numberFromString:self.amountTextField.text];
@@ -562,7 +560,6 @@
     BOOL isEditing = (self.existingTransaction != nil);
     BOOL amountOverflow = NO;
     
-    // --- Step 3: Undo Old Transaction if Editing ---
     if (isEditing) {
         Budget *oldBudget = self.existingTransaction.budget;
         Category *oldCategory = self.existingTransaction.category;
@@ -571,7 +568,6 @@
         oldCategory.usedAmount = [usedAmount decimalNumberBySubtracting:self.existingTransaction.amount];
     }
     
-    // --- Step 4: Apply New Transaction Amount ---
     NSDecimalNumber *usedAmount = newCategory.usedAmount ?: [NSDecimalNumber zero];
     NSDecimalNumber *totalUsedAmount = [usedAmount decimalNumberByAdding:amount];
     
@@ -582,7 +578,6 @@
         amountOverflow = YES;
     }
     
-    // --- Step 5: Save Transaction ---
     void (^saveBlock)(void) = ^{
         [self saveTransactionWithAmount:amount
                                    desc:desc
