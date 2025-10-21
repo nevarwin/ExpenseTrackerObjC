@@ -684,8 +684,9 @@
         newCategory.installmentStartDate = category.installmentStartDate;
         newCategory.isIncome = category.isIncome;
         newCategory.monthlyPayment = category.monthlyPayment;
-        newCategory.allocatedAmount = category.allocatedAmount;
+        newCategory.allocatedAmount = category.isInstallment ? category.monthlyPayment : category.allocatedAmount;
         newCategory.createdAt = category.createdAt;
+        newCategory.totalInstallmentAmount = category.allocatedAmount;
         
         if (category.isIncome) {
             [self.incomeCategories addObject:newCategory];
@@ -703,9 +704,12 @@
 
 - (void)updateCategoryCell:(UIButton *)sender indexPath:(NSIndexPath *)indexPath {
     Category *categoryToEdit;
+    BOOL isIncome;
     if (indexPath.section == 0) {
+        isIncome = NO;
         categoryToEdit = self.expenseCategories[indexPath.row];
     } else if (indexPath.section == 1) {
+        isIncome = YES;
         categoryToEdit = self.incomeCategories[indexPath.row];
     } else {
         return;
@@ -714,7 +718,7 @@
     CategoryViewController *categoryVC = [[CategoryViewController alloc] init];
 
     categoryVC.categoryToEdit = categoryToEdit;
-    categoryVC.isIncome = sender.tag;
+    categoryVC.isIncome = isIncome;
     categoryVC.budget = self.budget;
     categoryVC.isEditMode = YES;
     
@@ -725,8 +729,9 @@
         categoryToEdit.installmentStartDate = category.installmentStartDate;
         categoryToEdit.isIncome = category.isIncome;
         categoryToEdit.monthlyPayment = category.monthlyPayment;
-        categoryToEdit.allocatedAmount = category.allocatedAmount;
+        categoryToEdit.allocatedAmount = category.isInstallment ? category.monthlyPayment : category.allocatedAmount;
         categoryToEdit.createdAt = category.createdAt;
+        categoryToEdit.totalInstallmentAmount = category.allocatedAmount;
         
         [self.budgetDisplayTableView reloadData];
         [self.budgetInfoTableView reloadData];

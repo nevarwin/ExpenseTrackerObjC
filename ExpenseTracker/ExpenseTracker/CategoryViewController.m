@@ -27,9 +27,9 @@
     [self setupNavigationButtons];
     [self setupTableCells];
     
-    if(_isEditMode){
-        NSLog(@"is edit mode?");
+    if(self.isEditMode){
         [self setupEditMode];
+        [self toggleInstallment:self.installmentSwitch];
     }
 
 }
@@ -39,7 +39,11 @@
     NSInteger months = [self.monthsTextField.text integerValue];
     double amount = [self.amountTextField.text doubleValue];
     
-    double monthlyAmount = amount / months;
+    double monthlyAmount = 0.0;
+    
+    if (months > 0) {
+        monthlyAmount = amount / months;
+    }
     
     self.monthlyTextField.text = [NSString stringWithFormat:@"%.2f", monthlyAmount];
 }
@@ -87,12 +91,12 @@
     newCategory.name = self.categoryTextField.text;
     newCategory.createdAt = [NSDate date];
     newCategory.allocatedAmount = [NSDecimalNumber decimalNumberWithString:self.amountTextField.text];
+    newCategory.totalInstallmentAmount = newCategory.allocatedAmount;
     
     if (isInstallment) {
         newCategory.installmentStartDate = self.startDatePicker.date;
         newCategory.installmentMonths = (int16_t)[self.monthsTextField.text integerValue];
         newCategory.monthlyPayment = [NSDecimalNumber decimalNumberWithString:self.monthlyTextField.text];
-        newCategory.allocatedAmount = [NSDecimalNumber decimalNumberWithString:self.amountTextField.text];
     }
     
     if (self.onCategoryAdded) {
@@ -104,6 +108,7 @@
 
 - (void)toggleInstallment:(UISwitch *)sender {
     self.installmentEnabled = sender.isOn;
+    [self computeMonthlyAmount];
     [self.categoryInfoTableView reloadData];
 }
 
@@ -140,6 +145,7 @@
         self.categoryTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 100, 30)];
         self.categoryTextField.placeholder = @"e.g. Needs";
         self.categoryTextField.textAlignment = NSTextAlignmentRight;
+        self.categoryTextField.font = [UIFont systemFontOfSize:20 weight:UIFontWeightBold];
         self.categoryTextField.delegate = self;
     }
     if (!self.amountTextField) {
@@ -147,6 +153,7 @@
         self.amountTextField.keyboardType = UIKeyboardTypeNumberPad;
         self.amountTextField.placeholder = @"₱0.00";
         self.amountTextField.textAlignment = NSTextAlignmentRight;
+        self.amountTextField.font = [UIFont systemFontOfSize:20 weight:UIFontWeightBold];
         self.amountTextField.delegate = self;
         [self.amountTextField addTarget:self
                                  action:@selector(textFieldDidChange:)
@@ -164,7 +171,9 @@
         self.monthsTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 100, 30)];
         self.monthsTextField.keyboardType = UIKeyboardTypeNumberPad;
         self.monthsTextField.placeholder = @"e.g. 6";
+        self.monthsTextField.text = @"1";
         self.monthsTextField.textAlignment = NSTextAlignmentRight;
+        self.monthsTextField.font = [UIFont systemFontOfSize:20 weight:UIFontWeightBold];
         self.monthsTextField.delegate = self;
         
         [self.monthsTextField addTarget:self
@@ -172,10 +181,11 @@
                        forControlEvents:UIControlEventEditingChanged];
     }
     if (!self.monthlyTextField) {
-        self.monthlyTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 100, 30)];
+        self.monthlyTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 150, 30)];
         self.monthlyTextField.keyboardType = UIKeyboardTypeNumberPad;
         self.monthlyTextField.placeholder = @"₱0.00";
         self.monthlyTextField.textAlignment = NSTextAlignmentRight;
+        self.monthlyTextField.font = [UIFont systemFontOfSize:20 weight:UIFontWeightBold];
         self.monthlyTextField.delegate = self;
         self.monthlyTextField.userInteractionEnabled = NO;
     }
@@ -184,7 +194,7 @@
 - (void)setupEditMode {
     self.categoryTextField.text = self.categoryToEdit.name;
     self.installmentSwitch.on = self.categoryToEdit.isInstallment;
-    self.amountTextField.text = [self.categoryToEdit.allocatedAmount stringValue];
+    self.amountTextField.text = [self.categoryToEdit.totalInstallmentAmount stringValue];
     self.startDatePicker.date = self.categoryToEdit.installmentStartDate;
     self.monthsTextField.text = [[NSNumber numberWithShort:self.categoryToEdit.installmentMonths] stringValue];
     self.monthlyTextField.text = [self.categoryToEdit.monthlyPayment stringValue];
@@ -196,14 +206,14 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (!self.isIncome){
-        if (self.installmentEnabled) {
-            return 6;
-        } else {
-            return 3;
-        }
-    } else {
+    if (self.isIncome) {
         return 2;
+    }
+    
+    if (self.installmentEnabled) {
+        return 6;
+    } else {
+        return 3;
     }
 }
 
@@ -222,51 +232,24 @@
             cell.accessoryView = self.categoryTextField;
             break;
         case 1:
-            cell.textLabel.text = _installmentEnabled ? @"Total Amount" : @"Allocated Amount";
+            cell.textLabel.text = _installmentEnabled ? @"Total Amount" : @"Amount";
             cell.accessoryView = self.amountTextField;
             break;
         case 2: {
             cell.textLabel.text = @"Pay in Installments";
-            if (!self.installmentSwitch) {
-                self.installmentSwitch = [[UISwitch alloc] init];
-                [self.installmentSwitch addTarget:self action:@selector(toggleInstallment:) forControlEvents:UIControlEventValueChanged];
-            }
             cell.accessoryView = self.installmentSwitch;
             break;
         }
         case 3:
             cell.textLabel.text = @"Start Date";
-            if (!self.startDatePicker) {
-                self.startDatePicker = [[UIDatePicker alloc] init];
-                self.startDatePicker.preferredDatePickerStyle = UIDatePickerStyleAutomatic;
-            }
             cell.accessoryView = self.startDatePicker;
             break;
         case 4:
             cell.textLabel.text = @"Months";
-            if (!self.monthsTextField) {
-                self.monthsTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 100, 30)];
-                self.monthsTextField.keyboardType = UIKeyboardTypeNumberPad;
-                self.monthsTextField.placeholder = @"e.g. 6";
-                self.monthsTextField.textAlignment = NSTextAlignmentRight;
-                self.monthsTextField.delegate = self;
-                
-                [self.monthsTextField addTarget:self
-                                         action:@selector(textFieldDidChange:)
-                               forControlEvents:UIControlEventEditingChanged];
-            }
             cell.accessoryView = self.monthsTextField;
             break;
         case 5:
             cell.textLabel.text = @"Monthly Payment";
-            if (!self.monthlyTextField) {
-                self.monthlyTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 100, 30)];
-                self.monthlyTextField.keyboardType = UIKeyboardTypeNumberPad;
-                self.monthlyTextField.placeholder = @"₱0.00";
-                self.monthlyTextField.textAlignment = NSTextAlignmentRight;
-                self.monthlyTextField.delegate = self;
-                self.monthlyTextField.userInteractionEnabled = NO;
-            }
             cell.accessoryView = self.monthlyTextField;
             break;
     }
@@ -275,6 +258,12 @@
 
 # pragma mark - UITextFieldDelegate
 - (void)textFieldDidEndEditing:(UITextField *)textField {
+    if (textField == self.amountTextField || textField == self.monthlyTextField) {
+        [self computeMonthlyAmount];
+    }
+}
+
+- (void)textFieldDidBeginEditing:(UITextField *)textField {
     if (textField == self.amountTextField || textField == self.monthlyTextField) {
         [self computeMonthlyAmount];
     }
@@ -289,17 +278,7 @@
         NSString *newString = [textField.text stringByReplacingCharactersInRange:range withString:string];
         
         if (newString.length > 16 && self.presentedViewController == nil) {
-            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Limit Reached"
-                                                                           message:@"You can only enter up to 16 characters."
-                                                                    preferredStyle:UIAlertControllerStyleAlert];
-            
-            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK"
-                                                               style:UIAlertActionStyleDefault
-                                                             handler:nil];
-            [alert addAction:okAction];
-            
-            [self presentViewController:alert animated:YES completion:nil];
-            
+            [self showAlertWithTitle:@"Limit Reached" message:@"You can only enter up to 16 characters."];
             return NO;
         }
     }
@@ -319,8 +298,8 @@
         if (value <= 0) {
             textField.text = @"1";
             return NO;
-        } else if (value > 12) {
-            textField.text = @"12";
+        } else if (value > 36) {
+            textField.text = @"36";
             return NO;
         }
     }
@@ -329,17 +308,7 @@
         NSString *newString = [textField.text stringByReplacingCharactersInRange:range withString:string];
         
         if (newString.length > 8 && self.presentedViewController == nil) {
-            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Limit Reached"
-                                                                           message:@"You can only enter up to 8 digits."
-                                                                    preferredStyle:UIAlertControllerStyleAlert];
-            
-            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK"
-                                                               style:UIAlertActionStyleDefault
-                                                             handler:nil];
-            [alert addAction:okAction];
-            
-            [self presentViewController:alert animated:YES completion:nil];
-            
+            [self showAlertWithTitle:@"Limit Reached" message:@"You can only enter up to 8 digits."];
             return NO;
         }
     }
