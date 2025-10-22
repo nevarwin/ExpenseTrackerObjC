@@ -252,6 +252,7 @@
     
     NSError *error = nil;
     if (![context save:&error]) {
+        // FIXME: Transaction still saving even it failed
         NSLog(@"Failed to save transaction: %@", error);
     } else {
         NSLog(@"Transaction saved: %@", transaction);
