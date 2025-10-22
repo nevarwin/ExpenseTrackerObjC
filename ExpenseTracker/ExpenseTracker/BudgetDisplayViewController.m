@@ -47,7 +47,6 @@
                 [self.incomeCategories addObject:category];
             } else {
                 [self.expenseCategories addObject:category];
-                
             }
         }
     }
@@ -59,7 +58,7 @@
     [self selectEmptyScreen];
     
     [self.budgetDisplayTableView registerClass:[BudgetCategoryCell class]
-           forCellReuseIdentifier:@"BudgetCategoryCell"];
+                        forCellReuseIdentifier:@"BudgetCategoryCell"];
     
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(keyboardWillShow:)
@@ -104,31 +103,24 @@
                   month:(NSInteger)month
                    year:(NSInteger)year
 {
-    // Filter only active transactions within the budget period
     NSArray<Transaction *> *activeTransactions =
     [[category.transactions allObjects] filteredArrayUsingPredicate:
      [NSPredicate predicateWithBlock:^BOOL(Transaction *transaction, NSDictionary *bindings) {
-        
-        if (!transaction.isActive) {
-            return NO;
-        }
-        
-        // Extract month + year from transaction.date
+        if (!transaction.isActive) return NO;
         NSDateComponents *components = [[NSCalendar currentCalendar]
                                         components:(NSCalendarUnitMonth | NSCalendarUnitYear)
                                         fromDate:transaction.date];
-        
-        NSInteger transactionMonth = components.month;
-        NSInteger transactionYear  = components.year;
-        
-        return (transactionMonth == month && transactionYear == year);
+        return (components.month == month && components.year == year);
     }]];
     
-    for (Transaction *transaction in activeTransactions) {
-        Category *activeCategory = transaction.category;
-        if (activeCategory > 0) {
-//            [usedAmounts addObject:activeCategory.usedAmount ?: [NSDecimalNumber zero]];
+    if (activeTransactions.count > 0) {
+        NSDecimalNumber *totalUsed = [NSDecimalNumber zero];
+        for (Transaction *transaction in activeTransactions) {
+            totalUsed = [totalUsed decimalNumberByAdding:transaction.amount ?: [NSDecimalNumber zero]];
         }
+        category.usedAmount = totalUsed;
+    } else {
+        category.usedAmount = [NSDecimalNumber zero];
     }
 }
 
@@ -526,7 +518,7 @@
         NSString *incomeName = incomeCategory.name ?: @"";
         NSDecimalNumber *incomeAmount = incomeCategory.allocatedAmount ?: [NSDecimalNumber zero];
         NSDecimalNumber *incomeUsedAmount = incomeCategory.usedAmount ?: [NSDecimalNumber zero];
-
+        
         [cell configureWithPlaceholder:incomeName
                                  value:incomeAmount
                             usedAmount:incomeUsedAmount];
@@ -716,7 +708,7 @@
     }
     
     CategoryViewController *categoryVC = [[CategoryViewController alloc] init];
-
+    
     categoryVC.categoryToEdit = categoryToEdit;
     categoryVC.isIncome = isIncome;
     categoryVC.budget = self.budget;
