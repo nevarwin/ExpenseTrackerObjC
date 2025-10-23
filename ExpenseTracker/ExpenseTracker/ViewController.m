@@ -25,10 +25,10 @@
     [super viewDidLoad];
     [self setupHeaderView];
     [self setupYearHeaderView];
+    [self initializeCurrentDate];
     [self setupSegmentControls];
     [self setupWeekSegmentControls];
     [self setupTableView];
-    [self initializeCurrentDate];
     [self weekSegmentChange:self.weekSegmentControl];
     
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
@@ -338,8 +338,17 @@
 - (void)setupWeekSegmentControls {
     self.weekSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"Week 1", @"Week 2", @"Week 3", @"Week 4", @"Week 5"]];
     self.weekSegmentControl.translatesAutoresizingMaskIntoConstraints = NO;
-    self.weekSegmentControl.selectedSegmentIndex = 0;
+
+    // Calculate the week index for today in the current month/year
+    NSInteger weekIndex = [self weekIndexForTodayInMonth:self.currentDateComponents.month
+                                                    year:self.currentDateComponents.year];
     
+    NSLog(@"Initial week index for today: %ld", (long)weekIndex);
+    NSDate *dateNow = [NSDate date];
+    NSLog(@"Current date: %@", dateNow);
+    
+    self.weekSegmentControl.selectedSegmentIndex = weekIndex;
+
     [self.weekSegmentControl addTarget:self
                                 action:@selector(weekSegmentChange:)
                       forControlEvents:UIControlEventValueChanged];
@@ -347,7 +356,6 @@
     [self.view addSubview:self.weekSegmentControl];
     
     [NSLayoutConstraint activateConstraints:@[
-        // Type segment at top, under safe area
         [self.weekSegmentControl.topAnchor constraintEqualToAnchor:self.typeSegmentControl.bottomAnchor constant:8.0],
         [self.weekSegmentControl.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:16.0],
         [self.weekSegmentControl.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-16.0],
@@ -355,7 +363,6 @@
     ]];
     
     self.weekSegmentIndex = self.weekSegmentControl.selectedSegmentIndex;
-    
 }
 
 - (void)typeSegmentChange:(UISegmentedControl *)sender{
@@ -379,6 +386,9 @@
     
     // Always fetch only active transactions
     [predicates addObject:[NSPredicate predicateWithFormat:@"isActive == YES"]];
+    NSDate *dateNow = [NSDate date];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    dateFormatter.dateFormat = @"yyyy-MM-dd";
     
     // 0 = Expense, 1 = Income, 2 = All
     if (self.typeSegmentIndex != 2) {
@@ -419,6 +429,16 @@
                                                value:6
                                               toDate:weekStart
                                              options:0];
+        
+        // FIXME: Check if today is within the week range
+        NSDate *today = [NSDate date];
+        if ([today compare:weekStart] != NSOrderedAscending && [today compare:weekEnd] != NSOrderedDescending) {
+            NSLog(@"YESssss");
+        }
+        
+        NSLog(@"Date now: %@", dateNow);
+        NSLog(@"Week Start: %@", weekStart);
+        NSLog(@"Week End: %@", weekEnd);
         
         NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
         formatter.dateFormat = @"MMM dd";
