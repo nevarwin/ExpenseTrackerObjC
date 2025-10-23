@@ -7,7 +7,6 @@
 
 #import "BudgetDisplayViewController.h"
 #import "Budget+CoreDataClass.h"
-#import <HealthKit/HealthKit.h>
 #import "Category+CoreDataClass.h"
 #import "Transaction+CoreDataClass.h"
 #import "CoreDataManager.h"
@@ -165,8 +164,6 @@
         [weakSelf updateHeaderLabels];
         [self fetchCategory];
         [self updateHeaderLabels];
-        [self.budgetDisplayTableView reloadData];
-        [self.budgetInfoTableView reloadData];
     };
     
     [self presentViewController:vc animated:YES completion:nil];
@@ -187,8 +184,6 @@
         [weakSelf updateHeaderLabels];
         [self fetchCategory];
         [self updateHeaderLabels];
-        [self.budgetDisplayTableView reloadData];
-        [self.budgetInfoTableView reloadData];
     };
     
     [self presentViewController:vc animated:YES completion:nil];
@@ -364,7 +359,6 @@
 }
 
 - (void)setupYearHeaderView {
-    // --- Container for header ---
     self.yearHeaderView = [[UIView alloc] init];
     self.yearHeaderView.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:self.yearHeaderView];
@@ -376,7 +370,6 @@
         [self.yearHeaderView.heightAnchor constraintEqualToConstant:40.0]
     ]];
     
-    // --- Left button ---
     UIButton *leftButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [leftButton setTitle:@"◀︎" forState:UIControlStateNormal];
     leftButton.titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightBold];
@@ -384,7 +377,6 @@
     [leftButton addTarget:self action:@selector(didTapPreviousMonth) forControlEvents:UIControlEventTouchUpInside];
     [self.yearHeaderView addSubview:leftButton];
     
-    // --- Right button ---
     UIButton *rightButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [rightButton setTitle:@"▶︎" forState:UIControlStateNormal];
     rightButton.titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightBold];
@@ -392,7 +384,6 @@
     [rightButton addTarget:self action:@selector(didTapNextMonth) forControlEvents:UIControlEventTouchUpInside];
     [self.yearHeaderView addSubview:rightButton];
     
-    // --- Month label ---
     self.monthLabel = [[UILabel alloc] init];
     self.monthLabel.translatesAutoresizingMaskIntoConstraints = NO;
     self.monthLabel.font = [UIFont systemFontOfSize:22 weight:UIFontWeightSemibold];
@@ -403,7 +394,6 @@
     UITapGestureRecognizer *monthTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showMonthPicker)];
     [self.monthLabel addGestureRecognizer:monthTap];
     
-    // --- Year label ---
     self.yearLabel = [[UILabel alloc] init];
     self.yearLabel.translatesAutoresizingMaskIntoConstraints = NO;
     self.yearLabel.font = [UIFont systemFontOfSize:22 weight:UIFontWeightSemibold];
@@ -414,13 +404,11 @@
     UITapGestureRecognizer *yearTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showYearPicker)];
     [self.yearLabel addGestureRecognizer:yearTap];
     
-    // --- Hidden textfields to show pickers ---
     self.monthTextField = [[UITextField alloc] initWithFrame:CGRectZero];
     self.yearTextField = [[UITextField alloc] initWithFrame:CGRectZero];
     [self.view addSubview:self.monthTextField];
     [self.view addSubview:self.yearTextField];
     
-    // --- Layout ---
     [NSLayoutConstraint activateConstraints:@[
         [leftButton.centerYAnchor constraintEqualToAnchor:self.yearHeaderView.centerYAnchor],
         [leftButton.leadingAnchor constraintEqualToAnchor:self.yearHeaderView.leadingAnchor],
@@ -602,6 +590,8 @@
     } else {
         [self.incomeCategories removeObjectAtIndex:indexPath.row];
     }
+    [self.budgetDisplayTableView deleteRowsAtIndexPaths:@[indexPath]
+                                       withRowAnimation:UITableViewRowAnimationFade];
     [self.budgetInfoTableView reloadData];
     [self.budgetDisplayTableView reloadData];
 }
@@ -847,6 +837,3 @@
 }
 
 @end
-
-
-
