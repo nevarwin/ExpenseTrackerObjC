@@ -35,6 +35,7 @@
 }
 
 // TODO: Pagination
+// TODO: Skeleton
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
     if ([segue.identifier isEqualToString:@"TransactionsViewController"]) {
         UINavigationController *navController = segue.destinationViewController;
