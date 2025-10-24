@@ -21,7 +21,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Set background color to match Health app
+    // TODO: Placeholder cell for empty state which is a button
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
     
     // Setup UI components
