@@ -471,7 +471,7 @@
         self.dateRange = [NSString stringWithFormat:@"From: %@ - To: %@",
                           startString, endString];
         
-        [predicates addObject:[NSPredicate predicateWithFormat:@"date >= %@ AND date < %@", weekStart, weekEnd]];
+        [predicates addObject:[NSPredicate predicateWithFormat:@"date >= %@ AND date <= %@", weekStart, weekEnd]];
     }
     
     fetchRequest.predicate = [NSCompoundPredicate andPredicateWithSubpredicates:predicates];
