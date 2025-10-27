@@ -458,20 +458,25 @@
                                                options:0];
         
         NSDate *weekEnd = [calendar dateByAddingUnit:NSCalendarUnitDay
-                                               value:6
+                                               value:7
                                               toDate:weekStart
                                              options:0];
         
+        NSDate *weekEndMinusOneDay = [calendar dateByAddingUnit:NSCalendarUnitDay
+                                                          value:-1
+                                                         toDate:weekEnd
+                                                        options:0];
+
         NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
         formatter.dateFormat = @"MMM dd";
         
         NSString *startString = [formatter stringFromDate:weekStart];
-        NSString *endString   = [formatter stringFromDate:weekEnd];
+        NSString *endString   = [formatter stringFromDate:weekEndMinusOneDay];
         
         self.dateRange = [NSString stringWithFormat:@"From: %@ - To: %@",
                           startString, endString];
         
-        [predicates addObject:[NSPredicate predicateWithFormat:@"date >= %@ AND date <= %@", weekStart, weekEnd]];
+        [predicates addObject:[NSPredicate predicateWithFormat:@"date >= %@ AND date < %@", weekStart, weekEnd]];
     }
     
     fetchRequest.predicate = [NSCompoundPredicate andPredicateWithSubpredicates:predicates];
