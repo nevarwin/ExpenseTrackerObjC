@@ -44,12 +44,16 @@
         self.yearHeaderView.hidden = !self.isEditMode;
         
         for (Category *category in self.budget.category) {
-            if(category.isIncome){
+            if(category.isIncome && category.isActive){
                 [self.incomeCategories addObject:category];
             } else {
                 [self.expenseCategories addObject:category];
             }
         }
+    }
+    
+    if (@available(iOS 26.0, *)) {
+        NSLog(@"This is iOS 26 or newer. Loading new UI.");
     }
     
     [self fetchCategory];
@@ -95,6 +99,7 @@
                          year:self.currentDateComponents.year];
     }
     
+    NSLog(@"is this called");
     [self.budgetInfoTableView reloadData];
     [self.budgetDisplayTableView reloadData];
 }
@@ -104,6 +109,40 @@
                   month:(NSInteger)month
                    year:(NSInteger)year
 {
+    NSLog(@"Category.installmentEndDate: %@", category.installmentEndDate);
+    NSLog(@"Category.isActive: %d", category.isActive);
+    
+    if (category.installmentEndDate) {
+        NSCalendar *calendar = [NSCalendar currentCalendar];
+        
+        // Get the month and year components from the installmentEndDate
+        NSDateComponents *endDateComponents = [calendar components:(NSCalendarUnitMonth | NSCalendarUnitYear)
+                                                          fromDate:category.installmentEndDate];
+        NSInteger endMonth = endDateComponents.month;
+        NSInteger endYear = endDateComponents.year;
+        
+        NSLog(@"endDateComponents: %@", endDateComponents);
+        NSLog(@"year: %ld", (long)year);
+        NSLog(@"month: %ld", (long)month);
+        
+        BOOL isExpired = NO;
+        if (year > endYear) {
+            isExpired = YES;
+        } else if (year == endYear && month > endMonth) {
+            isExpired = YES;
+        }
+        
+        NSLog(@"isExpired: %d", isExpired);
+        if (isExpired) {
+            category.isActive = NO;
+            NSLog(@"expireeeeeeeeeeed");
+            return;
+        } else {
+            category.isActive = YES;
+            NSLog(@"noooot expireeeeeeeeeeed");
+        }
+    }
+    
     NSArray<Transaction *> *activeTransactions =
     [[category.transactions allObjects] filteredArrayUsingPredicate:
      [NSPredicate predicateWithBlock:^BOOL(Transaction *transaction, NSDictionary *bindings) {

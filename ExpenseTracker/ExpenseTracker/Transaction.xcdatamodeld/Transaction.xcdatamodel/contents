@@ -16,6 +16,7 @@
         <attribute name="installmentEndDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="installmentMonths" attributeType="Integer 16" defaultValueString="1" usesScalarValueType="YES"/>
         <attribute name="installmentStartDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
         <attribute name="isIncome" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="isInstallment" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="monthlyPayment" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
