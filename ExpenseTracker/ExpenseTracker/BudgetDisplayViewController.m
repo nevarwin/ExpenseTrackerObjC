@@ -671,6 +671,7 @@
         newCategory.allocatedAmount = category.isInstallment ? category.monthlyPayment : category.allocatedAmount;
         newCategory.createdAt = category.createdAt;
         newCategory.totalInstallmentAmount = category.allocatedAmount;
+        newCategory.installmentEndDate = category.installmentEndDate;
         
         if (category.isIncome) {
             [self.incomeCategories addObject:newCategory];
@@ -716,6 +717,7 @@
         categoryToEdit.allocatedAmount = category.isInstallment ? category.monthlyPayment : category.allocatedAmount;
         categoryToEdit.createdAt = category.createdAt;
         categoryToEdit.totalInstallmentAmount = category.allocatedAmount;
+        categoryToEdit.installmentEndDate = category.installmentEndDate;
         
         [self.budgetDisplayTableView reloadData];
         [self.budgetInfoTableView reloadData];
@@ -755,6 +757,7 @@
     
     // Add expense categories
     for (Category *category in self.expenseCategories) {
+        NSLog(@"Category: %@", category);
         [categoriesSet addObject:category];
     }
     

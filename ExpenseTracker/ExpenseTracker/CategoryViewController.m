@@ -86,6 +86,8 @@
         }
     }
     
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    
     newCategory.isIncome = self.isIncome;
     newCategory.isInstallment = isInstallment;
     newCategory.name = self.categoryTextField.text;
@@ -97,6 +99,12 @@
         newCategory.installmentStartDate = self.startDatePicker.date;
         newCategory.installmentMonths = (int16_t)[self.monthsTextField.text integerValue];
         newCategory.monthlyPayment = [NSDecimalNumber decimalNumberWithString:self.monthlyTextField.text];
+        NSDate *installmentEndDate = [calendar dateByAddingUnit:NSCalendarUnitMonth
+                                                          value:newCategory.installmentMonths
+                                                         toDate:newCategory.installmentStartDate
+                                                        options:0];
+        
+        newCategory.installmentEndDate = installmentEndDate;
     }
     
     if (self.onCategoryAdded) {
