@@ -42,6 +42,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSLayoutConstraint *budgetInfoTableViewHeightConstraint;
 
 @property (nonatomic, strong) UILabel *rightLabel;
+
+@property (nonatomic, assign) BOOL isBudgetSectionExpanded;
+
 @end
 
 NS_ASSUME_NONNULL_END
