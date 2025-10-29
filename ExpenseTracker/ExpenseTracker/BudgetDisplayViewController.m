@@ -29,7 +29,6 @@
 # pragma mark - viewDidLoad
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // TODO: Add installment logic
     // TODO: Handle empty state when no categories exist
     // TODO: Handle unique category names
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
@@ -44,10 +43,12 @@
         self.yearHeaderView.hidden = !self.isEditMode;
         
         for (Category *category in self.budget.category) {
-            if(category.isIncome && category.isActive){
-                [self.incomeCategories addObject:category];
-            } else {
-                [self.expenseCategories addObject:category];
+            if (category.isActive){
+                if(category.isIncome ){
+                    [self.incomeCategories addObject:category];
+                } else {
+                    [self.expenseCategories addObject:category];
+                }
             }
         }
     }
@@ -92,14 +93,24 @@
 # pragma mark - Helper
 
 - (void)fetchCategory {
+    [self.expenseCategories removeAllObjects];
+    [self.incomeCategories removeAllObjects];
+    
     for (Category *category in self.budget.category) {
         [self processCategory:category
                      isIncome:category.isIncome
                         month:self.currentDateComponents.month
                          year:self.currentDateComponents.year];
+        
+        if (category.isActive) {
+            if (category.isIncome) {
+                [self.incomeCategories addObject:category];
+            } else {
+                [self.expenseCategories addObject:category];
+            }
+        }
     }
     
-    NSLog(@"is this called");
     [self.budgetInfoTableView reloadData];
     [self.budgetDisplayTableView reloadData];
 }
@@ -109,38 +120,14 @@
                   month:(NSInteger)month
                    year:(NSInteger)year
 {
-    NSLog(@"Category.installmentEndDate: %@", category.installmentEndDate);
-    NSLog(@"Category.isActive: %d", category.isActive);
-    
     if (category.installmentEndDate) {
-        NSCalendar *calendar = [NSCalendar currentCalendar];
+        BOOL isWithinRange = [self year:year month:month betweenStartDate:category.installmentStartDate andEndDate:category.installmentEndDate];
         
-        // Get the month and year components from the installmentEndDate
-        NSDateComponents *endDateComponents = [calendar components:(NSCalendarUnitMonth | NSCalendarUnitYear)
-                                                          fromDate:category.installmentEndDate];
-        NSInteger endMonth = endDateComponents.month;
-        NSInteger endYear = endDateComponents.year;
-        
-        NSLog(@"endDateComponents: %@", endDateComponents);
-        NSLog(@"year: %ld", (long)year);
-        NSLog(@"month: %ld", (long)month);
-        
-        BOOL isExpired = NO;
-        if (year > endYear) {
-            isExpired = YES;
-        } else if (year == endYear && month > endMonth) {
-            isExpired = YES;
-        }
-        
-        NSLog(@"isExpired: %d", isExpired);
-        if (isExpired) {
+        if (!isWithinRange) {
             category.isActive = NO;
-            NSLog(@"expireeeeeeeeeeed");
             return;
-        } else {
-            category.isActive = YES;
-            NSLog(@"noooot expireeeeeeeeeeed");
         }
+        category.isActive = YES;
     }
     
     NSArray<Transaction *> *activeTransactions =
@@ -162,6 +149,47 @@
     } else {
         category.usedAmount = [NSDecimalNumber zero];
     }
+}
+
+- (BOOL)year:(NSInteger)year
+       month:(NSInteger)month
+betweenStartDate:(NSDate *)startDate
+  andEndDate:(NSDate *)endDate
+
+{
+    // Get the current calendar
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    if (startDate) {
+        NSDateComponents *startComponents = [calendar components:(NSCalendarUnitMonth | NSCalendarUnitYear)
+                                                        fromDate:startDate];
+        NSInteger startYear = startComponents.year;
+        NSInteger startMonth = startComponents.month;
+        
+        // Check if it's *before* the start date (which is invalid)
+        if (year < startYear) {
+            return NO; // Year is too early
+        }
+        if (year == startYear && month < startMonth) {
+            return NO; // Same year, but month is too early
+        }
+    }
+    
+    if (endDate) {
+        NSDateComponents *endComponents = [calendar components:(NSCalendarUnitMonth | NSCalendarUnitYear)
+                                                      fromDate:endDate];
+        NSInteger endYear = endComponents.year;
+        NSInteger endMonth = endComponents.month;
+        
+        // Check if it's *after* the end date (which is invalid)
+        if (year > endYear) {
+            return NO; // Year is too late
+        }
+        if (year == endYear && month > endMonth) {
+            return NO; // Same year, but month is too late
+        }
+    }
+    
+    return YES;
 }
 
 - (void)didTapPreviousMonth {
