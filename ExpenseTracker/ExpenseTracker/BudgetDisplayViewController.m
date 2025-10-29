@@ -30,7 +30,6 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // TODO: Handle empty state when no categories exist
-    // TODO: Handle unique category names
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
     self.title = self.isEditMode ? @"Budget" : @"Add Budget";
     self.expenseCategories = [NSMutableArray array];
