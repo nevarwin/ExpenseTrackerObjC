@@ -49,8 +49,6 @@
     UITabBarAppearance *appearance = [[UITabBarAppearance alloc] init];
     [appearance configureWithOpaqueBackground];
     appearance.backgroundColor = [UIColor systemBackgroundColor];
-    appearance.stackedLayoutAppearance.selected.iconColor = [UIColor systemTealColor];
-    appearance.stackedLayoutAppearance.selected.titleTextAttributes = @{NSForegroundColorAttributeName: [UIColor systemTealColor]};
     appearance.stackedLayoutAppearance.normal.iconColor = [UIColor labelColor];
     appearance.stackedLayoutAppearance.normal.titleTextAttributes = @{NSForegroundColorAttributeName: [UIColor labelColor]};
     

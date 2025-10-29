@@ -295,13 +295,11 @@
             pesoLabel.text = @"₱";
             pesoLabel.font = self.amountTextField.font;
             pesoLabel.textAlignment = NSTextAlignmentLeft;
-            pesoLabel.textColor = [UIColor systemTealColor];
             cell.textLabel.text = @"Amount";
             [cell.contentView addSubview:self.amountTextField];
             
             self.amountTextField.leftView = pesoLabel;
             self.amountTextField.leftViewMode = UITextFieldViewModeAlways;
-            self.amountTextField.textColor = [UIColor systemTealColor];
             self.amountTextField.translatesAutoresizingMaskIntoConstraints = NO;
             self.amountTextField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
             self.amountTextField.textAlignment = NSTextAlignmentRight;
