@@ -56,11 +56,19 @@
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     Category *newCategory = [NSEntityDescription insertNewObjectForEntityForName:@"Category"
                                                           inManagedObjectContext:context];
-    
-    
     BOOL isInstallment = _installmentSwitch.isOn;
-    
     NSDecimalNumber *amount = [NSDecimalNumber decimalNumberWithString:self.amountTextField.text];
+    
+    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Category"];
+    fetchRequest.predicate = [NSPredicate predicateWithFormat:@"name ==[c] %@",self.categoryTextField.text];
+    
+    NSError *error = nil;
+    NSUInteger matchCount = [context countForFetchRequest:fetchRequest error:&error];
+    
+    if (matchCount > 0){
+        [self showAlertWithTitle:@"Duplicate Category" message:@"Category already exist, please choose a different category title"];
+        return;
+    }
     
     if ([self.categoryTextField.text isEqualToString:@""] || [self.amountTextField.text isEqualToString:@""]) {
         [self showAlertWithTitle:@"Missing Fields"

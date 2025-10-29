@@ -378,7 +378,6 @@
     self.typeSegmentIndex = self.typeSegmentControl.selectedSegmentIndex;
 }
 
-// TODO: Automatic Selection based on date today
 - (void)setupWeekSegmentControls {
     self.weekSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"Week 1", @"Week 2", @"Week 3", @"Week 4", @"Week 5"]];
     self.weekSegmentControl.translatesAutoresizingMaskIntoConstraints = NO;
