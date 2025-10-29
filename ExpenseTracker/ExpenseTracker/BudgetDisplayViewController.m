@@ -31,6 +31,7 @@
     [super viewDidLoad];
     // TODO: Handle empty state when no categories exist
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
+    self.isBudgetSectionExpanded = YES;
     self.title = self.isEditMode ? @"Budget" : @"Add Budget";
     self.expenseCategories = [NSMutableArray array];
     self.incomeCategories = [NSMutableArray array];
@@ -357,6 +358,12 @@ betweenStartDate:(NSDate *)startDate
     return [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:netTotal];
 }
 
+- (void)didTapBudgetHeader{
+    self.isBudgetSectionExpanded = !self.isBudgetSectionExpanded;
+    [self.budgetInfoTableView reloadData];
+    [self.budgetDisplayTableView reloadData];
+}
+
 
 # pragma mark - SetUps
 
@@ -495,17 +502,23 @@ betweenStartDate:(NSDate *)startDate
 
 #pragma mark - UITableViewDelegate
 
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    return 44;
+}
+
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     if (tableView == self.budgetInfoTableView) return 1;
     return 2;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    if (tableView == self.budgetInfoTableView && self.isBudgetSectionExpanded) {
+            return 4;
+    }
     if (tableView == self.budgetDisplayTableView){
         if (section == 0) return self.expenseCategories.count;
         if (section == 1) return self.incomeCategories.count;
     }
-    if (tableView == self.budgetInfoTableView) return 4;
     return 0;
 }
 
@@ -585,63 +598,102 @@ betweenStartDate:(NSDate *)startDate
 
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
-    if (tableView == self.budgetInfoTableView) return nil;
-    UIView *headerView = [[UIView alloc] init];
-    headerView.backgroundColor = [UIColor clearColor];
+    if (tableView == self.budgetInfoTableView) {
+        UIView *headerView = [[UIView alloc] init];
+        headerView.backgroundColor = [UIColor clearColor];
+        UILabel *titleLabel = [[UILabel alloc] init];
     
-    UILabel *titleLabel = [[UILabel alloc] init];
-    titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    titleLabel.font = [UIFont boldSystemFontOfSize:[UIFont preferredFontForTextStyle:UIFontTextStyleFootnote].pointSize];
-    titleLabel.textColor = [UIColor secondaryLabelColor];
-    titleLabel.textAlignment = NSTextAlignmentLeft;
-    [titleLabel setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-    [titleLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-    
-    NSString *expensesTitleLabel = [NSString stringWithFormat:@"EXPENSES - %@", [self expensesAmountLabel]];
-    NSString *incomeTitleLabel = [NSString stringWithFormat:@"INCOME - %@",
-                                  [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:[self incomeAmountLabel]]];
-    
-    switch (section) {
-        case 0:
-            titleLabel.text = expensesTitleLabel;
-            break;
-        case 1:
-            titleLabel.text = incomeTitleLabel;
-            break;
-        default:
-            titleLabel.text = @"";
-    }
-    
-    [headerView addSubview:titleLabel];
-    
-    NSMutableArray<NSLayoutConstraint *> *constraints = [NSMutableArray array];
-    
-    [constraints addObjectsFromArray:@[
-        [titleLabel.leadingAnchor constraintEqualToAnchor:headerView.leadingAnchor constant:16],
-        [titleLabel.centerYAnchor constraintEqualToAnchor:headerView.centerYAnchor]
-    ]];
-    
-    if (section == 0 || section == 1) {
-        UIButton *plusButton = [UIButton buttonWithType:UIButtonTypeContactAdd];
-        plusButton.translatesAutoresizingMaskIntoConstraints = NO;
-        plusButton.tag = section;
-        [plusButton addTarget:self action:@selector(plusButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-        [headerView addSubview:plusButton];
+        titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        titleLabel.font = [UIFont boldSystemFontOfSize:[UIFont preferredFontForTextStyle:UIFontTextStyleFootnote].pointSize];
+        titleLabel.textColor = [UIColor secondaryLabelColor];
+        titleLabel.textAlignment = NSTextAlignmentLeft;
+        [titleLabel setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+        [titleLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+        titleLabel.text = @"BUDGET SUMMARY";
+        [headerView addSubview:titleLabel];
+        
+        NSMutableArray<NSLayoutConstraint *> *constraints = [NSMutableArray array];
         
         [constraints addObjectsFromArray:@[
-            [plusButton.trailingAnchor constraintEqualToAnchor:headerView.trailingAnchor constant:-16],
-            [plusButton.centerYAnchor constraintEqualToAnchor:headerView.centerYAnchor],
-            [titleLabel.trailingAnchor constraintLessThanOrEqualToAnchor:plusButton.leadingAnchor constant:-8]
+            [titleLabel.leadingAnchor constraintEqualToAnchor:headerView.leadingAnchor constant:16],
+            [titleLabel.centerYAnchor constraintEqualToAnchor:headerView.centerYAnchor]
         ]];
-    } else {
-        [constraints addObject:[titleLabel.trailingAnchor constraintLessThanOrEqualToAnchor:headerView.trailingAnchor constant:-16]];
+        
+        UIButton *button = [UIButton buttonWithType:UIButtonTypeInfoLight];
+        button.translatesAutoresizingMaskIntoConstraints = NO;
+        button.tag = section;
+        [button addTarget:self action:@selector(didTapBudgetHeader) forControlEvents:UIControlEventTouchUpInside];
+        [headerView addSubview:button];
+        
+        [constraints addObjectsFromArray:@[
+            [button.trailingAnchor constraintEqualToAnchor:headerView.trailingAnchor constant:-16],
+            [button.centerYAnchor constraintEqualToAnchor:headerView.centerYAnchor],
+            [titleLabel.trailingAnchor constraintLessThanOrEqualToAnchor:button.leadingAnchor constant:-8]
+        ]];
+        
+        [constraints addObject:[headerView.heightAnchor constraintEqualToConstant:44]];
+        [NSLayoutConstraint activateConstraints:constraints];
+        return headerView;
+        
+    };
+    
+    if (tableView == self.budgetDisplayTableView) {
+        UIView *headerView = [[UIView alloc] init];
+        headerView.backgroundColor = [UIColor clearColor];
+        UILabel *titleLabel = [[UILabel alloc] init];
+        titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        titleLabel.font = [UIFont boldSystemFontOfSize:[UIFont preferredFontForTextStyle:UIFontTextStyleFootnote].pointSize];
+        titleLabel.textColor = [UIColor secondaryLabelColor];
+        titleLabel.textAlignment = NSTextAlignmentLeft;
+        [titleLabel setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+        [titleLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+        
+        NSString *expensesTitleLabel = [NSString stringWithFormat:@"EXPENSES - %@", [self expensesAmountLabel]];
+        NSString *incomeTitleLabel = [NSString stringWithFormat:@"INCOME - %@",
+                                      [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:[self incomeAmountLabel]]];
+        
+        switch (section) {
+            case 0:
+                titleLabel.text = expensesTitleLabel;
+                break;
+            case 1:
+                titleLabel.text = incomeTitleLabel;
+                break;
+            default:
+                titleLabel.text = @"";
+        }
+        
+        [headerView addSubview:titleLabel];
+        
+        NSMutableArray<NSLayoutConstraint *> *constraints = [NSMutableArray array];
+        
+        [constraints addObjectsFromArray:@[
+            [titleLabel.leadingAnchor constraintEqualToAnchor:headerView.leadingAnchor constant:16],
+            [titleLabel.centerYAnchor constraintEqualToAnchor:headerView.centerYAnchor]
+        ]];
+        
+        if (section == 0 || section == 1) {
+            UIButton *plusButton = [UIButton buttonWithType:UIButtonTypeContactAdd];
+            plusButton.translatesAutoresizingMaskIntoConstraints = NO;
+            plusButton.tag = section;
+            [plusButton addTarget:self action:@selector(plusButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+            [headerView addSubview:plusButton];
+            
+            [constraints addObjectsFromArray:@[
+                [plusButton.trailingAnchor constraintEqualToAnchor:headerView.trailingAnchor constant:-16],
+                [plusButton.centerYAnchor constraintEqualToAnchor:headerView.centerYAnchor],
+                [titleLabel.trailingAnchor constraintLessThanOrEqualToAnchor:plusButton.leadingAnchor constant:-8]
+            ]];
+        } else {
+            [constraints addObject:[titleLabel.trailingAnchor constraintLessThanOrEqualToAnchor:headerView.trailingAnchor constant:-16]];
+        }
+        
+        // Fixed height
+        [constraints addObject:[headerView.heightAnchor constraintEqualToConstant:44]];
+        [NSLayoutConstraint activateConstraints:constraints];
+        return headerView;
     }
-    
-    // Fixed height
-    [constraints addObject:[headerView.heightAnchor constraintEqualToConstant:44]];
-    [NSLayoutConstraint activateConstraints:constraints];
-    
-    return headerView;
+    return nil;
 }
 
 // Deleting via swipe gesture
@@ -744,6 +796,7 @@ betweenStartDate:(NSDate *)startDate
         } else {
             [self.expenseCategories addObject:newCategory];
         }
+        NSLog(@"self.expenseCategories: %@", self.expenseCategories);
         
         [self.budgetDisplayTableView reloadData];
         [self.budgetInfoTableView reloadData];
