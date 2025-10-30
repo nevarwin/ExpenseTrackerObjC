@@ -60,7 +60,12 @@
     NSDecimalNumber *amount = [NSDecimalNumber decimalNumberWithString:self.amountTextField.text];
     
     NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Category"];
-    fetchRequest.predicate = [NSPredicate predicateWithFormat:@"name ==[c] %@",self.categoryTextField.text];
+    NSPredicate *p1 = [NSPredicate predicateWithFormat:@"budget.isActive == YES"];
+    NSPredicate *p2 = [NSPredicate predicateWithFormat:@"name ==[c] %@ AND budget == %@",
+                       self.categoryTextField.text,
+                       self.budget];
+    
+    fetchRequest.predicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[p1, p2]];
     
     NSError *error = nil;
     NSUInteger matchCount = [context countForFetchRequest:fetchRequest error:&error];
