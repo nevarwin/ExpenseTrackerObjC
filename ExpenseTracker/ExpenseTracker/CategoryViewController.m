@@ -65,7 +65,14 @@
                        self.categoryTextField.text,
                        self.budget];
     
-    fetchRequest.predicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[p1, p2]];
+    NSMutableArray *subpredicates = [NSMutableArray arrayWithObjects:p1, p2, nil];
+    
+    if (self.isEditMode && self.categoryToEdit) {
+        NSPredicate *p3 = [NSPredicate predicateWithFormat:@"self != %@", self.categoryToEdit];
+        [subpredicates addObject:p3];
+    }
+    
+    fetchRequest.predicate = [NSCompoundPredicate andPredicateWithSubpredicates:subpredicates];
     
     NSError *error = nil;
     NSUInteger matchCount = [context countForFetchRequest:fetchRequest error:&error];

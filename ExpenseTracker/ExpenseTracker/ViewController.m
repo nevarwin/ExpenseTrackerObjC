@@ -381,7 +381,7 @@
 - (void)setupWeekSegmentControls {
     self.weekSegmentControl = [[UISegmentedControl alloc] initWithItems:@[@"Week 1", @"Week 2", @"Week 3", @"Week 4", @"Week 5"]];
     self.weekSegmentControl.translatesAutoresizingMaskIntoConstraints = NO;
-
+    
     [self.weekSegmentControl addTarget:self
                                 action:@selector(weekSegmentChange:)
                       forControlEvents:UIControlEventValueChanged];
@@ -464,7 +464,7 @@
                                                           value:-1
                                                          toDate:weekEnd
                                                         options:0];
-
+        
         NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
         formatter.dateFormat = @"MMM dd";
         
