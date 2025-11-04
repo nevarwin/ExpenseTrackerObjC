@@ -17,6 +17,7 @@
 
 @implementation TransactionsViewController
 
+// TODO: add validation if the installment is done so it cannot be selected
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
