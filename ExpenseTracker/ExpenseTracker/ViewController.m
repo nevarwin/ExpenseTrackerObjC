@@ -21,7 +21,6 @@
 
 @implementation ViewController
 
-// TODO: add a signin page
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self setupHeaderView];
@@ -213,8 +212,7 @@
     // Setup add button (right side)
     self.addButton = [UIButton buttonWithType:UIButtonTypeSystem];
     self.addButton.translatesAutoresizingMaskIntoConstraints = NO;
-    self.addButton.titleLabel.font = [UIFont boldSystemFontOfSize:17];
-    [self.addButton setTitle:@"Add Data" forState:UIControlStateNormal];
+    [self.addButton setImage:[UIImage systemImageNamed:@"plus.circle.fill"] forState:UIControlStateNormal];
     [self.addButton addTarget:self action:@selector(addButtonTapped) forControlEvents:UIControlEventTouchUpInside];
     self.addButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [self.addButton.imageView setContentMode:UIViewContentModeScaleAspectFit];
