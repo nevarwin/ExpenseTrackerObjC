@@ -72,7 +72,6 @@
     [self.addButton setImage:[UIImage systemImageNamed:@"plus.circle.fill"] forState:UIControlStateNormal];
     [self.addButton addTarget:self action:@selector(addButtonTapped) forControlEvents:UIControlEventTouchUpInside];
     self.addButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
-    // Increase button size to match Health app
     [self.addButton.imageView setContentMode:UIViewContentModeScaleAspectFit];
     [headerContainer addSubview:self.addButton];
     
@@ -91,12 +90,9 @@
         [self.headerLabel.trailingAnchor constraintEqualToAnchor:self.addButton.leadingAnchor constant:-10]
     ]];
     
-    // Setup constraints for add button - make it larger like in Health app
     [NSLayoutConstraint activateConstraints:@[
         [self.addButton.trailingAnchor constraintEqualToAnchor:headerContainer.trailingAnchor],
         [self.addButton.centerYAnchor constraintEqualToAnchor:headerContainer.centerYAnchor],
-        [self.addButton.widthAnchor constraintEqualToConstant:44],
-        [self.addButton.heightAnchor constraintEqualToConstant:44]
     ]];
 }
 
