@@ -18,7 +18,10 @@
 
 - (void)configureWithPlaceholder:(NSString *)placeholder
                            value:(NSDecimalNumber *)value
-                      usedAmount:(NSDecimalNumber *)usedAmount;
+                      usedAmount:(NSDecimalNumber *)usedAmount
+               installmentNumber:(NSInteger)installmentNumber
+               totalInstallments:(NSInteger)totalInstallments;
+
 
 - (NSNumber *)safeNumberFrom:(NSDecimalNumber *)decimalNumber;
 
