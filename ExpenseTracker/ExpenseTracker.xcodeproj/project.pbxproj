@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		187E84D92F0B8F08001E22B5 /* Budget+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 187E84D82F0B8F08001E22B5 /* Budget+CoreDataProperties.swift */; };
+		187E84DB2F0B8F1D001E22B5 /* Category+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 187E84DA2F0B8F1D001E22B5 /* Category+CoreDataProperties.swift */; };
+		187E84DD2F0B8F30001E22B5 /* Transaction+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 187E84DC2F0B8F30001E22B5 /* Transaction+CoreDataProperties.swift */; };
+		187E84DE2F0B9963001E22B5 /* Transaction.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 97877F942F0665D00086DDFF /* Transaction.xcdatamodeld */; };
 		18AEAE982E867646003C31FA /* Transaction.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = 18AEAE942E867646003C31FA /* Transaction.sqlite */; };
 		18AEAE992E867646003C31FA /* Transaction.sqlite-shm in Resources */ = {isa = PBXBuildFile; fileRef = 18AEAE952E867646003C31FA /* Transaction.sqlite-shm */; };
 		18AEAE9A2E867646003C31FA /* Transaction.sqlite-wal in Resources */ = {isa = PBXBuildFile; fileRef = 18AEAE962E867646003C31FA /* Transaction.sqlite-wal */; };
@@ -53,6 +57,9 @@
 		1873DFEC2E0D3E6500C2C70B /* ExpenseTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExpenseTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1873E00A2E0D3E6600C2C70B /* ExpenseTrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExpenseTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1873E0142E0D3E6700C2C70B /* ExpenseTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExpenseTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		187E84D82F0B8F08001E22B5 /* Budget+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Budget+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		187E84DA2F0B8F1D001E22B5 /* Category+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Category+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		187E84DC2F0B8F30001E22B5 /* Transaction+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Transaction+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		18AEAE942E867646003C31FA /* Transaction.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = Transaction.sqlite; sourceTree = "<group>"; };
 		18AEAE952E867646003C31FA /* Transaction.sqlite-shm */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Transaction.sqlite-shm"; sourceTree = "<group>"; };
 		18AEAE962E867646003C31FA /* Transaction.sqlite-wal */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Transaction.sqlite-wal"; sourceTree = "<group>"; };
@@ -196,9 +203,11 @@
 			isa = PBXGroup;
 			children = (
 				97877F922F0665D00086DDFF /* Budget+CoreDataClass.swift */,
+				187E84D82F0B8F08001E22B5 /* Budget+CoreDataProperties.swift */,
 				97877F932F0665D00086DDFF /* Category+CoreDataClass.swift */,
-				97877F942F0665D00086DDFF /* Transaction.xcdatamodeld */,
+				187E84DA2F0B8F1D001E22B5 /* Category+CoreDataProperties.swift */,
 				97877F952F0665D00086DDFF /* Transaction+CoreDataClass.swift */,
+				187E84DC2F0B8F30001E22B5 /* Transaction+CoreDataProperties.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -206,6 +215,7 @@
 		97877F982F0665D00086DDFF /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
+				97877F942F0665D00086DDFF /* Transaction.xcdatamodeld */,
 				97877F972F0665D00086DDFF /* PersistenceController.swift */,
 			);
 			path = Persistence;
@@ -428,18 +438,22 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				187E84DD2F0B8F30001E22B5 /* Transaction+CoreDataProperties.swift in Sources */,
 				97877FAF2F06660D0086DDFF /* ContentView.swift in Sources */,
 				97877FB02F06660D0086DDFF /* ExpenseTrackerApp.swift in Sources */,
 				97877FB12F06660D0086DDFF /* Budget+CoreDataClass.swift in Sources */,
+				187E84DB2F0B8F1D001E22B5 /* Category+CoreDataProperties.swift in Sources */,
 				97877FB22F06660D0086DDFF /* Category+CoreDataClass.swift in Sources */,
 				97877FB32F06660D0086DDFF /* Transaction+CoreDataClass.swift in Sources */,
 				97877FB42F06660D0086DDFF /* PersistenceController.swift in Sources */,
 				97877FB52F06660D0086DDFF /* CurrencyFormatter.swift in Sources */,
+				187E84DE2F0B9963001E22B5 /* Transaction.xcdatamodeld in Sources */,
 				97877FB62F06660D0086DDFF /* DateExtensions.swift in Sources */,
 				97877FB72F06660D0086DDFF /* BudgetDetailViewModel.swift in Sources */,
 				97877FB82F06660D0086DDFF /* BudgetListViewModel.swift in Sources */,
 				97877FB92F06660D0086DDFF /* CategoryFormViewModel.swift in Sources */,
 				97877FBA2F06660D0086DDFF /* TransactionFormViewModel.swift in Sources */,
+				187E84D92F0B8F08001E22B5 /* Budget+CoreDataProperties.swift in Sources */,
 				97877FBB2F06660D0086DDFF /* TransactionsViewModel.swift in Sources */,
 				97877FBC2F06660D0086DDFF /* BudgetDetailView.swift in Sources */,
 				97877FBD2F06660D0086DDFF /* BudgetListView.swift in Sources */,
@@ -493,12 +507,12 @@
 				DEVELOPMENT_TEAM = VQXG9UW8TD;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Resources/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Expense me";
+				INFOPLIST_KEY_CFBundleDisplayName = ExpenseTracker;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = armv7;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
 				IPHONEOS_DEPLOYMENT_TARGET = 18;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -528,12 +542,12 @@
 				DEVELOPMENT_TEAM = VQXG9UW8TD;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Resources/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Expense me";
+				INFOPLIST_KEY_CFBundleDisplayName = ExpenseTracker;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = armv7;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
 				IPHONEOS_DEPLOYMENT_TARGET = 18;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
