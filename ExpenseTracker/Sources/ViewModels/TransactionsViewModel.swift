@@ -8,9 +8,10 @@
 import Foundation
 import CoreData
 import SwiftUI
+import Combine
 
 @MainActor
-class TransactionsViewModel: ObservableObject {
+class TransactionsViewModel: NSObject, ObservableObject {
     @Published var transactions: [Transaction] = []
     @Published var selectedTypeIndex: Int = 2 // 0: Expense, 1: Income, 2: All
     @Published var selectedWeekIndex: Int = 0
@@ -25,6 +26,8 @@ class TransactionsViewModel: ObservableObject {
         let calendar = Calendar.current
         let today = Date()
         self.currentDateComponents = calendar.dateComponents([.year, .month], from: today)
+        
+        super.init()
         
         setupFetchedResultsController()
     }
@@ -163,7 +166,7 @@ class TransactionsViewModel: ObservableObject {
     
     var monthYearString: String {
         let months = ["January", "February", "March", "April", "May", "June",
-                     "July", "August", "September", "October", "November", "December"]
+                      "July", "August", "September", "October", "November", "December"]
         let monthIndex = (currentDateComponents.month ?? 1) - 1
         let year = currentDateComponents.year ?? 2025
         return "\(months[monthIndex]) \(year)"
@@ -173,7 +176,7 @@ class TransactionsViewModel: ObservableObject {
 extension TransactionsViewModel: NSFetchedResultsControllerDelegate {
     nonisolated func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         Task { @MainActor in
-            transactions = fetchedResultsController?.fetchedObjects ?? []
+            self.transactions = self.fetchedResultsController?.fetchedObjects ?? []
         }
     }
 }

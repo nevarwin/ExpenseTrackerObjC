@@ -185,12 +185,6 @@ struct TransactionRow: View {
     }
 }
 
-extension Transaction: Identifiable {
-    public var id: NSManagedObjectID {
-        objectID
-    }
-}
-
 #Preview {
     TransactionsHomeView()
         .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)

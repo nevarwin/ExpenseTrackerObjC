@@ -238,12 +238,6 @@ struct CategoryRow: View {
     }
 }
 
-extension Category: Identifiable {
-    public var id: NSManagedObjectID {
-        objectID
-    }
-}
-
 #Preview {
     BudgetDetailView(budget: nil, context: PersistenceController.preview.container.viewContext)
 }

@@ -96,12 +96,6 @@ struct BudgetRow: View {
     }
 }
 
-extension Budget: Identifiable {
-    public var id: NSManagedObjectID {
-        objectID
-    }
-}
-
 #Preview {
     BudgetListView()
         .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)

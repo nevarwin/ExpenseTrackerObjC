@@ -11,7 +11,7 @@ import Foundation
 struct PersistenceController {
     static let shared = PersistenceController()
     
-    static var preview: PersistenceController = {
+    static let preview: PersistenceController = {
         let controller = PersistenceController(inMemory: true)
         let context = controller.container.viewContext
         
