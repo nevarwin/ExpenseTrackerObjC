@@ -119,8 +119,11 @@
         newCategory.installmentStartDate = self.startDatePicker.date;
         newCategory.installmentMonths = (int16_t)[self.monthsTextField.text integerValue];
         newCategory.monthlyPayment = [NSDecimalNumber decimalNumberWithString:self.monthlyTextField.text];
+        
+        NSInteger monthsToAdd = newCategory.installmentMonths > 0 ? (newCategory.installmentMonths - 1) : 0;
+        
         NSDate *installmentEndDate = [calendar dateByAddingUnit:NSCalendarUnitMonth
-                                                          value:newCategory.installmentMonths
+                                                          value:monthsToAdd
                                                          toDate:newCategory.installmentStartDate
                                                         options:0];
         
