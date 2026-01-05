@@ -42,9 +42,30 @@
         [self initializeCurrentDate];
         self.yearHeaderView.hidden = !self.isEditMode;
         
+        NSInteger currentMonth = self.currentDateComponents.month;
+        NSInteger currentYear = [self.yearLabel.text integerValue];
+        
+        // Convert to a linear score: (Year * 12) + Month
+        NSInteger currentTotalMonths = (currentYear * 12) + currentMonth;
+        
+        NSCalendar *calendar = [NSCalendar currentCalendar];
+        
         for (Category *category in self.budget.category) {
-            if (category.isActive){
-                if(category.isIncome ){
+            
+            if (!category.isActive) { continue; }
+            
+            NSDateComponents *startComps = [calendar components:(NSCalendarUnitYear | NSCalendarUnitMonth)
+                                                       fromDate:category.installmentStartDate];
+            NSInteger startTotalMonths = (startComps.year * 12) + startComps.month;
+            NSInteger lastValidTotalMonths = startTotalMonths + category.installmentMonths - 1;
+            
+            if (currentTotalMonths >= startTotalMonths && currentTotalMonths <= lastValidTotalMonths) {
+ 
+                // Optional: Calculate which payment number this is (e.g. 1 of 2)
+                NSInteger paymentNumber = currentTotalMonths - startTotalMonths + 1;
+                NSLog(@"Showing payment %ld of %ld for %@", (long)paymentNumber, (long)category.installmentMonths, category.name);
+                
+                if (category.isIncome) {
                     [self.incomeCategories addObject:category];
                 } else {
                     [self.expenseCategories addObject:category];
@@ -959,3 +980,4 @@ betweenStartDate:(NSDate *)startDate
 }
 
 @end
+
