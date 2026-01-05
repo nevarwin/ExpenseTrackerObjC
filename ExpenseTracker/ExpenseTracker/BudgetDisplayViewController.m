@@ -60,8 +60,7 @@
             NSInteger lastValidTotalMonths = startTotalMonths + category.installmentMonths - 1;
             
             if (currentTotalMonths >= startTotalMonths && currentTotalMonths <= lastValidTotalMonths) {
- 
-                // Optional: Calculate which payment number this is (e.g. 1 of 2)
+                
                 NSInteger paymentNumber = currentTotalMonths - startTotalMonths + 1;
                 NSLog(@"Showing payment %ld of %ld for %@", (long)paymentNumber, (long)category.installmentMonths, category.name);
                 
@@ -534,7 +533,7 @@ betweenStartDate:(NSDate *)startDate
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (tableView == self.budgetInfoTableView && self.isBudgetSectionExpanded) {
-            return 4;
+        return 4;
     }
     if (tableView == self.budgetDisplayTableView){
         if (section == 0) return self.expenseCategories.count;
@@ -585,35 +584,47 @@ betweenStartDate:(NSDate *)startDate
     
     BudgetCategoryCell *cell = [tableView dequeueReusableCellWithIdentifier:@"BudgetCategoryCell" forIndexPath:indexPath];
     
+    Category *category = nil;
     if (indexPath.section == 0) {
-        // Expense attributes
-        Category *expenseCategory = (indexPath.row < self.expenseCategories.count)
-        ? self.expenseCategories[indexPath.row]
-        : nil;
-        
-        NSString *expenseName = expenseCategory.name ?: @"";
-        NSDecimalNumber *expenseAmount = expenseCategory.allocatedAmount ?: [NSDecimalNumber zero];
-        NSDecimalNumber *expenseUsedAmount = expenseCategory.usedAmount ?: [NSDecimalNumber zero];
-        
-        [cell configureWithPlaceholder:expenseName
-                                 value:expenseAmount
-                            usedAmount:expenseUsedAmount];
-        
+        category = (indexPath.row < self.expenseCategories.count) ? self.expenseCategories[indexPath.row] : nil;
     } else if (indexPath.section == 1) {
-        // Income attributes
-        Category *incomeCategory = (indexPath.row < self.incomeCategories.count)
-        ? self.incomeCategories[indexPath.row]
-        : nil;
-        
-        NSString *incomeName = incomeCategory.name ?: @"";
-        NSDecimalNumber *incomeAmount = incomeCategory.allocatedAmount ?: [NSDecimalNumber zero];
-        NSDecimalNumber *incomeUsedAmount = incomeCategory.usedAmount ?: [NSDecimalNumber zero];
-        
-        [cell configureWithPlaceholder:incomeName
-                                 value:incomeAmount
-                            usedAmount:incomeUsedAmount];
-        
+        category = (indexPath.row < self.incomeCategories.count) ? self.incomeCategories[indexPath.row] : nil;
     }
+    
+    if (!category) return cell;
+    
+    NSString *name = category.name ?: @"";
+    NSDecimalNumber *amount = category.allocatedAmount ?: [NSDecimalNumber zero];
+    NSDecimalNumber *used = category.usedAmount ?: [NSDecimalNumber zero];
+    
+    NSInteger currentPaymentNum = 0;
+    NSInteger totalPayments = 0;
+    
+    if (category.installmentMonths > 1 && category.installmentStartDate) {
+        
+        // Get the view's current Score (Year * 12 + Month)
+        NSInteger currentViewMonth = self.currentDateComponents.month;
+        NSInteger currentViewYear = [self.yearLabel.text integerValue];
+        NSInteger currentViewScore = (currentViewYear * 12) + currentViewMonth;
+        
+        // Get the Start Date Score
+        NSCalendar *calendar = [NSCalendar currentCalendar];
+        NSDateComponents *startComps = [calendar components:(NSCalendarUnitYear | NSCalendarUnitMonth)
+                                                   fromDate:category.installmentStartDate];
+        NSInteger startScore = (startComps.year * 12) + startComps.month;
+        
+        // Calculate the Index (Difference + 1)
+        // Example: If View is Feb (Score 10) and Start is Jan (Score 9) -> 10 - 9 + 1 = Payment #2
+        currentPaymentNum = currentViewScore - startScore + 1;
+        totalPayments = category.installmentMonths;
+    }
+    
+    [cell configureWithPlaceholder:name
+                             value:amount
+                        usedAmount:used
+                 installmentNumber:currentPaymentNum
+                 totalInstallments:totalPayments];
+    
     return cell;
 }
 
@@ -623,7 +634,7 @@ betweenStartDate:(NSDate *)startDate
         UIView *headerView = [[UIView alloc] init];
         headerView.backgroundColor = [UIColor clearColor];
         UILabel *titleLabel = [[UILabel alloc] init];
-    
+        
         titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
         titleLabel.font = [UIFont boldSystemFontOfSize:[UIFont preferredFontForTextStyle:UIFontTextStyleFootnote].pointSize];
         titleLabel.textColor = [UIColor secondaryLabelColor];

@@ -64,8 +64,15 @@
 - (void)configureWithPlaceholder:(NSString *)placeholder
                            value:(NSDecimalNumber *)value
                       usedAmount:(NSDecimalNumber *)usedAmount
+               installmentNumber:(NSInteger)installmentNumber
+               totalInstallments:(NSInteger)totalInstallments
 {
-    self.categoryLabel.text = placeholder;
+    if (totalInstallments > 1 && installmentNumber > 0) {
+        self.categoryLabel.text = [NSString stringWithFormat:@"%@ (%ld/%ld)", placeholder, (long)installmentNumber, (long)totalInstallments];
+    } else {
+        self.categoryLabel.text = placeholder;
+    }
+
     self.amountLabel.text = [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:value];
     
     NSNumber *usedAmountNum = [self safeNumberFrom:usedAmount];
