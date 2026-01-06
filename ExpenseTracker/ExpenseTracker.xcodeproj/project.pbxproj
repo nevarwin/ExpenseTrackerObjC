@@ -19,6 +19,8 @@
 		97FBC7C12F0D49A100C555BC /* Transaction+CoreDataClass.h in Sources */ = {isa = PBXBuildFile; fileRef = 97FBC7B92F0D49A100C555BC /* Transaction+CoreDataClass.h */; };
 		97FBC7C22F0D49A100C555BC /* Budget+CoreDataClass.m in Sources */ = {isa = PBXBuildFile; fileRef = 97FBC7BA2F0D49A100C555BC /* Budget+CoreDataClass.m */; };
 		97FBC7C32F0D49A100C555BC /* Transaction+CoreDataProperties.h in Sources */ = {isa = PBXBuildFile; fileRef = 97FBC7BB2F0D49A100C555BC /* Transaction+CoreDataProperties.h */; };
+		97FBC8B82F0D52C800C555BC /* Category+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 97FBC8B72F0D52C800C555BC /* Category+CoreDataProperties.m */; };
+		97FBC8B92F0D52C800C555BC /* Category+CoreDataClass.m in Sources */ = {isa = PBXBuildFile; fileRef = 97FBC8B52F0D52C800C555BC /* Category+CoreDataClass.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,29 +56,17 @@
 		97FBC7B92F0D49A100C555BC /* Transaction+CoreDataClass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Transaction+CoreDataClass.h"; path = "Models/Transaction+CoreDataClass.h"; sourceTree = "<group>"; };
 		97FBC7BA2F0D49A100C555BC /* Budget+CoreDataClass.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = "Budget+CoreDataClass.m"; path = "Models/Budget+CoreDataClass.m"; sourceTree = "<group>"; };
 		97FBC7BB2F0D49A100C555BC /* Transaction+CoreDataProperties.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Transaction+CoreDataProperties.h"; path = "Models/Transaction+CoreDataProperties.h"; sourceTree = "<group>"; };
+		97FBC8B42F0D52C800C555BC /* Category+CoreDataClass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Category+CoreDataClass.h"; path = "Models/Category+CoreDataClass.h"; sourceTree = "<group>"; };
+		97FBC8B52F0D52C800C555BC /* Category+CoreDataClass.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = "Category+CoreDataClass.m"; path = "Models/Category+CoreDataClass.m"; sourceTree = "<group>"; };
+		97FBC8B62F0D52C800C555BC /* Category+CoreDataProperties.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Category+CoreDataProperties.h"; path = "Models/Category+CoreDataProperties.h"; sourceTree = "<group>"; };
+		97FBC8B72F0D52C800C555BC /* Category+CoreDataProperties.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = "Category+CoreDataProperties.m"; path = "Models/Category+CoreDataProperties.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		97FBC7B12F0D3D8700C555BC /* Exceptions for "ExpenseTrackerTests" folder in "ExpenseTracker" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				ExpenseTrackerTests.m,
-			);
-			target = 1873DFEB2E0D3E6500C2C70B /* ExpenseTracker */;
-		};
-		97FBC7B22F0D3D8700C555BC /* Exceptions for "ExpenseTrackerUITests" folder in "ExpenseTracker" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				ExpenseTrackerUITests.m,
-				ExpenseTrackerUITestsLaunchTests.m,
-			);
-			target = 1873DFEB2E0D3E6500C2C70B /* ExpenseTracker */;
-		};
 		97FBC7B32F0D3E0B00C555BC /* Exceptions for "ExpenseTracker" folder in "ExpenseTracker" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				App/Info.plist,
-				CoreData/Transaction.xcdatamodeld,
 			);
 			target = 1873DFEB2E0D3E6500C2C70B /* ExpenseTracker */;
 		};
@@ -113,22 +103,6 @@
 			path = ExpenseTracker;
 			sourceTree = "<group>";
 		};
-		1873E00D2E0D3E6600C2C70B /* ExpenseTrackerTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				97FBC7B12F0D3D8700C555BC /* Exceptions for "ExpenseTrackerTests" folder in "ExpenseTracker" target */,
-			);
-			path = ExpenseTrackerTests;
-			sourceTree = "<group>";
-		};
-		1873E0172E0D3E6700C2C70B /* ExpenseTrackerUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				97FBC7B22F0D3D8700C555BC /* Exceptions for "ExpenseTrackerUITests" folder in "ExpenseTracker" target */,
-			);
-			path = ExpenseTrackerUITests;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -160,6 +134,10 @@
 		1873DFE32E0D3E6500C2C70B = {
 			isa = PBXGroup;
 			children = (
+				97FBC8B42F0D52C800C555BC /* Category+CoreDataClass.h */,
+				97FBC8B52F0D52C800C555BC /* Category+CoreDataClass.m */,
+				97FBC8B62F0D52C800C555BC /* Category+CoreDataProperties.h */,
+				97FBC8B72F0D52C800C555BC /* Category+CoreDataProperties.m */,
 				97FBC7B52F0D49A100C555BC /* Budget+CoreDataClass.h */,
 				97FBC7BA2F0D49A100C555BC /* Budget+CoreDataClass.m */,
 				97FBC7B72F0D49A100C555BC /* Budget+CoreDataProperties.h */,
@@ -170,8 +148,6 @@
 				97FBC7B42F0D49A100C555BC /* Transaction+CoreDataProperties.m */,
 				18AEAE972E867646003C31FA /* Application Support */,
 				1873DFEE2E0D3E6500C2C70B /* ExpenseTracker */,
-				1873E00D2E0D3E6600C2C70B /* ExpenseTrackerTests */,
-				1873E0172E0D3E6700C2C70B /* ExpenseTrackerUITests */,
 				18E0C21A2E14E2C400CE9F57 /* Frameworks */,
 				1873DFED2E0D3E6500C2C70B /* Products */,
 			);
@@ -243,9 +219,6 @@
 			dependencies = (
 				1873E00C2E0D3E6600C2C70B /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				1873E00D2E0D3E6600C2C70B /* ExpenseTrackerTests */,
-			);
 			name = ExpenseTrackerTests;
 			packageProductDependencies = (
 			);
@@ -265,9 +238,6 @@
 			);
 			dependencies = (
 				1873E0162E0D3E6700C2C70B /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				1873E0172E0D3E6700C2C70B /* ExpenseTrackerUITests */,
 			);
 			name = ExpenseTrackerUITests;
 			packageProductDependencies = (
@@ -366,6 +336,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				97FBC8B82F0D52C800C555BC /* Category+CoreDataProperties.m in Sources */,
+				97FBC8B92F0D52C800C555BC /* Category+CoreDataClass.m in Sources */,
 				97FBC7BC2F0D49A100C555BC /* Transaction+CoreDataProperties.m in Sources */,
 				97FBC7BD2F0D49A100C555BC /* Budget+CoreDataClass.h in Sources */,
 				97FBC7BE2F0D49A100C555BC /* Budget+CoreDataProperties.m in Sources */,
@@ -406,7 +378,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = ExpenseTracker/Info.plist;
+				INFOPLIST_FILE = ExpenseTracker/App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Expense me";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -443,7 +415,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = ExpenseTracker/Info.plist;
+				INFOPLIST_FILE = ExpenseTracker/App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Expense me";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
