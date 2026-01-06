@@ -7,14 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1831B2BB2E77EF310076F721 /* Transaction+CoreDataClass.m in Sources */ = {isa = PBXBuildFile; fileRef = 1831B2B82E77EF310076F721 /* Transaction+CoreDataClass.m */; };
-		1831B2BC2E77EF310076F721 /* Transaction+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 1831B2BA2E77EF310076F721 /* Transaction+CoreDataProperties.m */; };
-		1831B2C12E77F53E0076F721 /* Budget+CoreDataClass.m in Sources */ = {isa = PBXBuildFile; fileRef = 1831B2BE2E77F53E0076F721 /* Budget+CoreDataClass.m */; };
-		1831B2C22E77F53E0076F721 /* Budget+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 1831B2C02E77F53E0076F721 /* Budget+CoreDataProperties.m */; };
 		18AEAE982E867646003C31FA /* Transaction.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = 18AEAE942E867646003C31FA /* Transaction.sqlite */; };
 		18AEAE992E867646003C31FA /* Transaction.sqlite-shm in Resources */ = {isa = PBXBuildFile; fileRef = 18AEAE952E867646003C31FA /* Transaction.sqlite-shm */; };
 		18AEAE9A2E867646003C31FA /* Transaction.sqlite-wal in Resources */ = {isa = PBXBuildFile; fileRef = 18AEAE962E867646003C31FA /* Transaction.sqlite-wal */; };
 		18E0C21C2E14E2C400CE9F57 /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 18E0C21B2E14E2C400CE9F57 /* CoreData.framework */; };
+		97FBC7BC2F0D49A100C555BC /* Transaction+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 97FBC7B42F0D49A100C555BC /* Transaction+CoreDataProperties.m */; };
+		97FBC7BD2F0D49A100C555BC /* Budget+CoreDataClass.h in Sources */ = {isa = PBXBuildFile; fileRef = 97FBC7B52F0D49A100C555BC /* Budget+CoreDataClass.h */; };
+		97FBC7BE2F0D49A100C555BC /* Budget+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 97FBC7B62F0D49A100C555BC /* Budget+CoreDataProperties.m */; };
+		97FBC7BF2F0D49A100C555BC /* Budget+CoreDataProperties.h in Sources */ = {isa = PBXBuildFile; fileRef = 97FBC7B72F0D49A100C555BC /* Budget+CoreDataProperties.h */; };
+		97FBC7C02F0D49A100C555BC /* Transaction+CoreDataClass.m in Sources */ = {isa = PBXBuildFile; fileRef = 97FBC7B82F0D49A100C555BC /* Transaction+CoreDataClass.m */; };
+		97FBC7C12F0D49A100C555BC /* Transaction+CoreDataClass.h in Sources */ = {isa = PBXBuildFile; fileRef = 97FBC7B92F0D49A100C555BC /* Transaction+CoreDataClass.h */; };
+		97FBC7C22F0D49A100C555BC /* Budget+CoreDataClass.m in Sources */ = {isa = PBXBuildFile; fileRef = 97FBC7BA2F0D49A100C555BC /* Budget+CoreDataClass.m */; };
+		97FBC7C32F0D49A100C555BC /* Transaction+CoreDataProperties.h in Sources */ = {isa = PBXBuildFile; fileRef = 97FBC7BB2F0D49A100C555BC /* Transaction+CoreDataProperties.h */; };
+		97FBC8B82F0D52C800C555BC /* Category+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 97FBC8B72F0D52C800C555BC /* Category+CoreDataProperties.m */; };
+		97FBC8B92F0D52C800C555BC /* Category+CoreDataClass.m in Sources */ = {isa = PBXBuildFile; fileRef = 97FBC8B52F0D52C800C555BC /* Category+CoreDataClass.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,14 +41,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		1831B2B72E77EF310076F721 /* Transaction+CoreDataClass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Transaction+CoreDataClass.h"; sourceTree = "<group>"; };
-		1831B2B82E77EF310076F721 /* Transaction+CoreDataClass.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "Transaction+CoreDataClass.m"; sourceTree = "<group>"; };
-		1831B2B92E77EF310076F721 /* Transaction+CoreDataProperties.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Transaction+CoreDataProperties.h"; sourceTree = "<group>"; };
-		1831B2BA2E77EF310076F721 /* Transaction+CoreDataProperties.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "Transaction+CoreDataProperties.m"; sourceTree = "<group>"; };
-		1831B2BD2E77F53E0076F721 /* Budget+CoreDataClass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Budget+CoreDataClass.h"; sourceTree = "<group>"; };
-		1831B2BE2E77F53E0076F721 /* Budget+CoreDataClass.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "Budget+CoreDataClass.m"; sourceTree = "<group>"; };
-		1831B2BF2E77F53E0076F721 /* Budget+CoreDataProperties.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Budget+CoreDataProperties.h"; sourceTree = "<group>"; };
-		1831B2C02E77F53E0076F721 /* Budget+CoreDataProperties.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "Budget+CoreDataProperties.m"; sourceTree = "<group>"; };
 		1873DFEC2E0D3E6500C2C70B /* ExpenseTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExpenseTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1873E00A2E0D3E6600C2C70B /* ExpenseTrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExpenseTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1873E0142E0D3E6700C2C70B /* ExpenseTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExpenseTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -50,35 +48,59 @@
 		18AEAE952E867646003C31FA /* Transaction.sqlite-shm */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Transaction.sqlite-shm"; sourceTree = "<group>"; };
 		18AEAE962E867646003C31FA /* Transaction.sqlite-wal */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Transaction.sqlite-wal"; sourceTree = "<group>"; };
 		18E0C21B2E14E2C400CE9F57 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
+		97FBC7B42F0D49A100C555BC /* Transaction+CoreDataProperties.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = "Transaction+CoreDataProperties.m"; path = "Models/Transaction+CoreDataProperties.m"; sourceTree = "<group>"; };
+		97FBC7B52F0D49A100C555BC /* Budget+CoreDataClass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Budget+CoreDataClass.h"; path = "Models/Budget+CoreDataClass.h"; sourceTree = "<group>"; };
+		97FBC7B62F0D49A100C555BC /* Budget+CoreDataProperties.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = "Budget+CoreDataProperties.m"; path = "Models/Budget+CoreDataProperties.m"; sourceTree = "<group>"; };
+		97FBC7B72F0D49A100C555BC /* Budget+CoreDataProperties.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Budget+CoreDataProperties.h"; path = "Models/Budget+CoreDataProperties.h"; sourceTree = "<group>"; };
+		97FBC7B82F0D49A100C555BC /* Transaction+CoreDataClass.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = "Transaction+CoreDataClass.m"; path = "Models/Transaction+CoreDataClass.m"; sourceTree = "<group>"; };
+		97FBC7B92F0D49A100C555BC /* Transaction+CoreDataClass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Transaction+CoreDataClass.h"; path = "Models/Transaction+CoreDataClass.h"; sourceTree = "<group>"; };
+		97FBC7BA2F0D49A100C555BC /* Budget+CoreDataClass.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = "Budget+CoreDataClass.m"; path = "Models/Budget+CoreDataClass.m"; sourceTree = "<group>"; };
+		97FBC7BB2F0D49A100C555BC /* Transaction+CoreDataProperties.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Transaction+CoreDataProperties.h"; path = "Models/Transaction+CoreDataProperties.h"; sourceTree = "<group>"; };
+		97FBC8B42F0D52C800C555BC /* Category+CoreDataClass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Category+CoreDataClass.h"; path = "Models/Category+CoreDataClass.h"; sourceTree = "<group>"; };
+		97FBC8B52F0D52C800C555BC /* Category+CoreDataClass.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = "Category+CoreDataClass.m"; path = "Models/Category+CoreDataClass.m"; sourceTree = "<group>"; };
+		97FBC8B62F0D52C800C555BC /* Category+CoreDataProperties.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Category+CoreDataProperties.h"; path = "Models/Category+CoreDataProperties.h"; sourceTree = "<group>"; };
+		97FBC8B72F0D52C800C555BC /* Category+CoreDataProperties.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = "Category+CoreDataProperties.m"; path = "Models/Category+CoreDataProperties.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		1873E01C2E0D3E6700C2C70B /* Exceptions for "ExpenseTracker" folder in "ExpenseTracker" target */ = {
+		97FBC7B32F0D3E0B00C555BC /* Exceptions for "ExpenseTracker" folder in "ExpenseTracker" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Info.plist,
+				App/Info.plist,
 			);
 			target = 1873DFEB2E0D3E6500C2C70B /* ExpenseTracker */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		97FBC7B02F0D3D8700C555BC /* Exceptions for "ExpenseTracker" folder in "Compile Sources" phase from "ExpenseTracker" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 97FBC7862F0D3D6000C555BC /* Sources */;
+			membershipExceptions = (
+				App/AppDelegate.h,
+				App/SceneDelegate.h,
+				Controllers/BudgetDisplayViewController.h,
+				Controllers/BudgetViewController.h,
+				Controllers/CategoryViewController.h,
+				Controllers/PickerModalViewController.h,
+				Controllers/TransactionsViewController.h,
+				Controllers/ViewController.h,
+				Services/CoreDataManager.h,
+				Utilities/CurrencyFormatterUtil.h,
+				"Utilities/UIViewController+Alerts.h",
+				Views/BudgetCategoryCell.h,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		1873DFEE2E0D3E6500C2C70B /* ExpenseTracker */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				1873E01C2E0D3E6700C2C70B /* Exceptions for "ExpenseTracker" folder in "ExpenseTracker" target */,
+				97FBC7B32F0D3E0B00C555BC /* Exceptions for "ExpenseTracker" folder in "ExpenseTracker" target */,
+				97FBC7B02F0D3D8700C555BC /* Exceptions for "ExpenseTracker" folder in "Compile Sources" phase from "ExpenseTracker" target */,
 			);
 			path = ExpenseTracker;
-			sourceTree = "<group>";
-		};
-		1873E00D2E0D3E6600C2C70B /* ExpenseTrackerTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ExpenseTrackerTests;
-			sourceTree = "<group>";
-		};
-		1873E0172E0D3E6700C2C70B /* ExpenseTrackerUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ExpenseTrackerUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -112,18 +134,20 @@
 		1873DFE32E0D3E6500C2C70B = {
 			isa = PBXGroup;
 			children = (
+				97FBC8B42F0D52C800C555BC /* Category+CoreDataClass.h */,
+				97FBC8B52F0D52C800C555BC /* Category+CoreDataClass.m */,
+				97FBC8B62F0D52C800C555BC /* Category+CoreDataProperties.h */,
+				97FBC8B72F0D52C800C555BC /* Category+CoreDataProperties.m */,
+				97FBC7B52F0D49A100C555BC /* Budget+CoreDataClass.h */,
+				97FBC7BA2F0D49A100C555BC /* Budget+CoreDataClass.m */,
+				97FBC7B72F0D49A100C555BC /* Budget+CoreDataProperties.h */,
+				97FBC7B62F0D49A100C555BC /* Budget+CoreDataProperties.m */,
+				97FBC7B92F0D49A100C555BC /* Transaction+CoreDataClass.h */,
+				97FBC7B82F0D49A100C555BC /* Transaction+CoreDataClass.m */,
+				97FBC7BB2F0D49A100C555BC /* Transaction+CoreDataProperties.h */,
+				97FBC7B42F0D49A100C555BC /* Transaction+CoreDataProperties.m */,
 				18AEAE972E867646003C31FA /* Application Support */,
-				1831B2BD2E77F53E0076F721 /* Budget+CoreDataClass.h */,
-				1831B2BE2E77F53E0076F721 /* Budget+CoreDataClass.m */,
-				1831B2BF2E77F53E0076F721 /* Budget+CoreDataProperties.h */,
-				1831B2C02E77F53E0076F721 /* Budget+CoreDataProperties.m */,
-				1831B2B72E77EF310076F721 /* Transaction+CoreDataClass.h */,
-				1831B2B82E77EF310076F721 /* Transaction+CoreDataClass.m */,
-				1831B2B92E77EF310076F721 /* Transaction+CoreDataProperties.h */,
-				1831B2BA2E77EF310076F721 /* Transaction+CoreDataProperties.m */,
 				1873DFEE2E0D3E6500C2C70B /* ExpenseTracker */,
-				1873E00D2E0D3E6600C2C70B /* ExpenseTrackerTests */,
-				1873E0172E0D3E6700C2C70B /* ExpenseTrackerUITests */,
 				18E0C21A2E14E2C400CE9F57 /* Frameworks */,
 				1873DFED2E0D3E6500C2C70B /* Products */,
 			);
@@ -164,7 +188,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 1873E01D2E0D3E6700C2C70B /* Build configuration list for PBXNativeTarget "ExpenseTracker" */;
 			buildPhases = (
-				1873DFE82E0D3E6500C2C70B /* Sources */,
+				97FBC7862F0D3D6000C555BC /* Sources */,
 				1873DFE92E0D3E6500C2C70B /* Frameworks */,
 				1873DFEA2E0D3E6500C2C70B /* Resources */,
 			);
@@ -195,9 +219,6 @@
 			dependencies = (
 				1873E00C2E0D3E6600C2C70B /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				1873E00D2E0D3E6600C2C70B /* ExpenseTrackerTests */,
-			);
 			name = ExpenseTrackerTests;
 			packageProductDependencies = (
 			);
@@ -217,9 +238,6 @@
 			);
 			dependencies = (
 				1873E0162E0D3E6700C2C70B /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				1873E0172E0D3E6700C2C70B /* ExpenseTrackerUITests */,
 			);
 			name = ExpenseTrackerUITests;
 			packageProductDependencies = (
@@ -300,17 +318,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		1873DFE82E0D3E6500C2C70B /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				1831B2C12E77F53E0076F721 /* Budget+CoreDataClass.m in Sources */,
-				1831B2C22E77F53E0076F721 /* Budget+CoreDataProperties.m in Sources */,
-				1831B2BB2E77EF310076F721 /* Transaction+CoreDataClass.m in Sources */,
-				1831B2BC2E77EF310076F721 /* Transaction+CoreDataProperties.m in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		1873E0062E0D3E6600C2C70B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -322,6 +329,23 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		97FBC7862F0D3D6000C555BC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				97FBC8B82F0D52C800C555BC /* Category+CoreDataProperties.m in Sources */,
+				97FBC8B92F0D52C800C555BC /* Category+CoreDataClass.m in Sources */,
+				97FBC7BC2F0D49A100C555BC /* Transaction+CoreDataProperties.m in Sources */,
+				97FBC7BD2F0D49A100C555BC /* Budget+CoreDataClass.h in Sources */,
+				97FBC7BE2F0D49A100C555BC /* Budget+CoreDataProperties.m in Sources */,
+				97FBC7BF2F0D49A100C555BC /* Budget+CoreDataProperties.h in Sources */,
+				97FBC7C02F0D49A100C555BC /* Transaction+CoreDataClass.m in Sources */,
+				97FBC7C12F0D49A100C555BC /* Transaction+CoreDataClass.h in Sources */,
+				97FBC7C22F0D49A100C555BC /* Budget+CoreDataClass.m in Sources */,
+				97FBC7C32F0D49A100C555BC /* Transaction+CoreDataProperties.h in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -348,13 +372,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = ExpenseTracker/ExpenseTracker.entitlements;
+				CODE_SIGN_ENTITLEMENTS = ExpenseTracker/App/ExpenseTracker.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = ExpenseTracker/Info.plist;
+				INFOPLIST_FILE = ExpenseTracker/App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Expense me";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -385,13 +409,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = ExpenseTracker/ExpenseTracker.entitlements;
+				CODE_SIGN_ENTITLEMENTS = ExpenseTracker/App/ExpenseTracker.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = ExpenseTracker/Info.plist;
+				INFOPLIST_FILE = ExpenseTracker/App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Expense me";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
