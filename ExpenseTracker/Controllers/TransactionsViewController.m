@@ -208,6 +208,28 @@
     return [budgetsArray copy];
 }
 
+- (BOOL)isWithinInstallment:(NSDate *)date
+                           :(Category *)newCategory {
+    
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    
+    NSDateComponents *currentComps = [calendar components:(NSCalendarUnitYear | NSCalendarUnitMonth) fromDate:date];
+    NSInteger currentMonth = currentComps.month;
+    NSInteger currentYear = currentComps.year;
+    
+    NSInteger currentTotalMonths = (currentYear * 12) + currentMonth;
+    NSDate *installmentStart = newCategory.installmentStartDate;
+    
+    NSDateComponents *startComps = [calendar components:(NSCalendarUnitYear | NSCalendarUnitMonth) fromDate:installmentStart];
+    NSInteger startTotalMonths = (startComps.year * 12) + startComps.month;
+    NSInteger lastValidTotalMonths = startTotalMonths + newCategory.installmentMonths - 1;
+    
+    if (currentTotalMonths >= startTotalMonths && currentTotalMonths <= lastValidTotalMonths) {
+        return NO;
+    }
+    return YES;
+}
+
 - (NSArray<NSDictionary *> *)getCategoryValues:(NSManagedObjectContext *)context error:(NSError **)error isIncome:(NSInteger)isIncome {
     NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Category"];
     fetchRequest.resultType = NSManagedObjectResultType;
