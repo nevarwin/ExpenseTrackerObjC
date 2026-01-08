@@ -48,6 +48,7 @@
 		18AEAE952E867646003C31FA /* Transaction.sqlite-shm */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Transaction.sqlite-shm"; sourceTree = "<group>"; };
 		18AEAE962E867646003C31FA /* Transaction.sqlite-wal */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Transaction.sqlite-wal"; sourceTree = "<group>"; };
 		18E0C21B2E14E2C400CE9F57 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
+		18E4B10A2F0F3DA1002E3CC1 /* ExpenseTracker.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = ExpenseTracker.xcodeproj; sourceTree = "<group>"; };
 		97FBC7B42F0D49A100C555BC /* Transaction+CoreDataProperties.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = "Transaction+CoreDataProperties.m"; path = "Models/Transaction+CoreDataProperties.m"; sourceTree = "<group>"; };
 		97FBC7B52F0D49A100C555BC /* Budget+CoreDataClass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Budget+CoreDataClass.h"; path = "Models/Budget+CoreDataClass.h"; sourceTree = "<group>"; };
 		97FBC7B62F0D49A100C555BC /* Budget+CoreDataProperties.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = "Budget+CoreDataProperties.m"; path = "Models/Budget+CoreDataProperties.m"; sourceTree = "<group>"; };
@@ -181,6 +182,13 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		18E4B10B2F0F3DA1002E3CC1 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -281,6 +289,12 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1873DFED2E0D3E6500C2C70B /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 18E4B10B2F0F3DA1002E3CC1 /* Products */;
+					ProjectRef = 18E4B10A2F0F3DA1002E3CC1 /* ExpenseTracker.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				1873DFEB2E0D3E6500C2C70B /* ExpenseTracker */,
@@ -376,7 +390,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = VQXG9UW8TD;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ExpenseTracker/App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Expense me";
@@ -413,7 +427,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = VQXG9UW8TD;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ExpenseTracker/App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Expense me";
