@@ -79,8 +79,8 @@
     NSNumber *valueNum = [self safeNumberFrom:value];
     NSNumber *remainingAmount = @([valueNum doubleValue] - [usedAmountNum doubleValue]);
     
-    NSString *usedAmountText = [NSString stringWithFormat:@"Used Amount: %@", [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:usedAmountNum]];
-    NSString *remainingAmountText = [NSString stringWithFormat:@"Remaining Amount: %@", [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:remainingAmount]];
+    NSString *usedAmountText = [NSString stringWithFormat:@"Used: %@", [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:usedAmountNum]];
+    NSString *remainingAmountText = [NSString stringWithFormat:@"Remaining: %@", [[CurrencyFormatterUtil currencyFormatter] stringFromNumber:remainingAmount]];
     
     NSString *combinedText = [NSString stringWithFormat:@"%@\n%@", usedAmountText, remainingAmountText];
     self.infoLabel.text = combinedText;
