@@ -560,19 +560,19 @@ betweenStartDate:(NSDate *)startDate
         
         switch (indexPath.row) {
             case 0:
-                cell.textLabel.text = @"Remaining Budget";
+                cell.textLabel.text = @"Remaining";
                 cell.detailTextLabel.text = [self totalBudget];
                 break;
             case 1:
-                cell.textLabel.text = @"Total Used Budget";
+                cell.textLabel.text = @"Spent";
                 cell.detailTextLabel.text = [[[CurrencyFormatterUtil currencyFormatter] stringFromNumber:[self totalUsedBudget]] copy];
                 break;
             case 2:
-                cell.textLabel.text = @"Expenses";
+                cell.textLabel.text = @"Total Expenses";
                 cell.detailTextLabel.text = [self expensesAmountLabel];
                 break;
             case 3:
-                cell.textLabel.text = @"Income";
+                cell.textLabel.text = @"Total Income";
                 cell.detailTextLabel.text = [[[CurrencyFormatterUtil currencyFormatter] stringFromNumber:[self incomeAmountLabel]] copy];
                 break;
             default:
@@ -641,7 +641,7 @@ betweenStartDate:(NSDate *)startDate
         titleLabel.textAlignment = NSTextAlignmentLeft;
         [titleLabel setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
         [titleLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-        titleLabel.text = @"BUDGET SUMMARY";
+        titleLabel.text = @"MONTHLY SUMMARY";
         [headerView addSubview:titleLabel];
         
         NSMutableArray<NSLayoutConstraint *> *constraints = [NSMutableArray array];
