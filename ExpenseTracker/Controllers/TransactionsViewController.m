@@ -560,6 +560,28 @@
     BOOL isEditing = (self.existingTransaction != nil);
     BOOL amountOverflow = NO;
     
+    // TODO: Turn this into function
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    
+    NSDateComponents *currentComps = [calendar components:(NSCalendarUnitYear | NSCalendarUnitMonth) fromDate:date];
+    NSInteger currentMonth = currentComps.month;
+    NSInteger currentYear = currentComps.year;
+    
+    NSInteger currentTotalMonths = (currentYear * 12) + currentMonth;
+    NSDate *installmentStart = newCategory.installmentStartDate;
+    
+    if (installmentStart == nil && newCategory.installmentMonths < 0){
+        return;
+    }
+    
+    NSDateComponents *startComps = [calendar components:(NSCalendarUnitYear | NSCalendarUnitMonth) fromDate:installmentStart];
+    NSInteger startTotalMonths = (startComps.year * 12) + startComps.month;
+    NSInteger lastValidTotalMonths = startTotalMonths + newCategory.installmentMonths - 1;
+    
+    if (currentTotalMonths < startTotalMonths || currentTotalMonths > lastValidTotalMonths) {
+        NSLog(@"Installment is finished (or hasn't started)");
+    }
+
     if (isEditing) {
         Budget *oldBudget = self.existingTransaction.budget;
         Category *oldCategory = self.existingTransaction.category;
@@ -616,3 +638,4 @@
 }
 
 @end
+
