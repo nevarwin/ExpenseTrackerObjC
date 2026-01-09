@@ -60,6 +60,7 @@
     self.datePicker = [[UIDatePicker alloc] init];
     self.datePicker.datePickerMode = UIDatePickerModeDateAndTime;
     self.datePicker.locale = [NSLocale localeWithLocaleIdentifier:@"en_US"];
+    [self.datePicker addTarget:self action:@selector(datePickerChanged:) forControlEvents:UIControlEventValueChanged];
     self.categoryPicker = [[UIPickerView alloc] init];
     self.categoryPicker.delegate = self;
     self.categoryPicker.dataSource = self;
@@ -208,8 +209,17 @@
     return [budgetsArray copy];
 }
 
-- (BOOL)isWithinInstallment:(NSDate *)date
+- (BOOL)isNotWithinInstallment:(NSDate *)date
                            :(Category *)newCategory {
+    
+    if (!newCategory.isInstallment) {
+        return NO;
+    }
+    
+    NSDate *installmentStart = newCategory.installmentStartDate;
+    if (!installmentStart) {
+        return NO;
+    }
     
     NSCalendar *calendar = [NSCalendar currentCalendar];
     
@@ -218,7 +228,6 @@
     NSInteger currentYear = currentComps.year;
     
     NSInteger currentTotalMonths = (currentYear * 12) + currentMonth;
-    NSDate *installmentStart = newCategory.installmentStartDate;
     
     NSDateComponents *startComps = [calendar components:(NSCalendarUnitYear | NSCalendarUnitMonth) fromDate:installmentStart];
     NSInteger startTotalMonths = (startComps.year * 12) + startComps.month;
@@ -237,15 +246,23 @@
     fetchRequest.predicate = [NSPredicate predicateWithFormat:@"isIncome == %@", @(isIncome)];
     
     NSArray<Category *> *results = [context executeFetchRequest:fetchRequest error:error];
+    
     if (!results) return nil;
+    
     NSMutableArray *categoryArray = [NSMutableArray array];
+    NSDate *transactionDate = self.datePicker.date ?: [NSDate date];
+    
     for (Category *category in results) {
         if (category.name && self.selectedBudgetIndex == category.budget.objectID && self.selectedBudgetIndex != nil) {
-            [categoryArray addObject:@{
-                @"name": category.name,
-                @"objectID": category.objectID,
-                @"isIncome": @(category.isIncome)
-            }];
+            
+            // Check if category is valid for the selected date (installment logic)
+            if (![self isNotWithinInstallment:transactionDate :category]) {
+                [categoryArray addObject:@{
+                    @"name": category.name,
+                    @"objectID": category.objectID,
+                    @"isIncome": @(category.isIncome)
+                }];
+            }
         }
     }
     return [categoryArray copy];
@@ -513,6 +530,7 @@
         };
     } else if (sender.tag == 2) {
         pickerVC.items = [self.category valueForKey:@"name"];
+        NSLog(@"pickerVC item: %@", pickerVC.items);
         pickerVC.selectedIndex = 0;
         pickerVC.onDone = ^(NSInteger selectedIndex) {
             NSDictionary *selectedCategory = self.category[selectedIndex];
@@ -522,6 +540,12 @@
     }
 
     [self presentViewController:pickerVC animated:YES completion:nil];
+}
+
+- (void)datePickerChanged:(UIDatePicker *)sender {
+    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+    NSError *error = nil;
+    self.category = [self getCategoryValues:context error:&error isIncome:self.selectedTypeIndex];
 }
 
 #pragma mark - UITableViewDelegate
@@ -581,28 +605,6 @@
     
     BOOL isEditing = (self.existingTransaction != nil);
     BOOL amountOverflow = NO;
-    
-    // TODO: Turn this into function
-    NSCalendar *calendar = [NSCalendar currentCalendar];
-    
-    NSDateComponents *currentComps = [calendar components:(NSCalendarUnitYear | NSCalendarUnitMonth) fromDate:date];
-    NSInteger currentMonth = currentComps.month;
-    NSInteger currentYear = currentComps.year;
-    
-    NSInteger currentTotalMonths = (currentYear * 12) + currentMonth;
-    NSDate *installmentStart = newCategory.installmentStartDate;
-    
-    if (installmentStart == nil && newCategory.installmentMonths < 0){
-        return;
-    }
-    
-    NSDateComponents *startComps = [calendar components:(NSCalendarUnitYear | NSCalendarUnitMonth) fromDate:installmentStart];
-    NSInteger startTotalMonths = (startComps.year * 12) + startComps.month;
-    NSInteger lastValidTotalMonths = startTotalMonths + newCategory.installmentMonths - 1;
-    
-    if (currentTotalMonths < startTotalMonths || currentTotalMonths > lastValidTotalMonths) {
-        NSLog(@"Installment is finished (or hasn't started)");
-    }
 
     if (isEditing) {
         Budget *oldBudget = self.existingTransaction.budget;
