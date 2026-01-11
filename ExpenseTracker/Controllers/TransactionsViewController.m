@@ -210,7 +210,7 @@
 }
 
 - (BOOL)isNotWithinInstallment:(NSDate *)date
-                           :(Category *)newCategory {
+                              :(Category *)newCategory {
     
     if (!newCategory.isInstallment) {
         return NO;
@@ -354,7 +354,7 @@
         {
             cell.textLabel.text = @"Description";
             [cell.contentView addSubview:self.descriptionTextField];
-
+            
             self.descriptionTextField.translatesAutoresizingMaskIntoConstraints = NO;
             self.descriptionTextField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
             self.descriptionTextField.textAlignment = NSTextAlignmentRight;
@@ -400,12 +400,23 @@
             break;
         }
         case 5: // Category
+        {
+            BOOL hasCategories = self.category.count > 0;
+            BOOL isTypeSelected = self.selectedTypeIndex != 3;
+            
             cell.textLabel.text = @"Category";
             UIButton *typeButton = [UIButton buttonWithType:UIButtonTypeSystem];
-            [typeButton setTitle:@"Select Category" forState:UIControlStateNormal];
+            
+            if (isTypeSelected && !hasCategories) {
+                [typeButton setTitle:@"No Categories" forState:UIControlStateNormal];
+            } else {
+                [typeButton setTitle:@"Select Category" forState:UIControlStateNormal];
+            }
+            
             typeButton.translatesAutoresizingMaskIntoConstraints = NO;
             typeButton.tag = 2;
-            typeButton.enabled = self.selectedTypeIndex == 3 ? NO : YES;
+            typeButton.enabled = isTypeSelected && hasCategories;
+            
             [typeButton addTarget:self action:@selector(pickerButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
             [cell.contentView addSubview:typeButton];
             
@@ -414,6 +425,7 @@
                 [typeButton.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor]
             ]];
             break;
+        }
     }
     return cell;
 }
@@ -494,17 +506,17 @@
 - (void)pickerButtonTapped:(UIButton *)sender {
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     self.currentPickerMode = sender.tag;
-
+    
     PickerModalViewController *pickerVC = [[PickerModalViewController alloc] init];
     pickerVC.modalPresentationStyle = UIModalPresentationPageSheet;
-
+    
     if (@available(iOS 15.0, *)) {
         UISheetPresentationController *sheet = pickerVC.sheetPresentationController;
         sheet.detents = @[UISheetPresentationControllerDetent.mediumDetent];
         sheet.prefersGrabberVisible = YES;
         sheet.preferredCornerRadius = 16.0;
     }
-
+    
     if (sender.tag == 0) {
         pickerVC.items = [self.budgets valueForKey:@"name"];
         pickerVC.selectedIndex = 0;
@@ -530,7 +542,6 @@
         };
     } else if (sender.tag == 2) {
         pickerVC.items = [self.category valueForKey:@"name"];
-        NSLog(@"pickerVC item: %@", pickerVC.items);
         pickerVC.selectedIndex = 0;
         pickerVC.onDone = ^(NSInteger selectedIndex) {
             NSDictionary *selectedCategory = self.category[selectedIndex];
@@ -538,7 +549,7 @@
             [sender setTitle:selectedCategory[@"name"] forState:UIControlStateNormal];
         };
     }
-
+    
     [self presentViewController:pickerVC animated:YES completion:nil];
 }
 
@@ -546,6 +557,14 @@
     NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     NSError *error = nil;
     self.category = [self getCategoryValues:context error:&error isIncome:self.selectedTypeIndex];
+    self.categoryValues = [self.category valueForKey:@"name"];
+    self.selectedCategoryIndex = nil;
+    
+    UIButton *categoryButton = [self buttonForRow:5];
+    [categoryButton setTitle:@"Select Category" forState:UIControlStateNormal];
+    
+    NSIndexPath *categoryIndexPath = [NSIndexPath indexPathForRow:5 inSection:0];
+    [self.tableView reloadRowsAtIndexPaths:@[categoryIndexPath] withRowAnimation:UITableViewRowAnimationNone];
 }
 
 #pragma mark - UITableViewDelegate
@@ -605,7 +624,7 @@
     
     BOOL isEditing = (self.existingTransaction != nil);
     BOOL amountOverflow = NO;
-
+    
     if (isEditing) {
         Budget *oldBudget = self.existingTransaction.budget;
         Category *oldCategory = self.existingTransaction.category;
