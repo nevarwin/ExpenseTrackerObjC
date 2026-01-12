@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "@kimsungwhee/apple-docs-mcp": "^1.0.26"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server-sequential-thinking": "^2025.12.18"
+  }
+}
