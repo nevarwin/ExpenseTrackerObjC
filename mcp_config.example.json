@@ -1,0 +1,20 @@
+{
+    "mcpServers": {
+        "apple-docs": {
+            "command": "path/to/your/node",
+            "args": [
+                "${PROJECT_ROOT}/node_modules/@kimsungwhee/apple-docs-mcp/dist/index.js"
+            ],
+            "disabled": false,
+            "autoApprove": []
+        },
+        "sequential-thinking": {
+            "command": "path/to/your/node",
+            "args": [
+                "${PROJECT_ROOT}/node_modules/@modelcontextprotocol/server-sequential-thinking/dist/index.js"
+            ],
+            "disabled": false,
+            "autoApprove": []
+        }
+    }
+}
