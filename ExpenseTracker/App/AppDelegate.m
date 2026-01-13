@@ -8,6 +8,8 @@
 #import "AppDelegate.h"
 #import "BudgetViewController.h"
 #import "CoreDataManager.h"
+#import "Budget+CoreDataClass.h"
+#import "Category+CoreDataClass.h"
 
 @interface AppDelegate ()
 
@@ -24,6 +26,27 @@
         [defaults synchronize];
     }
     self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    
+    // UI Testing Support
+    if ([[[NSProcessInfo processInfo] arguments] containsObject:@"-UITesting"]) {
+        [[CoreDataManager sharedManager] useInMemoryStore];
+        
+        NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+        
+        // Seed Budget
+        Budget *budget = [NSEntityDescription insertNewObjectForEntityForName:@"Budget" inManagedObjectContext:context];
+        budget.name = @"UI Test Budget";
+        budget.isActive = YES;
+        
+        // Seed Category
+        Category *category = [NSEntityDescription insertNewObjectForEntityForName:@"Category" inManagedObjectContext:context];
+        category.name = @"UI Test Category";
+        category.isIncome = NO;
+        category.budget = budget;
+        
+        [context save:nil];
+    }
+    
     [CoreDataManager.sharedManager viewContext];
     return YES;
 }

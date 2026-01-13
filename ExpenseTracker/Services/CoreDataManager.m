@@ -58,5 +58,19 @@
 
 
 
+- (void)useInMemoryStore {
+    _persistentContainer = [[NSPersistentContainer alloc] initWithName:@"Transaction"]; // Using same model name
+    NSPersistentStoreDescription *description = [[NSPersistentStoreDescription alloc] init];
+    description.type = NSInMemoryStoreType;
+    _persistentContainer.persistentStoreDescriptions = @[description];
+    
+    [_persistentContainer loadPersistentStoresWithCompletionHandler:^(NSPersistentStoreDescription *storeDescription, NSError *error) {
+        if (error != nil) {
+            NSLog(@"Unresolved error in testing store: %@, %@", error, error.userInfo);
+            abort();
+        }
+    }];
+}
+
 @end
 

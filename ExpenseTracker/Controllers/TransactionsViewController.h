@@ -8,11 +8,13 @@
 #ifndef TransactionsViewController_h
 #define TransactionsViewController_h
 
-#import <UIKit/UIKit.h>
 #import "Transaction+CoreDataClass.h"
+#import "TransactionService.h"
+#import <UIKit/UIKit.h>
 
 @interface TransactionsViewController : UIViewController
 
+@property (nonatomic, strong) TransactionService *service;
 @property (nonatomic, assign) BOOL isEditMode;
 @property (nonatomic, weak) id delegate;
 @property (nonatomic, strong) Transaction *existingTransaction;

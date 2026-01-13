@@ -18,6 +18,7 @@
 + (instancetype)sharedManager;
 - (NSManagedObjectContext *)viewContext;
 - (void)saveContext;
+- (void)useInMemoryStore;
 
 @end
 

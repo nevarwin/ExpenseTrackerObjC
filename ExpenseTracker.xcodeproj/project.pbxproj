@@ -44,6 +44,8 @@
 		1873DFEC2E0D3E6500C2C70B /* ExpenseTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExpenseTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1873E00A2E0D3E6600C2C70B /* ExpenseTrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExpenseTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1873E0142E0D3E6700C2C70B /* ExpenseTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExpenseTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		187F536E2F15F67A00275B01 /* ExpenseTracker.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = ExpenseTracker.xcodeproj; sourceTree = "<group>"; };
+		18837B502F15F43C00C47663 /* ExpenseTracker.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = ExpenseTracker.xcodeproj; sourceTree = "<group>"; };
 		18AEAE942E867646003C31FA /* Transaction.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = Transaction.sqlite; sourceTree = "<group>"; };
 		18AEAE952E867646003C31FA /* Transaction.sqlite-shm */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Transaction.sqlite-shm"; sourceTree = "<group>"; };
 		18AEAE962E867646003C31FA /* Transaction.sqlite-wal */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Transaction.sqlite-wal"; sourceTree = "<group>"; };
@@ -74,6 +76,27 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		187F53952F15F6CE00275B01 /* Exceptions for "ExpenseTracker" folder in "Copy Bundle Resources" phase from "ExpenseTrackerTests" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 1873E0082E0D3E6600C2C70B /* Resources */;
+			membershipExceptions = (
+				App/ExpenseTracker.entitlements,
+			);
+		};
+		187F53A02F15F6D200275B01 /* Exceptions for "ExpenseTracker" folder in "Copy Bundle Resources" phase from "ExpenseTrackerUITests" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 1873E0122E0D3E6700C2C70B /* Resources */;
+			membershipExceptions = (
+				App/ExpenseTracker.entitlements,
+			);
+		};
+		18837B7F2F15F62900C47663 /* Exceptions for "ExpenseTracker" folder in "Copy Bundle Resources" phase from "ExpenseTracker" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 1873DFEA2E0D3E6500C2C70B /* Resources */;
+			membershipExceptions = (
+				App/ExpenseTracker.entitlements,
+			);
+		};
 		97FBC7B02F0D3D8700C555BC /* Exceptions for "ExpenseTracker" folder in "Compile Sources" phase from "ExpenseTracker" target */ = {
 			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
 			buildPhase = 97FBC7862F0D3D6000C555BC /* Sources */;
@@ -100,6 +123,9 @@
 			exceptions = (
 				97FBC7B32F0D3E0B00C555BC /* Exceptions for "ExpenseTracker" folder in "ExpenseTracker" target */,
 				97FBC7B02F0D3D8700C555BC /* Exceptions for "ExpenseTracker" folder in "Compile Sources" phase from "ExpenseTracker" target */,
+				18837B7F2F15F62900C47663 /* Exceptions for "ExpenseTracker" folder in "Copy Bundle Resources" phase from "ExpenseTracker" target */,
+				187F53952F15F6CE00275B01 /* Exceptions for "ExpenseTracker" folder in "Copy Bundle Resources" phase from "ExpenseTrackerTests" target */,
+				187F53A02F15F6D200275B01 /* Exceptions for "ExpenseTracker" folder in "Copy Bundle Resources" phase from "ExpenseTrackerUITests" target */,
 			);
 			path = ExpenseTracker;
 			sourceTree = "<group>";
@@ -160,6 +186,20 @@
 				1873DFEC2E0D3E6500C2C70B /* ExpenseTracker.app */,
 				1873E00A2E0D3E6600C2C70B /* ExpenseTrackerTests.xctest */,
 				1873E0142E0D3E6700C2C70B /* ExpenseTrackerUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		187F536F2F15F67A00275B01 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		18837B512F15F43C00C47663 /* Products */ = {
+			isa = PBXGroup;
+			children = (
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -290,6 +330,14 @@
 			productRefGroup = 1873DFED2E0D3E6500C2C70B /* Products */;
 			projectDirPath = "";
 			projectReferences = (
+				{
+					ProductGroup = 187F536F2F15F67A00275B01 /* Products */;
+					ProjectRef = 187F536E2F15F67A00275B01 /* ExpenseTracker.xcodeproj */;
+				},
+				{
+					ProductGroup = 18837B512F15F43C00C47663 /* Products */;
+					ProjectRef = 18837B502F15F43C00C47663 /* ExpenseTracker.xcodeproj */;
+				},
 				{
 					ProductGroup = 18E4B10B2F0F3DA1002E3CC1 /* Products */;
 					ProjectRef = 18E4B10A2F0F3DA1002E3CC1 /* ExpenseTracker.xcodeproj */;
@@ -574,6 +622,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_ENTITLEMENTS = ExpenseTracker/App/ExpenseTracker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -591,6 +640,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_ENTITLEMENTS = ExpenseTracker/App/ExpenseTracker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -607,6 +657,7 @@
 		1873E0262E0D3E6700C2C70B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ExpenseTracker/App/ExpenseTracker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -622,6 +673,7 @@
 		1873E0272E0D3E6700C2C70B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ExpenseTracker/App/ExpenseTracker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;

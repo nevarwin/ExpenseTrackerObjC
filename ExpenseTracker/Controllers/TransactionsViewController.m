@@ -2,18 +2,20 @@
 
 #import "TransactionsViewController.h"
 #import "AppDelegate.h"
-#import "CoreDataManager.h"
 #import "Budget+CoreDataClass.h"
 #import "Category+CoreDataClass.h"
-#import "Transaction+CoreDataClass.h"
+#import "CoreDataManager.h"
 #import "PickerModalViewController.h"
-#import "UIViewController+Alerts.h"
+#import "Transaction+CoreDataClass.h"
 #import "TransactionService.h"
+#import "UIViewController+Alerts.h"
 
-@interface TransactionsViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate, UIPickerViewDelegate, UIPickerViewDataSource>
-@property (nonatomic, assign) BOOL isDatePickerVisible;
-@property (nonatomic, strong) NSDictionary *selectedBudget;
-@property (nonatomic, strong) NSDictionary *selectedCategory;
+@interface TransactionsViewController () <
+UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate,
+UIPickerViewDelegate, UIPickerViewDataSource>
+@property(nonatomic, assign) BOOL isDatePickerVisible;
+@property(nonatomic, strong) NSDictionary *selectedBudget;
+@property(nonatomic, strong) NSDictionary *selectedCategory;
 @end
 
 @implementation TransactionsViewController
@@ -25,8 +27,16 @@
     
     self.title = @"Transaction";
     NSString *rightButtonTitle = self.isEditMode ? @"Update" : @"Add";
-    self.leftButton = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(leftButtonTapped)];
-    self.rightButton = [[UIBarButtonItem alloc] initWithTitle:rightButtonTitle style:UIBarButtonItemStyleDone target:self action:@selector(rightButtonTapped)];
+    self.leftButton =
+    [[UIBarButtonItem alloc] initWithTitle:@"Cancel"
+                                     style:UIBarButtonItemStylePlain
+                                    target:self
+                                    action:@selector(leftButtonTapped)];
+    self.rightButton =
+    [[UIBarButtonItem alloc] initWithTitle:rightButtonTitle
+                                     style:UIBarButtonItemStyleDone
+                                    target:self
+                                    action:@selector(rightButtonTapped)];
     self.navigationItem.leftBarButtonItem = self.leftButton;
     self.navigationItem.rightBarButtonItem = self.rightButton;
     self.selectedTypeIndex = 3;
@@ -34,6 +44,11 @@
     [self setupTableView];
     [self setupPickers];
     [self selectEmptyScreen];
+    
+    if (!self.service) {
+        self.service = [TransactionService sharedService];
+    }
+    
     [self fetchCoreData];
 }
 
@@ -43,16 +58,21 @@
 }
 
 - (void)setupTableView {
-    self.tableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStyleInsetGrouped];
+    self.tableView =
+    [[UITableView alloc] initWithFrame:CGRectZero
+                                 style:UITableViewStyleInsetGrouped];
     self.tableView.translatesAutoresizingMaskIntoConstraints = NO;
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
     [self.view addSubview:self.tableView];
     
     [NSLayoutConstraint activateConstraints:@[
-        [self.tableView.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
-        [self.tableView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-        [self.tableView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [self.tableView.topAnchor
+         constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
+        [self.tableView.leadingAnchor
+         constraintEqualToAnchor:self.view.leadingAnchor],
+        [self.tableView.trailingAnchor
+         constraintEqualToAnchor:self.view.trailingAnchor],
         [self.tableView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
     ]];
 }
@@ -61,7 +81,9 @@
     self.datePicker = [[UIDatePicker alloc] init];
     self.datePicker.datePickerMode = UIDatePickerModeDateAndTime;
     self.datePicker.locale = [NSLocale localeWithLocaleIdentifier:@"en_US"];
-    [self.datePicker addTarget:self action:@selector(datePickerChanged:) forControlEvents:UIControlEventValueChanged];
+    [self.datePicker addTarget:self
+                        action:@selector(datePickerChanged:)
+              forControlEvents:UIControlEventValueChanged];
     self.categoryPicker = [[UIPickerView alloc] init];
     self.categoryPicker.delegate = self;
     self.categoryPicker.dataSource = self;
@@ -72,47 +94,55 @@
     self.descriptionTextField = [[UITextField alloc] init];
     self.descriptionTextField.placeholder = @"Enter description";
     self.descriptionTextField.delegate = self;
-    self.typeValues = @[@"Expense", @"Income"];
+    self.typeValues = @[ @"Expense", @"Income" ];
     self.typePicker = [[UIPickerView alloc] init];
     self.typePicker.delegate = self;
     self.typePicker.dataSource = self;
 }
 
 - (void)selectEmptyScreen {
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissKeyboard)];
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]
+                                   initWithTarget:self
+                                   action:@selector(dismissKeyboard)];
     tap.cancelsTouchesInView = NO;
     [self.view addGestureRecognizer:tap];
 }
 
 - (void)fetchCoreData {
     NSError *error = nil;
-    self.budgets = [[TransactionService sharedService] fetchBudgetsWithError:&error];
+    self.budgets = [self.service fetchBudgetsWithError:&error];
     
     // Initial fetch might not have budget or date setup fully so defaults apply
     if (self.selectedBudgetIndex) {
-         self.category = [[TransactionService sharedService] fetchCategoriesWithError:&error 
-                                                                             isIncome:self.selectedTypeIndex 
-                                                                      transactionDate:self.datePicker.date ?: [NSDate date]
-                                                                             budgetID:self.selectedBudgetIndex];
+        self.category = [self.service
+                         fetchCategoriesWithError:&error
+                         isIncome:self.selectedTypeIndex
+                         transactionDate:self.datePicker.date ?: [NSDate date]
+                         budgetID:self.selectedBudgetIndex];
     } else {
         self.category = @[];
     }
 }
 
-
-# pragma mark - UITextFieldDelegate
-- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
+#pragma mark - UITextFieldDelegate
+- (BOOL)textField:(UITextField *)textField
+shouldChangeCharactersInRange:(NSRange)range
+replacementString:(NSString *)string {
     if (textField == self.descriptionTextField) {
-        NSString *newString = [textField.text stringByReplacingCharactersInRange:range withString:string];
+        NSString *newString =
+        [textField.text stringByReplacingCharactersInRange:range
+                                                withString:string];
         
         if (newString.length > 36 && self.presentedViewController == nil) {
-            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Limit Reached"
-                                                                           message:@"You can only enter up to 36 characters."
-                                                                    preferredStyle:UIAlertControllerStyleAlert];
+            UIAlertController *alert = [UIAlertController
+                                        alertControllerWithTitle:@"Limit Reached"
+                                        message:@"You can only enter up to 36 characters."
+                                        preferredStyle:UIAlertControllerStyleAlert];
             
-            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK"
-                                                               style:UIAlertActionStyleDefault
-                                                             handler:nil];
+            UIAlertAction *okAction =
+            [UIAlertAction actionWithTitle:@"OK"
+                                     style:UIAlertActionStyleDefault
+                                   handler:nil];
             [alert addAction:okAction];
             
             [self presentViewController:alert animated:YES completion:nil];
@@ -122,16 +152,20 @@
     }
     
     if (textField == self.amountTextField) {
-        NSString *newString = [textField.text stringByReplacingCharactersInRange:range withString:string];
+        NSString *newString =
+        [textField.text stringByReplacingCharactersInRange:range
+                                                withString:string];
         
         if (newString.length > 8 && self.presentedViewController == nil) {
-            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Limit Reached"
-                                                                           message:@"You can only enter up to 8 digits."
-                                                                    preferredStyle:UIAlertControllerStyleAlert];
+            UIAlertController *alert = [UIAlertController
+                                        alertControllerWithTitle:@"Limit Reached"
+                                        message:@"You can only enter up to 8 digits."
+                                        preferredStyle:UIAlertControllerStyleAlert];
             
-            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK"
-                                                               style:UIAlertActionStyleDefault
-                                                             handler:nil];
+            UIAlertAction *okAction =
+            [UIAlertAction actionWithTitle:@"OK"
+                                     style:UIAlertActionStyleDefault
+                                   handler:nil];
             [alert addAction:okAction];
             
             [self presentViewController:alert animated:YES completion:nil];
@@ -144,12 +178,12 @@
 
 #pragma mark - Configure View for Edit Mode
 - (void)configureViewForMode {
-    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     NSError *error = nil;
     
     if (self.isEditMode && self.existingTransaction) {
         // Amount
-        self.amountTextField.text = [NSString stringWithFormat:@"%@", self.existingTransaction.amount];
+        self.amountTextField.text =
+        [NSString stringWithFormat:@"%@", self.existingTransaction.amount];
         
         // Description
         self.descriptionTextField.text = self.existingTransaction.desc;
@@ -161,21 +195,24 @@
         self.selectedTypeIndex = self.existingTransaction.category.isIncome;
         UIButton *typeButton = [self buttonForRow:4];
         typeButton.enabled = YES;
-        [typeButton setTitle:self.typeValues[self.selectedTypeIndex] forState:UIControlStateNormal];
+        [typeButton setTitle:self.typeValues[self.selectedTypeIndex]
+                    forState:UIControlStateNormal];
         
         // Budget
-        self.budgetValues = [[TransactionService sharedService] fetchBudgetsWithError:&error];
+        self.budgetValues = [self.service fetchBudgetsWithError:&error];
         self.selectedBudgetIndex = self.existingTransaction.budget.objectID;
         UIButton *budgetButton = [self buttonForRow:3];
         if (self.existingTransaction.budget.objectID) {
-            [budgetButton setTitle:self.existingTransaction.budget.name forState:UIControlStateNormal];
+            [budgetButton setTitle:self.existingTransaction.budget.name
+                          forState:UIControlStateNormal];
         }
         
         // Category
-        self.category = [[TransactionService sharedService] fetchCategoriesWithError:&error 
-                                                                            isIncome:self.existingTransaction.category.isIncome 
-                                                                     transactionDate:self.existingTransaction.date
-                                                                            budgetID:self.existingTransaction.budget.objectID];
+        self.category = [self.service
+                         fetchCategoriesWithError:&error
+                         isIncome:self.existingTransaction.category.isIncome
+                         transactionDate:self.existingTransaction.date
+                         budgetID:self.existingTransaction.budget.objectID];
         self.categoryValues = [self.category valueForKey:@"name"];
         
         self.selectedCategoryIndex = self.existingTransaction.category.objectID;
@@ -183,7 +220,8 @@
         UIButton *categoryButton = [self buttonForRow:5];
         categoryButton.enabled = YES;
         if (self.existingTransaction.category.objectID) {
-            [categoryButton setTitle:self.existingTransaction.category.name forState:UIControlStateNormal];
+            [categoryButton setTitle:self.existingTransaction.category.name
+                            forState:UIControlStateNormal];
         }
     }
 }
@@ -202,18 +240,25 @@
 
 #pragma mark - UITableViewDataSource
 
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView { return 1; }
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section { return 6; }
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    return 1;
+}
+- (NSInteger)tableView:(UITableView *)tableView
+ numberOfRowsInSection:(NSInteger)section {
+    return 6;
+}
 
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+- (UITableViewCell *)tableView:(UITableView *)tableView
+         cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     static NSString *cellId = @"FormCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellId];
-    if (!cell) cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:cellId];
+    if (!cell)
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1
+                                      reuseIdentifier:cellId];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     
     for (UIView *subview in cell.contentView.subviews) {
         [subview removeFromSuperview];
-        
     }
     switch (indexPath.row) {
         case 0: // Date
@@ -221,13 +266,17 @@
             [cell.contentView addSubview:self.datePicker];
             self.datePicker.translatesAutoresizingMaskIntoConstraints = NO;
             [NSLayoutConstraint activateConstraints:@[
-                [self.datePicker.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
-                [self.datePicker.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+                [self.datePicker.trailingAnchor
+                 constraintEqualToAnchor:cell.contentView.trailingAnchor
+                 constant:-16],
+                [self.datePicker.centerYAnchor
+                 constraintEqualToAnchor:cell.contentView.centerYAnchor],
             ]];
             break;
         case 1: // Amount
         {
-            UILabel *pesoLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 16, 20)];
+            UILabel *pesoLabel =
+            [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 16, 20)];
             pesoLabel.text = @"₱";
             pesoLabel.font = self.amountTextField.font;
             pesoLabel.textAlignment = NSTextAlignmentLeft;
@@ -237,11 +286,15 @@
             self.amountTextField.leftView = pesoLabel;
             self.amountTextField.leftViewMode = UITextFieldViewModeAlways;
             self.amountTextField.translatesAutoresizingMaskIntoConstraints = NO;
-            self.amountTextField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
+            self.amountTextField.font =
+            [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
             self.amountTextField.textAlignment = NSTextAlignmentRight;
             [NSLayoutConstraint activateConstraints:@[
-                [self.amountTextField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
-                [self.amountTextField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+                [self.amountTextField.trailingAnchor
+                 constraintEqualToAnchor:cell.contentView.trailingAnchor
+                 constant:-16],
+                [self.amountTextField.centerYAnchor
+                 constraintEqualToAnchor:cell.contentView.centerYAnchor],
                 [self.amountTextField.widthAnchor constraintEqualToConstant:120]
             ]];
             break;
@@ -252,11 +305,15 @@
             [cell.contentView addSubview:self.descriptionTextField];
             
             self.descriptionTextField.translatesAutoresizingMaskIntoConstraints = NO;
-            self.descriptionTextField.font = [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
+            self.descriptionTextField.font =
+            [UIFont monospacedDigitSystemFontOfSize:17 weight:UIFontWeightRegular];
             self.descriptionTextField.textAlignment = NSTextAlignmentRight;
             [NSLayoutConstraint activateConstraints:@[
-                [self.descriptionTextField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
-                [self.descriptionTextField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+                [self.descriptionTextField.trailingAnchor
+                 constraintEqualToAnchor:cell.contentView.trailingAnchor
+                 constant:-16],
+                [self.descriptionTextField.centerYAnchor
+                 constraintEqualToAnchor:cell.contentView.centerYAnchor],
                 [self.descriptionTextField.widthAnchor constraintEqualToConstant:200]
             ]];
             break;
@@ -269,12 +326,17 @@
             typeButton.translatesAutoresizingMaskIntoConstraints = NO;
             typeButton.tag = 0;
             typeButton.enabled = self.budgets.count == 0 ? NO : YES;
-            [typeButton addTarget:self action:@selector(pickerButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+            [typeButton addTarget:self
+                           action:@selector(pickerButtonTapped:)
+                 forControlEvents:UIControlEventTouchUpInside];
             [cell.contentView addSubview:typeButton];
             
             [NSLayoutConstraint activateConstraints:@[
-                [typeButton.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
-                [typeButton.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor]
+                [typeButton.trailingAnchor
+                 constraintEqualToAnchor:cell.contentView.trailingAnchor
+                 constant:-16],
+                [typeButton.centerYAnchor
+                 constraintEqualToAnchor:cell.contentView.centerYAnchor]
             ]];
             break;
         }
@@ -286,12 +348,17 @@
             typeButton.translatesAutoresizingMaskIntoConstraints = NO;
             typeButton.tag = 1;
             typeButton.enabled = self.selectedBudgetIndex == nil ? NO : YES;
-            [typeButton addTarget:self action:@selector(pickerButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+            [typeButton addTarget:self
+                           action:@selector(pickerButtonTapped:)
+                 forControlEvents:UIControlEventTouchUpInside];
             [cell.contentView addSubview:typeButton];
             
             [NSLayoutConstraint activateConstraints:@[
-                [typeButton.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
-                [typeButton.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor]
+                [typeButton.trailingAnchor
+                 constraintEqualToAnchor:cell.contentView.trailingAnchor
+                 constant:-16],
+                [typeButton.centerYAnchor
+                 constraintEqualToAnchor:cell.contentView.centerYAnchor]
             ]];
             break;
         }
@@ -313,12 +380,17 @@
             typeButton.tag = 2;
             typeButton.enabled = isTypeSelected && hasCategories;
             
-            [typeButton addTarget:self action:@selector(pickerButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+            [typeButton addTarget:self
+                           action:@selector(pickerButtonTapped:)
+                 forControlEvents:UIControlEventTouchUpInside];
             [cell.contentView addSubview:typeButton];
             
             [NSLayoutConstraint activateConstraints:@[
-                [typeButton.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-16],
-                [typeButton.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor]
+                [typeButton.trailingAnchor
+                 constraintEqualToAnchor:cell.contentView.trailingAnchor
+                 constant:-16],
+                [typeButton.centerYAnchor
+                 constraintEqualToAnchor:cell.contentView.centerYAnchor]
             ]];
             break;
         }
@@ -330,18 +402,24 @@
 
 - (NSString *)titleForPickerWithSender:(UIButton *)sender {
     switch (sender.tag) {
-        case 0: return @"Budget";
-        case 1: return @"Type";
-        case 2: return @"Category";
-        default: return [sender titleForState:UIControlStateNormal];
+        case 0:
+            return @"Budget";
+        case 1:
+            return @"Type";
+        case 2:
+            return @"Category";
+        default:
+            return [sender titleForState:UIControlStateNormal];
     }
 }
 
 - (BOOL)checkAndShowEmptyBudgetAlertIfNeeded {
     if (self.currentPickerMode == 0 && self.budgetValues.count == 0) {
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"An error occurred."
-                                                                       message:@"There is no existing budget. Please add a budget to proceed."
-                                                                preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertController *alert = [UIAlertController
+                                    alertControllerWithTitle:@"An error occurred."
+                                    message:@"There is no existing budget. Please add a "
+                                    @"budget to proceed."
+                                    preferredStyle:UIAlertControllerStyleAlert];
         UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
                                                      style:UIAlertActionStyleDefault
                                                    handler:nil];
@@ -353,14 +431,20 @@
 }
 
 - (UIPickerView *)createPickerForAlert:(UIAlertController *)alert {
-    UIPickerView *picker = [[UIPickerView alloc] initWithFrame:CGRectMake(0, 40, alert.view.bounds.size.width - 20, 140)];
+    UIPickerView *picker = [[UIPickerView alloc]
+                            initWithFrame:CGRectMake(0, 40, alert.view.bounds.size.width - 20, 140)];
     picker.dataSource = self;
     picker.delegate = self;
     return picker;
 }
 
-- (UIAlertAction *)createDoneActionForPicker:(UIPickerView *)picker sender:(UIButton *)sender context:(NSManagedObjectContext *)context {
-    return [UIAlertAction actionWithTitle:@"Done" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+- (UIAlertAction *)createDoneActionForPicker:(UIPickerView *)picker
+                                      sender:(UIButton *)sender
+                                     context:(NSManagedObjectContext *)context {
+    return [UIAlertAction
+            actionWithTitle:@"Done"
+            style:UIAlertActionStyleDefault
+            handler:^(UIAlertAction *action) {
         NSInteger selectedRow = [picker selectedRowInComponent:0];
         NSError *error = nil;
         
@@ -368,31 +452,40 @@
             case 0: { // Budget
                 NSDictionary *selectedBudget = self.budgets[selectedRow];
                 self.selectedBudgetIndex = selectedBudget[@"objectID"];
-                [sender setTitle:self.budgetValues[selectedRow] forState:UIControlStateNormal];
+                [sender setTitle:self.budgetValues[selectedRow]
+                        forState:UIControlStateNormal];
                 
-                [self.tableView reloadRowsAtIndexPaths:@[
+                [self.tableView
+                 reloadRowsAtIndexPaths:@[
                     [NSIndexPath indexPathForRow:4 inSection:0],
                     [NSIndexPath indexPathForRow:5 inSection:0]
-                ] withRowAnimation:UITableViewRowAnimationAutomatic];
+                ]
+                 withRowAnimation:UITableViewRowAnimationAutomatic];
                 break;
             }
             case 1: { // Type
                 self.selectedTypeIndex = selectedRow;
-                [sender setTitle:self.typeValues[selectedRow] forState:UIControlStateNormal];
+                [sender setTitle:self.typeValues[selectedRow]
+                        forState:UIControlStateNormal];
                 
-                self.category = [[TransactionService sharedService] fetchCategoriesWithError:&error 
-                                                                                    isIncome:self.selectedTypeIndex 
-                                                                             transactionDate:self.datePicker.date ?: [NSDate date]
-                                                                                    budgetID:self.selectedBudgetIndex];
-                [self.tableView reloadRowsAtIndexPaths:@[
-                    [NSIndexPath indexPathForRow:5 inSection:0]
-                ] withRowAnimation:UITableViewRowAnimationAutomatic];
+                self.category = [self.service
+                                 fetchCategoriesWithError:&error
+                                 isIncome:self.selectedTypeIndex
+                                 transactionDate:self.datePicker.date
+                                 ?: [NSDate date]
+                                 budgetID:self.selectedBudgetIndex];
+                [self.tableView
+                 reloadRowsAtIndexPaths:@[ [NSIndexPath
+                                            indexPathForRow:5
+                                            inSection:0] ]
+                 withRowAnimation:UITableViewRowAnimationAutomatic];
                 break;
             }
             case 2: { // Category
                 NSDictionary *selectedCategory = self.category[selectedRow];
                 self.selectedCategoryIndex = selectedCategory[@"objectID"];
-                [sender setTitle:self.categoryValues[selectedRow] forState:UIControlStateNormal];
+                [sender setTitle:self.categoryValues[selectedRow]
+                        forState:UIControlStateNormal];
                 break;
             }
             default:
@@ -401,17 +494,16 @@
     }];
 }
 
-
 - (void)pickerButtonTapped:(UIButton *)sender {
-    NSError *error = nil;
     self.currentPickerMode = sender.tag;
     
-    PickerModalViewController *pickerVC = [[PickerModalViewController alloc] init];
+    PickerModalViewController *pickerVC =
+    [[PickerModalViewController alloc] init];
     pickerVC.modalPresentationStyle = UIModalPresentationPageSheet;
     
     if (@available(iOS 15.0, *)) {
         UISheetPresentationController *sheet = pickerVC.sheetPresentationController;
-        sheet.detents = @[UISheetPresentationControllerDetent.mediumDetent];
+        sheet.detents = @[ UISheetPresentationControllerDetent.mediumDetent ];
         sheet.prefersGrabberVisible = YES;
         sheet.preferredCornerRadius = 16.0;
     }
@@ -426,23 +518,28 @@
             [self.tableView reloadRowsAtIndexPaths:@[
                 [NSIndexPath indexPathForRow:4 inSection:0],
                 [NSIndexPath indexPathForRow:5 inSection:0]
-            ] withRowAnimation:UITableViewRowAnimationAutomatic];
+            ]
+                                  withRowAnimation:UITableViewRowAnimationAutomatic];
         };
     } else if (sender.tag == 1) {
         pickerVC.items = self.typeValues;
         pickerVC.selectedIndex = self.selectedTypeIndex;
         pickerVC.onDone = ^(NSInteger selectedIndex) {
             self.selectedTypeIndex = selectedIndex;
-            [sender setTitle:self.typeValues[selectedIndex] forState:UIControlStateNormal];
+            [sender setTitle:self.typeValues[selectedIndex]
+                    forState:UIControlStateNormal];
             
-            self.category = [[TransactionService sharedService] fetchCategoriesWithError:&error 
-                                                                                isIncome:self.selectedTypeIndex 
-                                                                         transactionDate:self.datePicker.date ?: [NSDate date]
-                                                                                budgetID:self.selectedBudgetIndex];
+            NSError *error = nil;
+            self.category = [self.service
+                             fetchCategoriesWithError:&error
+                             isIncome:self.selectedTypeIndex
+                             transactionDate:self.datePicker.date ?: [NSDate date]
+                             budgetID:self.selectedBudgetIndex];
             
-            [self.tableView reloadRowsAtIndexPaths:@[
-                [NSIndexPath indexPathForRow:5 inSection:0]
-            ] withRowAnimation:UITableViewRowAnimationAutomatic];
+            [self.tableView
+             reloadRowsAtIndexPaths:@[ [NSIndexPath indexPathForRow:5
+                                                          inSection:0] ]
+             withRowAnimation:UITableViewRowAnimationAutomatic];
         };
     } else if (sender.tag == 2) {
         pickerVC.items = [self.category valueForKey:@"name"];
@@ -459,10 +556,12 @@
 
 - (void)datePickerChanged:(UIDatePicker *)sender {
     NSError *error = nil;
-    self.category = [[TransactionService sharedService] fetchCategoriesWithError:&error 
-                                                                        isIncome:self.selectedTypeIndex 
-                                                                 transactionDate:self.datePicker.date ?: [NSDate date]
-                                                                        budgetID:self.selectedBudgetIndex];
+    self.category = [self.service
+                     fetchCategoriesWithError:&error
+                     isIncome:self.selectedTypeIndex
+                     transactionDate:self.datePicker.date ?: [NSDate date]
+                     budgetID:self.selectedBudgetIndex];
+    
     self.categoryValues = [self.category valueForKey:@"name"];
     self.selectedCategoryIndex = nil;
     
@@ -470,13 +569,14 @@
     [categoryButton setTitle:@"Select Category" forState:UIControlStateNormal];
     
     NSIndexPath *categoryIndexPath = [NSIndexPath indexPathForRow:5 inSection:0];
-    [self.tableView reloadRowsAtIndexPaths:@[categoryIndexPath] withRowAnimation:UITableViewRowAnimationNone];
+    [self.tableView reloadRowsAtIndexPaths:@[ categoryIndexPath ]
+                          withRowAnimation:UITableViewRowAnimationNone];
 }
 
 #pragma mark - UITableViewDelegate
 
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    
+- (void)tableView:(UITableView *)tableView
+didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
 }
 
 #pragma mark - UIPickerViewDataSource/Delegate
@@ -484,75 +584,99 @@
 - (NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView {
     return 1;
 }
-- (NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component {
-    if(self.currentPickerMode == 0) return self.budgetValues.count;
-    if(self.currentPickerMode == 1) return self.typeValues.count;
-    if(self.currentPickerMode == 2) return self.categoryValues.count;
+- (NSInteger)pickerView:(UIPickerView *)pickerView
+numberOfRowsInComponent:(NSInteger)component {
+    if (self.currentPickerMode == 0)
+        return self.budgetValues.count;
+    if (self.currentPickerMode == 1)
+        return self.typeValues.count;
+    if (self.currentPickerMode == 2)
+        return self.categoryValues.count;
     return 0;
 }
-- (NSString *)pickerView:(UIPickerView *)pickerView titleForRow:(NSInteger)row forComponent:(NSInteger)component {
-    if(self.currentPickerMode == 0) return self.budgetValues[row];
-    if(self.currentPickerMode == 1) return self.typeValues[row];
-    if(self.currentPickerMode == 2) return self.categoryValues[row];
+- (NSString *)pickerView:(UIPickerView *)pickerView
+             titleForRow:(NSInteger)row
+            forComponent:(NSInteger)component {
+    if (self.currentPickerMode == 0)
+        return self.budgetValues[row];
+    if (self.currentPickerMode == 1)
+        return self.typeValues[row];
+    if (self.currentPickerMode == 2)
+        return self.categoryValues[row];
     return 0;
 }
-- (void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component {
-    
+- (void)pickerView:(UIPickerView *)pickerView
+      didSelectRow:(NSInteger)row
+       inComponent:(NSInteger)component {
 }
 #pragma mark - Actions
 
-- (void)leftButtonTapped { [self dismissViewControllerAnimated:YES completion:nil]; }
+- (void)leftButtonTapped {
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
 - (void)rightButtonTapped {
-    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+    NSManagedObjectContext *context =
+    [[CoreDataManager sharedManager] viewContext];
     NSError *error = nil;
     // TODO: Improve UI based on category's
     if ([self.amountTextField.text isEqualToString:@""] ||
         [self.amountTextField.text isEqualToString:@"0"] ||
-        self.selectedBudgetIndex == nil ||
-        self.selectedCategoryIndex == nil ||
+        self.selectedBudgetIndex == nil || self.selectedCategoryIndex == nil ||
         !self.datePicker.date) {
         
-        [self showAlertWithTitle:@"Invalid Input" message:@"Please fill all fields correctly."];
+        [self showAlertWithTitle:@"Invalid Input"
+                         message:@"Please fill all fields correctly."];
         return;
     }
     
     NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
     formatter.numberStyle = NSNumberFormatterDecimalStyle;
-    NSNumber *amountNumber = [formatter numberFromString:self.amountTextField.text];
-    NSDecimalNumber *amount = [NSDecimalNumber decimalNumberWithDecimal:amountNumber.decimalValue];
+    NSNumber *amountNumber =
+    [formatter numberFromString:self.amountTextField.text];
+    NSDecimalNumber *amount =
+    [NSDecimalNumber decimalNumberWithDecimal:amountNumber.decimalValue];
     NSString *desc = self.descriptionTextField.text ?: @"";
     
     NSInteger type = self.selectedTypeIndex;
     NSDate *date = self.datePicker.date;
     
-    Budget *newBudget = (Budget *)[context existingObjectWithID:self.selectedBudgetIndex error:&error];
-    Category *newCategory = (Category *)[context existingObjectWithID:self.selectedCategoryIndex error:&error];
+    Budget *newBudget =
+    (Budget *)[context existingObjectWithID:self.selectedBudgetIndex
+                                      error:&error];
+    Category *newCategory =
+    (Category *)[context existingObjectWithID:self.selectedCategoryIndex
+                                        error:&error];
     
-    [[TransactionService sharedService] saveTransactionWithAmount:amount 
-                                                             desc:desc 
-                                                             date:date 
-                                                           budget:newBudget 
-                                                         category:newCategory 
-                                                         isIncome:(BOOL)type 
-                                              existingTransaction:self.existingTransaction 
-                                                       completion:^(BOOL success, NSError * _Nullable error, BOOL amountOverflow) {
-        
+    [self.service
+     saveTransactionWithAmount:amount
+     desc:desc
+     date:date
+     budget:newBudget
+     category:newCategory
+     isIncome:(BOOL)type
+     existingTransaction:self.existingTransaction
+     completion:^(BOOL success, NSError *_Nullable error,
+                  BOOL amountOverflow) {
         if (amountOverflow) {
-            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Amount exceeded"
-                                                                           message:@"The amount exceeds the budget allocated, but the transaction will still be saved."
-                                                                    preferredStyle:UIAlertControllerStyleAlert];
+            UIAlertController *alert = [UIAlertController
+                                        alertControllerWithTitle:@"Amount exceeded"
+                                        message:@"The amount exceeds the "
+                                        @"budget allocated, but "
+                                        @"the transaction will "
+                                        @"still be saved."
+                                        preferredStyle:
+                                            UIAlertControllerStyleAlert];
             
-            UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
-                                                         style:UIAlertActionStyleDefault
-                                                       handler:^(UIAlertAction * _Nonnull action) {
-                [self dismissViewControllerAnimated:YES completion:nil];
-            }];
-            
-            [self presentViewController:alert animated:YES completion:nil];
+            [self presentViewController:alert
+                               animated:YES
+                             completion:nil];
         } else if (success) {
-            [self dismissViewControllerAnimated:YES completion:nil];
+            [self dismissViewControllerAnimated:YES
+                                     completion:nil];
         } else {
-             [self showAlertWithTitle:@"Error" message:@"Failed to save transaction."];
+            [self
+             showAlertWithTitle:@"Error"
+             message:@"Failed to save transaction."];
         }
     }];
 }
@@ -562,4 +686,3 @@
 }
 
 @end
-
