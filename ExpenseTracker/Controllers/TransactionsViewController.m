@@ -8,6 +8,7 @@
 #import "Transaction+CoreDataClass.h"
 #import "PickerModalViewController.h"
 #import "UIViewController+Alerts.h"
+#import "TransactionService.h"
 
 @interface TransactionsViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate, UIPickerViewDelegate, UIPickerViewDataSource>
 @property (nonatomic, assign) BOOL isDatePickerVisible;
@@ -84,10 +85,18 @@
 }
 
 - (void)fetchCoreData {
-    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     NSError *error = nil;
-    self.budgets = [self getBudgetValues:context error:&error];
-    self.category = [self getCategoryValues:context error:&error isIncome: self.selectedTypeIndex];
+    self.budgets = [[TransactionService sharedService] fetchBudgetsWithError:&error];
+    
+    // Initial fetch might not have budget or date setup fully so defaults apply
+    if (self.selectedBudgetIndex) {
+         self.category = [[TransactionService sharedService] fetchCategoriesWithError:&error 
+                                                                             isIncome:self.selectedTypeIndex 
+                                                                      transactionDate:self.datePicker.date ?: [NSDate date]
+                                                                             budgetID:self.selectedBudgetIndex];
+    } else {
+        self.category = @[];
+    }
 }
 
 
@@ -155,7 +164,7 @@
         [typeButton setTitle:self.typeValues[self.selectedTypeIndex] forState:UIControlStateNormal];
         
         // Budget
-        self.budgetValues = [self getBudgetValues:context error:&error];
+        self.budgetValues = [[TransactionService sharedService] fetchBudgetsWithError:&error];
         self.selectedBudgetIndex = self.existingTransaction.budget.objectID;
         UIButton *budgetButton = [self buttonForRow:3];
         if (self.existingTransaction.budget.objectID) {
@@ -163,7 +172,10 @@
         }
         
         // Category
-        self.category = [self getCategoryValues:context error:&error isIncome:self.existingTransaction.category.isIncome];
+        self.category = [[TransactionService sharedService] fetchCategoriesWithError:&error 
+                                                                            isIncome:self.existingTransaction.category.isIncome 
+                                                                     transactionDate:self.existingTransaction.date
+                                                                            budgetID:self.existingTransaction.budget.objectID];
         self.categoryValues = [self.category valueForKey:@"name"];
         
         self.selectedCategoryIndex = self.existingTransaction.category.objectID;
@@ -187,122 +199,6 @@
     }
     return nil;
 }
-
-- (NSArray<NSDictionary *> *)getBudgetValues:(NSManagedObjectContext *)context error:(NSError **)error {
-    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Budget"];
-    fetchRequest.resultType = NSManagedObjectResultType;
-    fetchRequest.propertiesToFetch = nil;
-    fetchRequest.predicate = [NSPredicate predicateWithFormat:@"isActive == YES"];
-    
-    NSArray<Budget *> *results = [context executeFetchRequest:fetchRequest error:error];
-    if (!results) return nil;
-    
-    NSMutableArray *budgetsArray = [NSMutableArray array];
-    for (Budget *budget in results) {
-        if (budget.name) {
-            [budgetsArray addObject:@{
-                @"name": budget.name,
-                @"objectID": budget.objectID
-            }];
-        }
-    }
-    return [budgetsArray copy];
-}
-
-- (BOOL)isNotWithinInstallment:(NSDate *)date
-                              :(Category *)newCategory {
-    
-    if (!newCategory.isInstallment) {
-        return NO;
-    }
-    
-    NSDate *installmentStart = newCategory.installmentStartDate;
-    if (!installmentStart) {
-        return NO;
-    }
-    
-    NSCalendar *calendar = [NSCalendar currentCalendar];
-    
-    NSDateComponents *currentComps = [calendar components:(NSCalendarUnitYear | NSCalendarUnitMonth) fromDate:date];
-    NSInteger currentMonth = currentComps.month;
-    NSInteger currentYear = currentComps.year;
-    
-    NSInteger currentTotalMonths = (currentYear * 12) + currentMonth;
-    
-    NSDateComponents *startComps = [calendar components:(NSCalendarUnitYear | NSCalendarUnitMonth) fromDate:installmentStart];
-    NSInteger startTotalMonths = (startComps.year * 12) + startComps.month;
-    NSInteger lastValidTotalMonths = startTotalMonths + newCategory.installmentMonths - 1;
-    
-    if (currentTotalMonths >= startTotalMonths && currentTotalMonths <= lastValidTotalMonths) {
-        return NO;
-    }
-    return YES;
-}
-
-- (NSArray<NSDictionary *> *)getCategoryValues:(NSManagedObjectContext *)context error:(NSError **)error isIncome:(NSInteger)isIncome {
-    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Category"];
-    fetchRequest.resultType = NSManagedObjectResultType;
-    fetchRequest.propertiesToFetch = nil;
-    fetchRequest.predicate = [NSPredicate predicateWithFormat:@"isIncome == %@", @(isIncome)];
-    
-    NSArray<Category *> *results = [context executeFetchRequest:fetchRequest error:error];
-    
-    if (!results) return nil;
-    
-    NSMutableArray *categoryArray = [NSMutableArray array];
-    NSDate *transactionDate = self.datePicker.date ?: [NSDate date];
-    
-    for (Category *category in results) {
-        if (category.name && self.selectedBudgetIndex == category.budget.objectID && self.selectedBudgetIndex != nil) {
-            
-            // Check if category is valid for the selected date (installment logic)
-            if (![self isNotWithinInstallment:transactionDate :category]) {
-                [categoryArray addObject:@{
-                    @"name": category.name,
-                    @"objectID": category.objectID,
-                    @"isIncome": @(category.isIncome)
-                }];
-            }
-        }
-    }
-    return [categoryArray copy];
-}
-
-- (void)saveTransactionWithAmount:(NSDecimalNumber *)amount
-                             desc:(NSString *)desc
-                             date:(NSDate *)date
-                           budget:(Budget *)budget
-                         category:(Category *)category
-                             type:(BOOL)type {
-    
-    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
-    
-    Transaction *transaction = self.isEditMode ? self.existingTransaction :
-    [NSEntityDescription insertNewObjectForEntityForName:@"Transaction"
-                                  inManagedObjectContext:context];
-    
-    transaction.amount = amount;
-    transaction.desc = desc;
-    transaction.date = date;
-    transaction.budget = budget;
-    transaction.category = category;
-    transaction.category.isIncome = type;
-    
-    [category addTransactionsObject:transaction];
-    
-    NSError *error = nil;
-    if (![context save:&error]) {
-        // FIXME: Transaction still saving even it failed
-        NSLog(@"Failed to save transaction: %@", error);
-    } else {
-        NSLog(@"Transaction saved: %@", transaction);
-    }
-    
-    [self dismissViewControllerAnimated:YES completion:nil];
-}
-
-
-
 
 #pragma mark - UITableViewDataSource
 
@@ -484,7 +380,10 @@
                 self.selectedTypeIndex = selectedRow;
                 [sender setTitle:self.typeValues[selectedRow] forState:UIControlStateNormal];
                 
-                self.category = [self getCategoryValues:context error:&error isIncome:self.selectedTypeIndex];
+                self.category = [[TransactionService sharedService] fetchCategoriesWithError:&error 
+                                                                                    isIncome:self.selectedTypeIndex 
+                                                                             transactionDate:self.datePicker.date ?: [NSDate date]
+                                                                                    budgetID:self.selectedBudgetIndex];
                 [self.tableView reloadRowsAtIndexPaths:@[
                     [NSIndexPath indexPathForRow:5 inSection:0]
                 ] withRowAnimation:UITableViewRowAnimationAutomatic];
@@ -504,7 +403,7 @@
 
 
 - (void)pickerButtonTapped:(UIButton *)sender {
-    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
+    NSError *error = nil;
     self.currentPickerMode = sender.tag;
     
     PickerModalViewController *pickerVC = [[PickerModalViewController alloc] init];
@@ -535,7 +434,12 @@
         pickerVC.onDone = ^(NSInteger selectedIndex) {
             self.selectedTypeIndex = selectedIndex;
             [sender setTitle:self.typeValues[selectedIndex] forState:UIControlStateNormal];
-            self.category = [self getCategoryValues:context error:nil isIncome:self.selectedTypeIndex];
+            
+            self.category = [[TransactionService sharedService] fetchCategoriesWithError:&error 
+                                                                                isIncome:self.selectedTypeIndex 
+                                                                         transactionDate:self.datePicker.date ?: [NSDate date]
+                                                                                budgetID:self.selectedBudgetIndex];
+            
             [self.tableView reloadRowsAtIndexPaths:@[
                 [NSIndexPath indexPathForRow:5 inSection:0]
             ] withRowAnimation:UITableViewRowAnimationAutomatic];
@@ -554,9 +458,11 @@
 }
 
 - (void)datePickerChanged:(UIDatePicker *)sender {
-    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
     NSError *error = nil;
-    self.category = [self getCategoryValues:context error:&error isIncome:self.selectedTypeIndex];
+    self.category = [[TransactionService sharedService] fetchCategoriesWithError:&error 
+                                                                        isIncome:self.selectedTypeIndex 
+                                                                 transactionDate:self.datePicker.date ?: [NSDate date]
+                                                                        budgetID:self.selectedBudgetIndex];
     self.categoryValues = [self.category valueForKey:@"name"];
     self.selectedCategoryIndex = nil;
     
@@ -622,58 +528,33 @@
     Budget *newBudget = (Budget *)[context existingObjectWithID:self.selectedBudgetIndex error:&error];
     Category *newCategory = (Category *)[context existingObjectWithID:self.selectedCategoryIndex error:&error];
     
-    BOOL isEditing = (self.existingTransaction != nil);
-    BOOL amountOverflow = NO;
-    
-    if (isEditing) {
-        Budget *oldBudget = self.existingTransaction.budget;
-        Category *oldCategory = self.existingTransaction.category;
+    [[TransactionService sharedService] saveTransactionWithAmount:amount 
+                                                             desc:desc 
+                                                             date:date 
+                                                           budget:newBudget 
+                                                         category:newCategory 
+                                                         isIncome:(BOOL)type 
+                                              existingTransaction:self.existingTransaction 
+                                                       completion:^(BOOL success, NSError * _Nullable error, BOOL amountOverflow) {
         
-        NSDecimalNumber *usedAmount = oldCategory.usedAmount ?: [NSDecimalNumber zero];
-        oldCategory.usedAmount = [usedAmount decimalNumberBySubtracting:self.existingTransaction.amount];
-    }
-    
-    NSDecimalNumber *usedAmount = newCategory.usedAmount ?: [NSDecimalNumber zero];
-    NSDecimalNumber *totalUsedAmount = [usedAmount decimalNumberByAdding:amount];
-    
-    if ([totalUsedAmount compare:newCategory.allocatedAmount] != NSOrderedDescending) {
-        newCategory.usedAmount = totalUsedAmount;
-    } else {
-        newCategory.usedAmount = totalUsedAmount;
-        amountOverflow = YES;
-    }
-    
-    void (^saveBlock)(void) = ^{
-        [self saveTransactionWithAmount:amount
-                                   desc:desc
-                                   date:date
-                                 budget:newBudget
-                               category:newCategory
-                                   type:type];
-    };
-    
-    if (amountOverflow) {
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Amount exceeded"
-                                                                       message:@"The amount exceeds the budget allocated, but the transaction will still be saved."
-                                                                preferredStyle:UIAlertControllerStyleAlert];
-        
-        UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
-                                                     style:UIAlertActionStyleDefault
-                                                   handler:^(UIAlertAction * _Nonnull action) {
-            saveBlock();
-        }];
-        
-        UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel"
-                                                         style:UIAlertActionStyleCancel
-                                                       handler:nil];
-        
-        [alert addAction:cancel];
-        [alert addAction:ok];
-        
-        [self presentViewController:alert animated:YES completion:nil];
-    } else {
-        saveBlock();
-    }
+        if (amountOverflow) {
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Amount exceeded"
+                                                                           message:@"The amount exceeds the budget allocated, but the transaction will still be saved."
+                                                                    preferredStyle:UIAlertControllerStyleAlert];
+            
+            UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
+                                                         style:UIAlertActionStyleDefault
+                                                       handler:^(UIAlertAction * _Nonnull action) {
+                [self dismissViewControllerAnimated:YES completion:nil];
+            }];
+            
+            [self presentViewController:alert animated:YES completion:nil];
+        } else if (success) {
+            [self dismissViewControllerAnimated:YES completion:nil];
+        } else {
+             [self showAlertWithTitle:@"Error" message:@"Failed to save transaction."];
+        }
+    }];
 }
 
 - (void)dismissKeyboard {

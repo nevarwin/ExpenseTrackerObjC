@@ -15,6 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface Category : NSManagedObject
 
+- (BOOL)isValidForDate:(NSDate *)date;
+
 @end
 
 NS_ASSUME_NONNULL_END
