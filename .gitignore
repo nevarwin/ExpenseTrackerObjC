@@ -1,3 +1,15 @@
+# VS Code local history and private settings
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Generated Build Server config
+buildServer.json
+
+# Mac System files
 .DS_Store
+
 node_modules/
 mcp_config.json
