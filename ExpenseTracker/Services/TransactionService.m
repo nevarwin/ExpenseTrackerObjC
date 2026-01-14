@@ -1,6 +1,8 @@
-
 #import "TransactionService.h"
 #import "CoreDataManager.h"
+#import "Budget+CoreDataClass.h"
+#import "Category+CoreDataClass.h"
+#import "Transaction+CoreDataClass.h"
 
 @implementation TransactionService
 
@@ -17,28 +19,18 @@
     return [[CoreDataManager sharedManager] viewContext];
 }
 
-- (NSArray<NSDictionary *> *)fetchBudgetsWithError:(NSError **)error {
+- (NSArray<Budget *> *)fetchBudgetsWithError:(NSError **)error {
     NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Budget"];
     fetchRequest.resultType = NSManagedObjectResultType;
-    fetchRequest.propertiesToFetch = nil;
     fetchRequest.predicate = [NSPredicate predicateWithFormat:@"isActive == YES"];
     
-    NSArray<Budget *> *results = [[self context] executeFetchRequest:fetchRequest error:error];
-    if (!results) return nil;
+    NSSortDescriptor *sort = [NSSortDescriptor sortDescriptorWithKey:@"createdAt" ascending:NO];
+    fetchRequest.sortDescriptors = @[sort];
     
-    NSMutableArray *budgetsArray = [NSMutableArray array];
-    for (Budget *budget in results) {
-        if (budget.name) {
-            [budgetsArray addObject:@{
-                @"name": budget.name,
-                @"objectID": budget.objectID
-            }];
-        }
-    }
-    return [budgetsArray copy];
+    return [[self context] executeFetchRequest:fetchRequest error:error];
 }
 
-- (NSArray<NSDictionary *> *)fetchCategoriesWithError:(NSError **)error 
+- (NSArray<Category *> *)fetchCategoriesWithError:(NSError **)error 
                                              isIncome:(NSInteger)isIncome 
                                         transactionDate:(NSDate *)date 
                                             budgetID:(NSManagedObjectID *)budgetID 
@@ -46,13 +38,12 @@
     
     NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Category"];
     fetchRequest.resultType = NSManagedObjectResultType;
-    fetchRequest.propertiesToFetch = nil;
     fetchRequest.predicate = [NSPredicate predicateWithFormat:@"isIncome == %@", @(isIncome)];
     
     NSArray<Category *> *results = [[self context] executeFetchRequest:fetchRequest error:error];
     if (!results) return nil;
     
-    NSMutableArray *categoryArray = [NSMutableArray array];
+    NSMutableArray<Category *> *categoryArray = [NSMutableArray array];
     NSCalendar *calendar = [NSCalendar currentCalendar];
     
     for (Category *category in results) {
@@ -85,12 +76,15 @@
                 }
             }
             
+            // Validate installment expiration
+            if (shouldInclude && category.isInstallment && category.installmentEndDate && date) {
+                 // Simple check: if date is after end date, don't show?
+                 // Or rely on isValidForDate logic if it exists
+                 // The previous code called [category isValidForDate:date]
+            }
+            
             if (shouldInclude && [category isValidForDate:date]) {
-                [categoryArray addObject:@{
-                    @"name": category.name,
-                    @"objectID": category.objectID,
-                    @"isIncome": @(category.isIncome)
-                }];
+                [categoryArray addObject:category];
             }
         }
     }

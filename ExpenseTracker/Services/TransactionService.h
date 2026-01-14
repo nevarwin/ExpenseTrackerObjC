@@ -1,8 +1,8 @@
 
 #import <Foundation/Foundation.h>
-#import "Budget+CoreDataClass.h"
-#import "Category+CoreDataClass.h"
-#import "Transaction+CoreDataClass.h"
+@class Budget;
+@class Category;
+@class Transaction;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -10,13 +10,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (instancetype)sharedService;
 
-- (NSArray<NSDictionary *> *)fetchBudgetsWithError:(NSError **)error;
+- (NSArray<Budget *> *)fetchBudgetsWithError:(NSError **)error;
 
-- (NSArray<NSDictionary *> *)fetchCategoriesWithError:(NSError **)error 
+- (NSArray<Category *> *)fetchCategoriesWithError:(NSError **)error 
                                              isIncome:(NSInteger)isIncome 
                                         transactionDate:(NSDate *)date 
-                                            budgetID:(NSManagedObjectID *)budgetID
-                             excludedTransactionID:(nullable NSManagedObjectID *)excludedTransactionID;
+                                            budgetID:(Budget *)budgetID
+                             excludedTransactionID:(nullable Budget *)excludedTransactionID;
 
 - (void)saveTransactionWithAmount:(NSDecimalNumber *)amount
                              desc:(NSString *)desc

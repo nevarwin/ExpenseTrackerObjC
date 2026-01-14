@@ -8,6 +8,7 @@
 #import "AppDelegate.h"
 #import "Budget+CoreDataClass.h"
 #import "Transaction+CoreDataClass.h"
+#import "TransactionService.h"
 #import "Category+CoreDataClass.h"
 #import "BudgetDisplayViewController.h"
 #import "CoreDataManager.h"
@@ -39,15 +40,12 @@
 
 - (void)fetchBudgets {
     NSError *error = nil;
-    NSManagedObjectContext *context = [[CoreDataManager sharedManager] viewContext];
-    NSFetchRequest *request = [NSFetchRequest fetchRequestWithEntityName:@"Budget"];
-    NSPredicate *activePredicate = [NSPredicate predicateWithFormat:@"isActive == YES"];
-    NSSortDescriptor *sort = [NSSortDescriptor sortDescriptorWithKey:@"createdAt" ascending:NO];
+    // Use TransactionService instead of manual fetch
+    self.budgets = [[TransactionService sharedService] fetchBudgetsWithError:&error];
     
-    request.predicate = activePredicate;
-    request.sortDescriptors = @[sort];
-    
-    self.budgets = [context executeFetchRequest:request error:&error];
+    if (error) {
+        NSLog(@"Error fetching budgets: %@", error);
+    }
     
     [self.budgetTableView reloadData];
 }

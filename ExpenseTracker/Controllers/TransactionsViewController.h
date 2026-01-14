@@ -40,8 +40,8 @@
 
 @property (nonatomic, assign) NSInteger currentPickerMode;
 
-@property (nonatomic, strong) NSArray *budgets;
-@property (nonatomic, strong) NSArray *category;
+@property (nonatomic, strong) NSArray<Budget *> *budgets;
+@property (nonatomic, strong) NSArray<Category *> *category;
 
 @property (nonatomic, strong) NSDate *createdAt;
 @property (nonatomic, strong) NSDate *updatedAt;

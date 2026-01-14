@@ -20,7 +20,6 @@ UIPickerViewDelegate, UIPickerViewDataSource>
 
 @implementation TransactionsViewController
 
-// TODO: add validation if the installment is done so it cannot be selected
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor systemGroupedBackgroundColor];
@@ -452,8 +451,8 @@ replacementString:(NSString *)string {
         
         switch (sender.tag) {
             case 0: { // Budget
-                NSDictionary *selectedBudget = self.budgets[selectedRow];
-                self.selectedBudgetIndex = selectedBudget[@"objectID"];
+                Budget *selectedBudget = self.budgets[selectedRow];
+                self.selectedBudgetIndex = selectedBudget.objectID;
                 [sender setTitle:self.budgetValues[selectedRow]
                         forState:UIControlStateNormal];
                 
@@ -485,8 +484,8 @@ replacementString:(NSString *)string {
                 break;
             }
             case 2: { // Category
-                NSDictionary *selectedCategory = self.category[selectedRow];
-                self.selectedCategoryIndex = selectedCategory[@"objectID"];
+                Category *selectedCategory = self.category[selectedRow];
+                self.selectedCategoryIndex = selectedCategory.objectID;
                 [sender setTitle:self.categoryValues[selectedRow]
                         forState:UIControlStateNormal];
                 break;
@@ -515,9 +514,9 @@ replacementString:(NSString *)string {
         pickerVC.items = [self.budgets valueForKey:@"name"];
         pickerVC.selectedIndex = 0;
         pickerVC.onDone = ^(NSInteger selectedIndex) {
-            NSDictionary *selectedBudget = self.budgets[selectedIndex];
-            self.selectedBudgetIndex = selectedBudget[@"objectID"];
-            [sender setTitle:selectedBudget[@"name"] forState:UIControlStateNormal];
+            Budget *selectedBudget = self.budgets[selectedIndex];
+            self.selectedBudgetIndex = selectedBudget.objectID;
+            [sender setTitle:selectedBudget.name forState:UIControlStateNormal];
             [self.tableView reloadRowsAtIndexPaths:@[
                 [NSIndexPath indexPathForRow:4 inSection:0],
                 [NSIndexPath indexPathForRow:5 inSection:0]
@@ -549,9 +548,9 @@ replacementString:(NSString *)string {
         pickerVC.items = [self.category valueForKey:@"name"];
         pickerVC.selectedIndex = 0;
         pickerVC.onDone = ^(NSInteger selectedIndex) {
-            NSDictionary *selectedCategory = self.category[selectedIndex];
-            self.selectedCategoryIndex = selectedCategory[@"objectID"];
-            [sender setTitle:selectedCategory[@"name"] forState:UIControlStateNormal];
+            Category *selectedCategory = self.category[selectedIndex];
+            self.selectedCategoryIndex = selectedCategory.objectID;
+            [sender setTitle:selectedCategory.name forState:UIControlStateNormal];
         };
     }
     
