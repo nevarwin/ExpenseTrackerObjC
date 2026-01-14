@@ -651,40 +651,78 @@ numberOfRowsInComponent:(NSInteger)component {
     (Category *)[context existingObjectWithID:self.selectedCategoryIndex
                                         error:&error];
     
-    [self.service
-     saveTransactionWithAmount:amount
-     desc:desc
-     date:date
-     budget:newBudget
-     category:newCategory
-     isIncome:(BOOL)type
-     existingTransaction:self.existingTransaction
-     completion:^(BOOL success, NSError *_Nullable error,
-                  BOOL amountOverflow) {
-        if (amountOverflow) {
-            UIAlertController *alert = [UIAlertController
-                                        alertControllerWithTitle:@"Amount exceeded"
-                                        message:@"The amount exceeds the "
-                                        @"budget allocated, but "
-                                        @"the transaction will "
-                                        @"still be saved."
-                                        preferredStyle:
+    // Define save logic block
+    void (^proceedToSave)(void) = ^{
+        [self.service
+         saveTransactionWithAmount:amount
+         desc:desc
+         date:date
+         budget:newBudget
+         category:newCategory
+         isIncome:(BOOL)type
+         existingTransaction:self.existingTransaction
+         completion:^(BOOL success, NSError *_Nullable error,
+                      BOOL amountOverflow) {
+            if (amountOverflow) {
+                UIAlertController *alert = [UIAlertController
+                                            alertControllerWithTitle:@"Amount exceeded"
+                                            message:@"The amount exceeds the "
+                                            @"budget allocated, but "
+                                            @"the transaction will "
+                                            @"still be saved."
+                                            preferredStyle:
                                             UIAlertControllerStyleAlert];
-            
-            UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
-                                                         style:UIAlertActionStyleDefault
-                                                       handler:^(UIAlertAction * _Nonnull action) {
+                
+                UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
+                                                             style:UIAlertActionStyleDefault
+                                                           handler:^(UIAlertAction * _Nonnull action) {
+                    [self dismissViewControllerAnimated:YES completion:nil];
+                }];
+                [alert addAction:ok];
+                
+                [self presentViewController:alert animated:YES completion:nil];
+            } else if (success) {
                 [self dismissViewControllerAnimated:YES completion:nil];
+            } else {
+                [self showAlertWithTitle:@"Error" message:@"Failed to save transaction."];
+            }
+        }];
+    };
+    
+    // Check for excess installment amount
+    if (newCategory.isInstallment && newCategory.monthlyPayment) {
+        if ([amount compare:newCategory.monthlyPayment] == NSOrderedDescending) {
+            
+            NSString *formattedAmount = [formatter stringFromNumber:amount];
+            NSString *formattedMonthly = [formatter stringFromNumber:newCategory.monthlyPayment];
+            
+            NSString *message = [NSString stringWithFormat:@"You are paying %@, which is higher than your monthly installment of %@. The excess will be applied to your total installment balance. Do you want to proceed?",
+                                 formattedAmount, formattedMonthly];
+            
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Extra Payment"
+                                                                           message:message
+                                                                    preferredStyle:UIAlertControllerStyleAlert];
+            
+            UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel"
+                                                             style:UIAlertActionStyleCancel
+                                                           handler:nil];
+            
+            UIAlertAction *proceed = [UIAlertAction actionWithTitle:@"Proceed"
+                                                              style:UIAlertActionStyleDefault
+                                                            handler:^(UIAlertAction * _Nonnull action) {
+                proceedToSave();
             }];
-            [alert addAction:ok];
+            
+            [alert addAction:cancel];
+            [alert addAction:proceed];
             
             [self presentViewController:alert animated:YES completion:nil];
-        } else if (success) {
-            [self dismissViewControllerAnimated:YES completion:nil];
-        } else {
-            [self showAlertWithTitle:@"Error" message:@"Failed to save transaction."];
+            return;
         }
-    }];
+    }
+    
+    // If no excess, proceed to save directly
+    proceedToSave();
 }
 
 - (void)dismissKeyboard {
