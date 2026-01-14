@@ -671,7 +671,7 @@ numberOfRowsInComponent:(NSInteger)component {
                                             @"the transaction will "
                                             @"still be saved."
                                             preferredStyle:
-                                            UIAlertControllerStyleAlert];
+                                                UIAlertControllerStyleAlert];
                 
                 UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
                                                              style:UIAlertActionStyleDefault
