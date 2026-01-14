@@ -41,12 +41,8 @@
 - (NSArray<NSDictionary *> *)fetchCategoriesWithError:(NSError **)error 
                                              isIncome:(NSInteger)isIncome 
                                         transactionDate:(NSDate *)date 
-                                            budgetID:(NSManagedObjectID *)budgetID {
-    
-    // Ensure we have a valid budget ID before fetching? 
-    // The original code checked: self.selectedBudgetIndex == category.budget.objectID
-    // It seems it fetched everything then filtered. We can do that or filter in predicate.
-    // The original predicate only checked `isIncome`.
+                                            budgetID:(NSManagedObjectID *)budgetID 
+                             excludedTransactionID:(nullable NSManagedObjectID *)excludedTransactionID {
     
     NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Category"];
     fetchRequest.resultType = NSManagedObjectResultType;
@@ -57,13 +53,39 @@
     if (!results) return nil;
     
     NSMutableArray *categoryArray = [NSMutableArray array];
+    NSCalendar *calendar = [NSCalendar currentCalendar];
     
     for (Category *category in results) {
-        // Original logic: category.name && selectedBudgetIndex == category.budget.objectID
         if (category.name && [budgetID isEqual:category.budget.objectID]) {
             
-            // New Logic: Use the Category method we just added
-            if ([category isValidForDate:date]) {
+            BOOL shouldInclude = YES;
+            
+            // Check for duplicate installment transaction in the same month
+            if (category.isInstallment && date) {
+                NSInteger targetYear = [calendar component:NSCalendarUnitYear fromDate:date];
+                NSInteger targetMonth = [calendar component:NSCalendarUnitMonth fromDate:date];
+                
+                for (Transaction *transaction in category.transactions) {
+                    // Check if exclude (for edit mode)
+                    if (excludedTransactionID && [transaction.objectID isEqual:excludedTransactionID]) {
+                        continue;
+                    }
+
+                    if (!transaction.isActive) {
+                        continue;
+                    }
+                    
+                    NSInteger tYear = [calendar component:NSCalendarUnitYear fromDate:transaction.date];
+                    NSInteger tMonth = [calendar component:NSCalendarUnitMonth fromDate:transaction.date];
+                    
+                    if (tYear == targetYear && tMonth == targetMonth) {
+                        shouldInclude = NO;
+                        break;
+                    }
+                }
+            }
+            
+            if (shouldInclude && [category isValidForDate:date]) {
                 [categoryArray addObject:@{
                     @"name": category.name,
                     @"objectID": category.objectID,

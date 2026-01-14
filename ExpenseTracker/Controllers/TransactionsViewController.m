@@ -118,7 +118,8 @@ UIPickerViewDelegate, UIPickerViewDataSource>
                          fetchCategoriesWithError:&error
                          isIncome:self.selectedTypeIndex
                          transactionDate:self.datePicker.date ?: [NSDate date]
-                         budgetID:self.selectedBudgetIndex];
+                         budgetID:self.selectedBudgetIndex
+                         excludedTransactionID:self.existingTransaction.objectID];
     } else {
         self.category = @[];
     }
@@ -212,7 +213,8 @@ replacementString:(NSString *)string {
                          fetchCategoriesWithError:&error
                          isIncome:self.existingTransaction.category.isIncome
                          transactionDate:self.existingTransaction.date
-                         budgetID:self.existingTransaction.budget.objectID];
+                         budgetID:self.existingTransaction.budget.objectID
+                         excludedTransactionID:self.existingTransaction.objectID];
         self.categoryValues = [self.category valueForKey:@"name"];
         
         self.selectedCategoryIndex = self.existingTransaction.category.objectID;
@@ -473,7 +475,8 @@ replacementString:(NSString *)string {
                                  isIncome:self.selectedTypeIndex
                                  transactionDate:self.datePicker.date
                                  ?: [NSDate date]
-                                 budgetID:self.selectedBudgetIndex];
+                                 budgetID:self.selectedBudgetIndex
+                                 excludedTransactionID:self.existingTransaction.objectID];
                 [self.tableView
                  reloadRowsAtIndexPaths:@[ [NSIndexPath
                                             indexPathForRow:5
@@ -534,7 +537,8 @@ replacementString:(NSString *)string {
                              fetchCategoriesWithError:&error
                              isIncome:self.selectedTypeIndex
                              transactionDate:self.datePicker.date ?: [NSDate date]
-                             budgetID:self.selectedBudgetIndex];
+                             budgetID:self.selectedBudgetIndex
+                             excludedTransactionID:self.existingTransaction.objectID];
             
             [self.tableView
              reloadRowsAtIndexPaths:@[ [NSIndexPath indexPathForRow:5
@@ -560,7 +564,8 @@ replacementString:(NSString *)string {
                      fetchCategoriesWithError:&error
                      isIncome:self.selectedTypeIndex
                      transactionDate:self.datePicker.date ?: [NSDate date]
-                     budgetID:self.selectedBudgetIndex];
+                     budgetID:self.selectedBudgetIndex
+                     excludedTransactionID:self.existingTransaction.objectID];
     
     self.categoryValues = [self.category valueForKey:@"name"];
     self.selectedCategoryIndex = nil;
@@ -667,16 +672,18 @@ numberOfRowsInComponent:(NSInteger)component {
                                         preferredStyle:
                                             UIAlertControllerStyleAlert];
             
-            [self presentViewController:alert
-                               animated:YES
-                             completion:nil];
+            UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK"
+                                                         style:UIAlertActionStyleDefault
+                                                       handler:^(UIAlertAction * _Nonnull action) {
+                [self dismissViewControllerAnimated:YES completion:nil];
+            }];
+            [alert addAction:ok];
+            
+            [self presentViewController:alert animated:YES completion:nil];
         } else if (success) {
-            [self dismissViewControllerAnimated:YES
-                                     completion:nil];
+            [self dismissViewControllerAnimated:YES completion:nil];
         } else {
-            [self
-             showAlertWithTitle:@"Error"
-             message:@"Failed to save transaction."];
+            [self showAlertWithTitle:@"Error" message:@"Failed to save transaction."];
         }
     }];
 }
@@ -686,3 +693,4 @@ numberOfRowsInComponent:(NSInteger)component {
 }
 
 @end
+

@@ -15,7 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray<NSDictionary *> *)fetchCategoriesWithError:(NSError **)error 
                                              isIncome:(NSInteger)isIncome 
                                         transactionDate:(NSDate *)date 
-                                            budgetID:(NSManagedObjectID *)budgetID;
+                                            budgetID:(NSManagedObjectID *)budgetID
+                             excludedTransactionID:(nullable NSManagedObjectID *)excludedTransactionID;
 
 - (void)saveTransactionWithAmount:(NSDecimalNumber *)amount
                              desc:(NSString *)desc
