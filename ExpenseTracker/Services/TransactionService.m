@@ -31,10 +31,10 @@
 }
 
 - (NSArray<Category *> *)fetchCategoriesWithError:(NSError **)error 
-                                             isIncome:(NSInteger)isIncome 
-                                        transactionDate:(NSDate *)date 
-                                            budgetID:(NSManagedObjectID *)budgetID 
-                             excludedTransactionID:(nullable NSManagedObjectID *)excludedTransactionID {
+                                         isIncome:(NSInteger)isIncome 
+                                  transactionDate:(NSDate *)date 
+                                         budgetID:(NSManagedObjectID *)budgetID 
+                            excludedTransactionID:(nullable NSManagedObjectID *)excludedTransactionID {
     
     NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Category"];
     fetchRequest.resultType = NSManagedObjectResultType;
@@ -61,7 +61,7 @@
                     if (excludedTransactionID && [transaction.objectID isEqual:excludedTransactionID]) {
                         continue;
                     }
-
+                    
                     if (!transaction.isActive) {
                         continue;
                     }
@@ -78,9 +78,9 @@
             
             // Validate installment expiration
             if (shouldInclude && category.isInstallment && category.installmentEndDate && date) {
-                 // Simple check: if date is after end date, don't show?
-                 // Or rely on isValidForDate logic if it exists
-                 // The previous code called [category isValidForDate:date]
+                // Simple check: if date is after end date, don't show?
+                // Or rely on isValidForDate logic if it exists
+                // The previous code called [category isValidForDate:date]
             }
             
             if (shouldInclude && [category isValidForDate:date]) {
@@ -97,7 +97,7 @@
                            budget:(Budget *)budget
                          category:(Category *)category
                          isIncome:(BOOL)isIncome
-               existingTransaction:(nullable Transaction *)existingTransaction
+              existingTransaction:(nullable Transaction *)existingTransaction
                        completion:(void (^)(BOOL success, NSError * _Nullable error, BOOL amountOverflow))completion {
     
     NSManagedObjectContext *context = [self context];
@@ -111,11 +111,11 @@
     
     if (existingTransaction) {
         // If editing, subtract old amount first
-         Budget *oldBudget = existingTransaction.budget; // Currently unused in logic but good to know
-         Category *oldCategory = existingTransaction.category;
-         
-         NSDecimalNumber *usedAmount = oldCategory.usedAmount ?: [NSDecimalNumber zero];
-         oldCategory.usedAmount = [usedAmount decimalNumberBySubtracting:existingTransaction.amount];
+        Budget *oldBudget = existingTransaction.budget; // Currently unused in logic but good to know
+        Category *oldCategory = existingTransaction.category;
+        
+        NSDecimalNumber *usedAmount = oldCategory.usedAmount ?: [NSDecimalNumber zero];
+        oldCategory.usedAmount = [usedAmount decimalNumberBySubtracting:existingTransaction.amount];
     }
     
     NSDecimalNumber *usedAmount = category.usedAmount ?: [NSDecimalNumber zero];

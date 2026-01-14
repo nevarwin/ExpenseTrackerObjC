@@ -13,10 +13,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray<Budget *> *)fetchBudgetsWithError:(NSError **)error;
 
 - (NSArray<Category *> *)fetchCategoriesWithError:(NSError **)error 
-                                             isIncome:(NSInteger)isIncome 
-                                        transactionDate:(NSDate *)date 
-                                            budgetID:(Budget *)budgetID
-                             excludedTransactionID:(nullable Budget *)excludedTransactionID;
+                                         isIncome:(NSInteger)isIncome 
+                                  transactionDate:(NSDate *)date 
+                                         budgetID:(Budget *)budgetID
+                            excludedTransactionID:(nullable Budget *)excludedTransactionID;
 
 - (void)saveTransactionWithAmount:(NSDecimalNumber *)amount
                              desc:(NSString *)desc
@@ -24,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
                            budget:(Budget *)budget
                          category:(Category *)category
                          isIncome:(BOOL)isIncome
-               existingTransaction:(nullable Transaction *)existingTransaction
+              existingTransaction:(nullable Transaction *)existingTransaction
                        completion:(void (^)(BOOL success, NSError * _Nullable error, BOOL amountOverflow))completion;
 
 @end
