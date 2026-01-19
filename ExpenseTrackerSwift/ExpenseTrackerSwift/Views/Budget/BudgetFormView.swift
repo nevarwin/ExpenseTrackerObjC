@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 struct BudgetFormView: View {
     @Environment(\.dismiss) private var dismiss
@@ -99,5 +100,5 @@ struct BudgetFormView: View {
     let container = try! ModelContainer(for: Budget.self, configurations: config)
     let viewModel = BudgetViewModel(modelContext: container.mainContext)
     
-    return BudgetFormView(viewModel: viewModel)
+    BudgetFormView(viewModel: viewModel)
 }

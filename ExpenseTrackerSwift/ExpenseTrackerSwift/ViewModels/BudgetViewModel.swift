@@ -1,12 +1,14 @@
 import SwiftUI
 import SwiftData
+import Combine
 
-@Observable
-final class BudgetViewModel {
-    var budgets: [Budget] = []
-    var selectedBudget: Budget?
-    var isLoading = false
-    var errorMessage: String?
+final class BudgetViewModel: ObservableObject {
+    let objectWillChange = ObservableObjectPublisher()
+    
+    @Published var budgets: [Budget] = []
+    @Published var selectedBudget: Budget?
+    @Published var isLoading = false
+    @Published var errorMessage: String?
     
     private let modelContext: ModelContext
     

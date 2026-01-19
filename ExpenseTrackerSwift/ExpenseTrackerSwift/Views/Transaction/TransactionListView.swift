@@ -104,7 +104,7 @@ struct TransactionDetailRow: View {
 
 struct TransactionFormView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: TransactionViewModel
+    @Bindable var viewModel: TransactionViewModel
     
     let budget: Budget
     let existingTransaction: Transaction?
