@@ -30,10 +30,10 @@
     return [[self context] executeFetchRequest:fetchRequest error:error];
 }
 
-- (NSArray<Category *> *)fetchCategoriesWithError:(NSError **)error 
-                                         isIncome:(NSInteger)isIncome 
-                                  transactionDate:(NSDate *)date 
-                                         budgetID:(NSManagedObjectID *)budgetID 
+- (NSArray<Category *> *)fetchCategoriesWithError:(NSError **)error
+                                         isIncome:(NSInteger)isIncome
+                                  transactionDate:(NSDate *)date
+                                         budgetID:(NSManagedObjectID *)budgetID
                             excludedTransactionID:(nullable NSManagedObjectID *)excludedTransactionID {
     
     NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Category"];
