@@ -1,0 +1,17 @@
+import SwiftUI
+import SwiftData
+
+@main
+struct ExpenseTrackerApp: App {
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+        }
+        .modelContainer(for: [
+            Budget.self,
+            Category.self,
+            Transaction.self,
+            BudgetAllocation.self
+        ])
+    }
+}
