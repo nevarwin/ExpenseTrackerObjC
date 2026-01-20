@@ -9,53 +9,36 @@ struct BudgetListView: View {
     
     var body: some View {
         NavigationStack {
-            Group {
-                if let viewModel = viewModel {
-                    if viewModel.isLoading {
-                        ProgressView("Loading budgets...")
-                    } else if viewModel.budgets.isEmpty {
-                        ContentUnavailableView(
-                            "No Budgets",
-                            systemImage: "creditcard",
-                            description: Text("Create your first budget to get started")
-                        )
-                    } else {
-                        List {
-                            ForEach(viewModel.budgets) { budget in
-                                NavigationLink(value: budget) {
-                                    BudgetRowView(budget: budget)
-                                }
-                            }
-                            .onDelete(perform: deleteBudgets)
+            contentView
+                .navigationTitle("Budgets")
+                .navigationDestination(for: Budget.self) { budget in
+                    BudgetDetailView(budget: budget)
+                }
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button(action: { showingAddBudget = true }) {
+                            Label("Add Budget", systemImage: "plus")
                         }
                     }
-                } else {
-                    ProgressView()
                 }
+        }
+        .sheet(isPresented: $showingAddBudget, onDismiss: {
+            // Reload budgets when sheet dismisses to ensure list is updated
+            // Dispatch to main thread with slight delay to ensure save completes
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                viewModel?.loadBudgets()
             }
-            .navigationTitle("Budgets")
-            .navigationDestination(for: Budget.self) { budget in
-                BudgetDetailView(budget: budget)
+        }) {
+            if let viewModel = viewModel {
+                BudgetFormView(viewModel: viewModel)
             }
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button(action: { showingAddBudget = true }) {
-                        Label("Add Budget", systemImage: "plus")
-                    }
-                }
+        }
+        .alert("Error", isPresented: $showingError) {
+            Button("OK") {
+                viewModel?.errorMessage = nil
             }
-            .sheet(isPresented: $showingAddBudget) {
-                if let viewModel = viewModel {
-                    BudgetFormView(viewModel: viewModel)
-                }
-            }
-            .alert("Error", isPresented: $showingError) {
-                Button("OK") {
-                    viewModel?.errorMessage = nil
-                }
-            } message: {
-                Text(viewModel?.errorMessage ?? "An error occurred")
-            }
+        } message: {
+            Text(viewModel?.errorMessage ?? "An error occurred")
         }
         .onAppear {
             if viewModel == nil {
@@ -65,6 +48,32 @@ struct BudgetListView: View {
         }
         .onChange(of: viewModel?.errorMessage) { _, newValue in
             showingError = newValue != nil
+        }
+    }
+    
+    @ViewBuilder
+    private var contentView: some View {
+        if let viewModel = viewModel {
+            if viewModel.isLoading {
+                ProgressView("Loading budgets...")
+            } else if viewModel.budgets.isEmpty {
+                ContentUnavailableView(
+                    "No Budgets",
+                    systemImage: "creditcard",
+                    description: Text("Create your first budget to get started")
+                )
+            } else {
+                List {
+                    ForEach(viewModel.budgets) { budget in
+                        NavigationLink(value: budget) {
+                            BudgetRowView(budget: budget)
+                        }
+                    }
+                    .onDelete(perform: deleteBudgets)
+                }
+            }
+        } else {
+            ProgressView()
         }
     }
     

@@ -21,12 +21,12 @@ final class BudgetViewModel: ObservableObject {
         errorMessage = nil
         
         let descriptor = FetchDescriptor<Budget>(
-            predicate: #Predicate { $0.isActive == true },
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
         
         do {
             budgets = try modelContext.fetch(descriptor)
+            objectWillChange.send()
         } catch {
             errorMessage = "Failed to load budgets: \(error.localizedDescription)"
         }
@@ -34,12 +34,14 @@ final class BudgetViewModel: ObservableObject {
         isLoading = false
     }
     
-    func createBudget(name: String, totalAmount: Decimal) throws {
+    @discardableResult
+    func createBudget(name: String, totalAmount: Decimal) throws -> Budget {
         let budget = Budget(name: name, totalAmount: totalAmount)
         modelContext.insert(budget)
         
         try modelContext.save()
         budgets.insert(budget, at: 0)
+        return budget
     }
     
     func updateBudget(_ budget: Budget, name: String, totalAmount: Decimal) throws {
