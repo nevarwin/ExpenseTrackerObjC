@@ -4,6 +4,27 @@ import SwiftData
 struct BudgetListView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel: BudgetViewModel?
+    
+    var body: some View {
+        Group {
+            if let viewModel = viewModel {
+                BudgetListContent(viewModel: viewModel)
+            } else {
+                ProgressView()
+                    .onAppear {
+                        // Initialize ViewModel exactly once
+                        let vm = BudgetViewModel(modelContext: modelContext)
+                        self.viewModel = vm
+                        // Load initial data
+                        vm.loadBudgets()
+                    }
+            }
+        }
+    }
+}
+
+struct BudgetListContent: View {
+    @ObservedObject var viewModel: BudgetViewModel
     @State private var showingAddBudget = false
     @State private var showingError = false
     
@@ -24,62 +45,45 @@ struct BudgetListView: View {
         }
         .sheet(isPresented: $showingAddBudget, onDismiss: {
             // Reload budgets when sheet dismisses to ensure list is updated
-            // Dispatch to main thread with slight delay to ensure save completes
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                viewModel?.loadBudgets()
-            }
+            viewModel.loadBudgets()
         }) {
-            if let viewModel = viewModel {
-                BudgetFormView(viewModel: viewModel)
-            }
+            BudgetFormView(viewModel: viewModel)
         }
         .alert("Error", isPresented: $showingError) {
             Button("OK") {
-                viewModel?.errorMessage = nil
+                viewModel.errorMessage = nil
             }
         } message: {
-            Text(viewModel?.errorMessage ?? "An error occurred")
+            Text(viewModel.errorMessage ?? "An error occurred")
         }
-        .onAppear {
-            if viewModel == nil {
-                viewModel = BudgetViewModel(modelContext: modelContext)
-            }
-            viewModel?.loadBudgets()
-        }
-        .onChange(of: viewModel?.errorMessage) { _, newValue in
+        .onChange(of: viewModel.errorMessage) { _, newValue in
             showingError = newValue != nil
         }
     }
     
     @ViewBuilder
     private var contentView: some View {
-        if let viewModel = viewModel {
-            if viewModel.isLoading {
-                ProgressView("Loading budgets...")
-            } else if viewModel.budgets.isEmpty {
-                ContentUnavailableView(
-                    "No Budgets",
-                    systemImage: "creditcard",
-                    description: Text("Create your first budget to get started")
-                )
-            } else {
-                List {
-                    ForEach(viewModel.budgets) { budget in
-                        NavigationLink(value: budget) {
-                            BudgetRowView(budget: budget)
-                        }
-                    }
-                    .onDelete(perform: deleteBudgets)
-                }
-            }
+        if viewModel.isLoading {
+            ProgressView("Loading budgets...")
+        } else if viewModel.budgets.isEmpty {
+            ContentUnavailableView(
+                "No Budgets",
+                systemImage: "creditcard",
+                description: Text("Create your first budget to get started")
+            )
         } else {
-            ProgressView()
+            List {
+                ForEach(viewModel.budgets) { budget in
+                    NavigationLink(value: budget) {
+                        BudgetRowView(budget: budget)
+                    }
+                }
+                .onDelete(perform: deleteBudgets)
+            }
         }
     }
     
     private func deleteBudgets(at offsets: IndexSet) {
-        guard let viewModel = viewModel else { return }
-        
         for index in offsets {
             let budget = viewModel.budgets[index]
             do {
