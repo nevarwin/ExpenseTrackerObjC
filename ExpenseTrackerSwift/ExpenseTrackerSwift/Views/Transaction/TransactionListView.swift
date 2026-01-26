@@ -43,8 +43,12 @@ struct TransactionListView: View {
                 }
             }
             .sheet(isPresented: $showingAddTransaction) {
-                if let budget = activeBudgets.first {
-                    TransactionFormView(budget: budget, viewModel: viewModel!)
+                if let firstBudget = activeBudgets.first {
+                    TransactionFormView(
+                        activeBudgets: activeBudgets,
+                        initialBudget: firstBudget,
+                        viewModel: viewModel!
+                    )
                 }
             }
         }
@@ -106,28 +110,32 @@ struct TransactionFormView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var viewModel: TransactionViewModel
     
-    let budget: Budget
+    let availableBudgets: [Budget]
     let existingTransaction: Transaction?
+    
+    @State private var selectedBudget: Budget
     
     @State private var amount: String = ""
     @State private var description: String = ""
     @State private var date: Date = Date()
-    @State private var isIncome: Bool = false
+
     @State private var selectedCategory: Category?
     @State private var showingOverflowAlert = false
     @State private var showingError = false
     @State private var errorMessage = ""
     
-    init(budget: Budget, viewModel: TransactionViewModel, existingTransaction: Transaction? = nil) {
-        self.budget = budget
+    init(activeBudgets: [Budget], initialBudget: Budget, viewModel: TransactionViewModel, existingTransaction: Transaction? = nil) {
+        self.availableBudgets = activeBudgets
+        _selectedBudget = State(initialValue: initialBudget)
         self.viewModel = viewModel
         self.existingTransaction = existingTransaction
         
-        if let transaction = existingTransaction {
+        if let transaction = existingTransaction,
+           let transactionBudget = transaction.budget {
+            _selectedBudget = State(initialValue: transactionBudget)
             _amount = State(initialValue: "\(transaction.amount)")
             _description = State(initialValue: transaction.desc)
             _date = State(initialValue: transaction.date)
-            _isIncome = State(initialValue: transaction.isIncome)
             _selectedCategory = State(initialValue: transaction.category)
         }
     }
@@ -136,7 +144,12 @@ struct TransactionFormView: View {
         NavigationStack {
             Form {
                 Section("Transaction Details") {
-                    Toggle("Income", isOn: $isIncome)
+                    Picker("Budget", selection: $selectedBudget) {
+                        ForEach(availableBudgets) { budget in
+                            Text(budget.name).tag(budget)
+                        }
+                    }
+
                     
                     TextField("Amount", text: $amount)
                         .keyboardType(.decimalPad)
@@ -150,8 +163,16 @@ struct TransactionFormView: View {
                     Picker("Category", selection: $selectedCategory) {
                         Text("Select Category").tag(nil as Category?)
                         
-                        ForEach(viewModel.availableCategories) { category in
-                            Text(category.name).tag(category as Category?)
+                        Section("Income") {
+                            ForEach(viewModel.availableCategories.filter { $0.isIncome }) { category in
+                                Text(category.name).tag(category as Category?)
+                            }
+                        }
+                        
+                        Section("Expense") {
+                            ForEach(viewModel.availableCategories.filter { !$0.isIncome }) { category in
+                                Text(category.name).tag(category as Category?)
+                            }
                         }
                     }
                 }
@@ -185,8 +206,12 @@ struct TransactionFormView: View {
         .onAppear {
             loadCategories()
         }
-        .onChange(of: isIncome) { _, _ in loadCategories() }
+
         .onChange(of: date) { _, _ in loadCategories() }
+        .onChange(of: selectedBudget) { _, _ in
+            selectedCategory = nil
+            loadCategories()
+        }
     }
     
     private var isValid: Bool {
@@ -201,9 +226,8 @@ struct TransactionFormView: View {
     
     private func loadCategories() {
         viewModel.loadAvailableCategories(
-            isIncome: isIncome,
             transactionDate: date,
-            budget: budget,
+            budget: selectedBudget,
             excluding: existingTransaction
         )
     }
@@ -219,7 +243,7 @@ struct TransactionFormView: View {
                 amount: decimalAmount,
                 description: description,
                 date: date,
-                budget: budget,
+                budget: selectedBudget,
                 category: category,
                 existing: existingTransaction
             )

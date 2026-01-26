@@ -41,14 +41,13 @@ final class TransactionViewModel {
     }
     
     func loadAvailableCategories(
-        isIncome: Bool,
         transactionDate: Date,
         budget: Budget,
         excluding: Transaction? = nil
     ) {
         let descriptor = FetchDescriptor<Category>(
             predicate: #Predicate<Category> { category in
-                category.isIncome == isIncome && category.isActive == true
+                category.isActive == true
             }
         )
         
