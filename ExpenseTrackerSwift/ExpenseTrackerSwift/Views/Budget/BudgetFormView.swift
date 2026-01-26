@@ -28,6 +28,11 @@ struct BudgetFormView: View {
                     isIncome: category.isIncome
                 )
             })
+        } else {
+            // Initialize with one default category for new budget
+            _categoryDrafts = State(initialValue: [
+                CategoryDraft(name: "", allocatedAmount: "0", isIncome: true)
+            ])
         }
     }
     
@@ -39,9 +44,9 @@ struct BudgetFormView: View {
                 }
                 
                 Section {
-                    ForEach(categoryDrafts) { draft in
-                        CategoryInputRow(draft: draft) {
-                            categoryDrafts.removeAll { $0.id == draft.id }
+                    ForEach($categoryDrafts) { $draft in
+                        CategoryInputRow(draft: $draft) {
+                            categoryDrafts.removeAll { $0.id == $draft.wrappedValue.id }
                         }
                     }
                     
@@ -118,8 +123,7 @@ struct BudgetFormView: View {
         
         guard !name.trimmingCharacters(in: .whitespaces).isEmpty,
               incomeTotal > 0,
-              categoryDrafts.filter({ $0.isIncome }).count > 0,
-              categoryDrafts.filter({ !$0.isIncome }).count > 0 else {
+              categoryDrafts.filter({ $0.isIncome }).count > 0 else {
             return false
         }
         

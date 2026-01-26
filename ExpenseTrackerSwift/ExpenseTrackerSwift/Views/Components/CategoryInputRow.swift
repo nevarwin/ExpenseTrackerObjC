@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Inline category input row for budget creation/editing
 struct CategoryInputRow: View {
-    @ObservedObject var draft: CategoryDraft
+    @Binding var draft: CategoryDraft
     let onDelete: () -> Void
     
     var body: some View {
@@ -53,11 +53,11 @@ struct CategoryInputRow: View {
 
 #Preview {
     struct PreviewWrapper: View {
-        @StateObject private var draft = CategoryDraft(name: "Groceries", allocatedAmount: "500", isIncome: false)
+        @State private var draft = CategoryDraft(name: "Groceries", allocatedAmount: "500", isIncome: false)
         
         var body: some View {
             Form {
-                CategoryInputRow(draft: draft, onDelete: {})
+                CategoryInputRow(draft: $draft, onDelete: {})
             }
         }
     }

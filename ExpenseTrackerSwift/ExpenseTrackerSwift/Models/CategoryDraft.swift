@@ -4,11 +4,13 @@ import Combine
 
 /// Temporary model for category data during budget creation/editing
 /// Used to hold category information before persisting to SwiftData
-final class CategoryDraft: ObservableObject, Identifiable {
+/// Temporary model for category data during budget creation/editing
+/// Used to hold category information before persisting to SwiftData
+struct CategoryDraft: Identifiable {
     let id: UUID
-    @Published var name: String
-    @Published var allocatedAmount: String
-    @Published var isIncome: Bool
+    var name: String
+    var allocatedAmount: String
+    var isIncome: Bool
     
     init(id: UUID = UUID(), name: String = "", allocatedAmount: String = "0", isIncome: Bool = false) {
         self.id = id
