@@ -176,6 +176,25 @@ struct TransactionFormView: View {
                         }
                     }
                 }
+                
+                if let category = selectedCategory, category.isInstallment {
+                    LabeledContent("Monthly Installment") {
+                        Text(category.allocatedAmount, format: .currency(code: "USD"))
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    if let decimalAmount = Decimal(string: amount), decimalAmount > 0 {
+                        if decimalAmount > category.allocatedAmount {
+                            Text("Extra payment of \(decimalAmount - category.allocatedAmount, format: .currency(code: "USD")) will reduce the term.")
+                                .font(.caption)
+                                .foregroundStyle(.blue)
+                        } else if decimalAmount < category.allocatedAmount {
+                            Text("Payment is less than the monthly installment.")
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                        }
+                    }
+                }
             }
             .navigationTitle(existingTransaction == nil ? "New Transaction" : "Edit Transaction")
             .navigationBarTitleDisplayMode(.inline)
@@ -192,7 +211,7 @@ struct TransactionFormView: View {
             .alert("Amount Exceeds Allocation", isPresented: $showingOverflowAlert) {
                 Button("Cancel", role: .cancel) { }
                 Button("Proceed Anyway") {
-                    dismiss()
+                    performSave()
                 }
             } message: {
                 Text("The entered amount exceeds the allocated budget for this category. The excess will be applied to the total. Do you want to continue?")
@@ -238,8 +257,29 @@ struct TransactionFormView: View {
             return
         }
         
+        // 1. Check for overflow
+        let hasOverflow = viewModel.checkOverflow(
+            amount: decimalAmount,
+            budget: selectedBudget,
+            category: category,
+            existing: existingTransaction
+        )
+        
+        if hasOverflow {
+            showingOverflowAlert = true
+            return // Stop here, wait for user confirmation
+        }
+        
+        // 2. If no overflow, save immediately
+        performSave()
+    }
+    
+    private func performSave() {
+        guard let decimalAmount = Decimal(string: amount),
+              let category = selectedCategory else { return }
+        
         do {
-            let hasOverflow = try viewModel.saveTransaction(
+            try viewModel.saveTransaction(
                 amount: decimalAmount,
                 description: description,
                 date: date,
@@ -247,12 +287,7 @@ struct TransactionFormView: View {
                 category: category,
                 existing: existingTransaction
             )
-            
-            if hasOverflow {
-                showingOverflowAlert = true
-            } else {
-                dismiss()
-            }
+            dismiss()
         } catch {
             errorMessage = error.localizedDescription
             showingError = true

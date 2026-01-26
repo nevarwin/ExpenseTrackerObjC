@@ -75,6 +75,23 @@ final class TransactionViewModel {
         }
     }
     
+    func checkOverflow(
+        amount: Decimal,
+        budget: Budget,
+        category: Category,
+        existing: Transaction? = nil
+    ) -> Bool {
+        var currentUsed = category.usedAmount
+        
+        // If editing, subtract the previous amount from the usage
+        if let existing = existing, let oldCategory = existing.category, oldCategory.id == category.id {
+            currentUsed -= existing.amount
+        }
+        
+        let totalUsed = currentUsed + amount
+        return totalUsed > category.allocatedAmount
+    }
+    
     func saveTransaction(
         amount: Decimal,
         description: String,
@@ -82,19 +99,27 @@ final class TransactionViewModel {
         budget: Budget,
         category: Category,
         existing: Transaction? = nil
-    ) throws -> Bool {
-        // Update old category if editing
-        if let existing = existing, let oldCategory = existing.category {
+    ) throws {
+        // Update old category if editing and category changed
+        if let existing = existing, 
+           let oldCategory = existing.category, 
+           oldCategory.id != category.id {
             oldCategory.usedAmount -= existing.amount
             oldCategory.updatedAt = Date()
         }
         
-        // Check for overflow
-        let totalUsed = category.usedAmount + amount
-        let hasOverflow = totalUsed > category.allocatedAmount
+        // Prepare new category usage
+        // Note: If we are editing in the SAME category, we need to adjust for the diff
+        var newUsage = category.usedAmount
+        if let existing = existing, 
+           let oldCategory = existing.category, 
+           oldCategory.id == category.id {
+            newUsage -= existing.amount
+        }
+        newUsage += amount
         
         // Update category
-        category.usedAmount = totalUsed
+        category.usedAmount = newUsage
         category.updatedAt = Date()
         
         // Create or update transaction
@@ -121,8 +146,6 @@ final class TransactionViewModel {
         budget.updateRemainingAmount()
         
         try modelContext.save()
-        
-        return hasOverflow
     }
     
     func deleteTransaction(_ transaction: Transaction) throws {

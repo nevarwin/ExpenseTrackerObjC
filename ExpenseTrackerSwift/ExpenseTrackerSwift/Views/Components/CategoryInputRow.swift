@@ -19,15 +19,29 @@ struct CategoryInputRow: View {
             }
             
             HStack {
-                TextField("Amount", text: $draft.allocatedAmount)
-                    .keyboardType(.decimalPad)
-                    .textFieldStyle(.plain)
-                    .frame(maxWidth: 120)
+                if draft.isInstallment {
+                    VStack(alignment: .leading) {
+                        Text("Monthly:")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(formatCurrency(draft.allocatedDecimal))
+                            .fontWeight(.medium)
+                    }
+                    .frame(maxWidth: 120, alignment: .leading)
+                } else {
+                    TextField("Amount", text: $draft.allocatedAmount)
+                        .keyboardType(.decimalPad)
+                        .textFieldStyle(.plain)
+                        .frame(maxWidth: 120)
+                }
                 
                 Spacer()
                 
                 Button(action: {
                     draft.isIncome.toggle()
+                    if draft.isIncome {
+                        draft.isInstallment = false
+                    }
                 }) {
                     Text(draft.isIncome ? "Income" : "Expense")
                         .foregroundStyle(draft.isIncome ? .green : .primary)
@@ -39,6 +53,25 @@ struct CategoryInputRow: View {
                 .buttonStyle(.plain)
             }
             
+            if !draft.isIncome {
+                Toggle("Installment", isOn: $draft.isInstallment)
+                    .toggleStyle(SwitchToggleStyle(tint: .blue))
+                    .font(.subheadline)
+            }
+            
+            if draft.isInstallment {
+                HStack {
+                    TextField("Total", text: $draft.totalInstallmentAmount)
+                        .keyboardType(.decimalPad)
+                    
+                    TextField("Months", text: $draft.installmentMonths)
+                        .keyboardType(.numberPad)
+                }
+                .textFieldStyle(.roundedBorder)
+                
+                DatePicker("Start Date", selection: $draft.installmentStartDate, displayedComponents: [.date])
+            }
+            
             // Validation feedback
             if !draft.name.trimmingCharacters(in: .whitespaces).isEmpty && 
                draft.allocatedDecimal <= 0 {
@@ -48,6 +81,13 @@ struct CategoryInputRow: View {
             }
         }
         .padding(.vertical, 8)
+    }
+    
+    private func formatCurrency(_ amount: Decimal) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "USD"
+        return formatter.string(from: amount as NSDecimalNumber) ?? "$0.00"
     }
 }
 

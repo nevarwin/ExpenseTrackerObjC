@@ -25,7 +25,11 @@ struct BudgetFormView: View {
                 CategoryDraft(
                     name: category.name,
                     allocatedAmount: "\(category.allocatedAmount)",
-                    isIncome: category.isIncome
+                    isIncome: category.isIncome,
+                    isInstallment: category.isInstallment,
+                    totalInstallmentAmount: category.totalInstallmentAmount?.description ?? "0",
+                    installmentMonths: category.installmentMonths?.description ?? "12",
+                    installmentStartDate: category.installmentStartDate ?? Date()
                 )
             })
         } else {
@@ -173,8 +177,22 @@ struct BudgetFormView: View {
                     name: draft.name.trimmingCharacters(in: .whitespaces),
                     allocatedAmount: draft.allocatedDecimal,
                     isIncome: draft.isIncome,
+                    isInstallment: draft.isInstallment,
                     budget: budget
                 )
+                
+                if draft.isInstallment {
+                    let total = Decimal(string: draft.totalInstallmentAmount) ?? 0
+                    let months = Int(draft.installmentMonths) ?? 1
+                    
+                    category.configureInstallment(
+                        monthlyPayment: draft.allocatedDecimal,
+                        totalAmount: total,
+                        months: months,
+                        startDate: draft.installmentStartDate
+                    )
+                }
+                
                 modelContext.insert(category)
             }
             
