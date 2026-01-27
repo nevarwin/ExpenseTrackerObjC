@@ -1,6 +1,6 @@
-import SwiftUI
-import SwiftData
 import Combine
+import SwiftData
+import SwiftUI
 
 final class BudgetViewModel: ObservableObject {
     let objectWillChange = ObservableObjectPublisher()

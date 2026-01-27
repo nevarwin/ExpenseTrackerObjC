@@ -1,22 +1,31 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct BudgetListView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel: BudgetViewModel?
     
+    init() {
+        print("BudgetListView: init")
+    }
+    
     var body: some View {
         Group {
             if let viewModel = viewModel {
+                let _ = print("BudgetListView: showing content")
                 BudgetListContent(viewModel: viewModel)
             } else {
                 ProgressView()
                     .onAppear {
+                        print("BudgetListView: onAppear - Initializing ViewModel")
                         // Initialize ViewModel exactly once
                         let vm = BudgetViewModel(modelContext: modelContext)
                         self.viewModel = vm
                         // Load initial data
                         vm.loadBudgets()
+                    }
+                    .onDisappear {
+                        print("BudgetListView: ProgressView Disappeared")
                     }
             }
         }
@@ -43,10 +52,13 @@ struct BudgetListContent: View {
                     }
                 }
         }
-        .sheet(isPresented: $showingAddBudget, onDismiss: {
-            // Reload budgets when sheet dismisses to ensure list is updated
-            viewModel.loadBudgets()
-        }) {
+        .sheet(
+            isPresented: $showingAddBudget,
+            onDismiss: {
+                // Reload budgets when sheet dismisses to ensure list is updated
+                viewModel.loadBudgets()
+            }
+        ) {
             BudgetFormView(viewModel: viewModel)
         }
         .alert("Error", isPresented: $showingError) {
@@ -63,14 +75,16 @@ struct BudgetListContent: View {
     
     @ViewBuilder
     private var contentView: some View {
-        if viewModel.isLoading {
-            ProgressView("Loading budgets...")
-        } else if viewModel.budgets.isEmpty {
-            ContentUnavailableView(
-                "No Budgets",
-                systemImage: "creditcard",
-                description: Text("Create your first budget to get started")
-            )
+        if viewModel.budgets.isEmpty {
+            if viewModel.isLoading {
+                ProgressView("Loading budgets...")
+            } else {
+                ContentUnavailableView(
+                    "No Budgets",
+                    systemImage: "creditcard",
+                    description: Text("Create your first budget to get started")
+                )
+            }
         } else {
             List {
                 ForEach(viewModel.budgets) { budget in
@@ -79,6 +93,15 @@ struct BudgetListContent: View {
                     }
                 }
                 .onDelete(perform: deleteBudgets)
+            }
+            .overlay {
+                if viewModel.isLoading {
+                    ProgressView()
+                        .controlSize(.large)
+                        .padding()
+                        .background(.thinMaterial)
+                        .cornerRadius(10)
+                }
             }
         }
     }
@@ -109,11 +132,11 @@ struct BudgetRowView: View {
                 
                 if !budget.isActive {
                     Text("Inactive")
-                    .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(4)
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.gray.opacity(0.2))
+                        .cornerRadius(4)
                 }
             }
             
@@ -148,8 +171,13 @@ struct BudgetRowView: View {
                         .frame(height: 6)
                         .cornerRadius(3)
                     
-                    let progress = budget.totalAmount > 0 ? 
-                        min(max(0, Double(truncating: (budget.totalExpenses / budget.totalAmount) as NSDecimalNumber)), 1.0) : 0
+                    let progress =
+                    budget.totalAmount > 0
+                    ? min(
+                        max(
+                            0,
+                            Double(truncating: (budget.totalExpenses / budget.totalAmount) as NSDecimalNumber)),
+                        1.0) : 0
                     
                     Rectangle()
                         .fill(progress > 0.9 ? Color.red : Color.blue)
