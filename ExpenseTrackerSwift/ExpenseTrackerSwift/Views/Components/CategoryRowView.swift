@@ -3,6 +3,7 @@ import SwiftData
 
 struct CategoryRowView: View {
     let category: Category
+    @EnvironmentObject var currencyManager: CurrencyManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -57,7 +58,7 @@ struct CategoryRowView: View {
     private func formatCurrency(_ amount: Decimal) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        return formatter.string(from: amount as NSDecimalNumber) ?? "$0.00"
+        formatter.currencyCode = currencyManager.currencyCode
+        return formatter.string(from: amount as NSDecimalNumber) ?? "\(currencyManager.currencySymbol)0.00"
     }
 }

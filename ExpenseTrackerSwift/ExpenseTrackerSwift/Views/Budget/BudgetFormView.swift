@@ -4,6 +4,7 @@ import SwiftData
 struct BudgetFormView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var currencyManager: CurrencyManager
     @ObservedObject var viewModel: BudgetViewModel
     
     @State private var name: String = ""
@@ -310,8 +311,8 @@ struct BudgetFormView: View {
     private func formatCurrency(_ amount: Decimal) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        return formatter.string(from: amount as NSDecimalNumber) ?? "$0.00"
+        formatter.currencyCode = currencyManager.currencyCode
+        return formatter.string(from: amount as NSDecimalNumber) ?? "\(currencyManager.currencySymbol)0.00"
     }
 }
 

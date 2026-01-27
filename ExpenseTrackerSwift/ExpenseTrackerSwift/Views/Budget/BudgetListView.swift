@@ -97,6 +97,7 @@ struct BudgetListContent: View {
 
 struct BudgetRowView: View {
     let budget: Budget
+    @EnvironmentObject var currencyManager: CurrencyManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -108,11 +109,11 @@ struct BudgetRowView: View {
                 
                 if !budget.isActive {
                     Text("Inactive")
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.gray.opacity(0.2))
-                        .cornerRadius(4)
+                    .font(.caption)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(4)
                 }
             }
             
@@ -121,7 +122,7 @@ struct BudgetRowView: View {
                     Text("Total")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text(budget.totalAmount, format: .currency(code: "USD"))
+                    Text(budget.totalAmount, format: .currency(code: currencyManager.currencyCode))
                         .font(.subheadline)
                         .fontWeight(.medium)
                 }
@@ -132,7 +133,7 @@ struct BudgetRowView: View {
                     Text("Remaining")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text(budget.remainingAmount, format: .currency(code: "USD"))
+                    Text(budget.remainingAmount, format: .currency(code: currencyManager.currencyCode))
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundStyle(budget.remainingAmount >= 0 ? .green : .red)

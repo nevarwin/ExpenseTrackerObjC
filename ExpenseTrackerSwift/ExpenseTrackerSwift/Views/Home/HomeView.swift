@@ -32,6 +32,7 @@ struct HomeView: View {
 
 struct BudgetSummaryCard: View {
     let budget: Budget
+    @EnvironmentObject var currencyManager: CurrencyManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -44,7 +45,7 @@ struct BudgetSummaryCard: View {
                     Text("Total Budget")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text(budget.totalAmount, format: .currency(code: "USD"))
+                    Text(budget.totalAmount, format: .currency(code: currencyManager.currencyCode))
                         .font(.title3)
                         .fontWeight(.semibold)
                 }
@@ -55,7 +56,7 @@ struct BudgetSummaryCard: View {
                     Text("Remaining")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text(budget.remainingAmount, format: .currency(code: "USD"))
+                    Text(budget.remainingAmount, format: .currency(code: currencyManager.currencyCode))
                         .font(.title3)
                         .fontWeight(.semibold)
                         .foregroundStyle(budget.remainingAmount >= 0 ? .green : .red)
@@ -172,6 +173,7 @@ struct CategoryOverviewSection: View {
 
 struct TransactionRowView: View {
     let transaction: Transaction
+    @EnvironmentObject var currencyManager: CurrencyManager
     
     var body: some View {
         HStack {
@@ -186,7 +188,7 @@ struct TransactionRowView: View {
             
             Spacer()
             
-            Text(transaction.amount, format: .currency(code: "USD"))
+            Text(transaction.amount, format: .currency(code: currencyManager.currencyCode))
                 .font(.body)
                 .fontWeight(.medium)
                 .foregroundStyle(transaction.isIncome ? .green : .red)

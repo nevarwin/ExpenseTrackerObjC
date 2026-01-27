@@ -2,6 +2,8 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+    @StateObject private var currencyManager = CurrencyManager()
+    
     var body: some View {
         TabView {
             HomeView()
@@ -18,7 +20,13 @@ struct ContentView: View {
                 .tabItem {
                     Label("Transactions", systemImage: "list.bullet")
                 }
+            
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "gear")
+                }
         }
+        .environmentObject(currencyManager)
     }
 }
 

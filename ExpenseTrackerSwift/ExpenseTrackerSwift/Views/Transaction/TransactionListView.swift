@@ -72,6 +72,7 @@ struct TransactionListView: View {
 
 struct TransactionDetailRow: View {
     let transaction: Transaction
+    @EnvironmentObject var currencyManager: CurrencyManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -91,7 +92,7 @@ struct TransactionDetailRow: View {
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text(transaction.amount, format: .currency(code: "USD"))
+                    Text(transaction.amount, format: .currency(code: currencyManager.currencyCode))
                         .font(.body)
                         .fontWeight(.semibold)
                         .foregroundStyle(transaction.isIncome ? .green : .red)
@@ -108,6 +109,7 @@ struct TransactionDetailRow: View {
 
 struct TransactionFormView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var currencyManager: CurrencyManager
     @Bindable var viewModel: TransactionViewModel
     
     let availableBudgets: [Budget]
@@ -179,13 +181,13 @@ struct TransactionFormView: View {
                 
                 if let category = selectedCategory, category.isInstallment {
                     LabeledContent("Monthly Installment") {
-                        Text(category.allocatedAmount, format: .currency(code: "USD"))
+                        Text(category.allocatedAmount, format: .currency(code: currencyManager.currencyCode))
                             .foregroundStyle(.secondary)
                     }
                     
                     if let decimalAmount = Decimal(string: amount), decimalAmount > 0 {
                         if decimalAmount > category.allocatedAmount {
-                            Text("Extra payment of \(decimalAmount - category.allocatedAmount, format: .currency(code: "USD")) will reduce the term.")
+                            Text("Extra payment of \(decimalAmount - category.allocatedAmount, format: .currency(code: currencyManager.currencyCode)) will reduce the term.")
                                 .font(.caption)
                                 .foregroundStyle(.blue)
                         } else if decimalAmount < category.allocatedAmount {

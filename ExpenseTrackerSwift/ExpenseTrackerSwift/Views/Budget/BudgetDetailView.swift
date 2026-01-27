@@ -3,6 +3,7 @@ import SwiftData
 
 struct BudgetDetailView: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var currencyManager: CurrencyManager
     let budget: Budget
     
     @State private var categoryViewModel: CategoryViewModel?
@@ -12,11 +13,11 @@ struct BudgetDetailView: View {
     var body: some View {
         List {
             Section("Budget Overview") {
-                LabeledContent("Total Budget", value: budget.totalAmount, format: .currency(code: "USD"))
-                LabeledContent("Total Income", value: budget.totalIncome, format: .currency(code: "USD"))
-                LabeledContent("Total Expenses", value: budget.totalExpenses, format: .currency(code: "USD"))
+                LabeledContent("Total Budget", value: budget.totalAmount, format: .currency(code: currencyManager.currencyCode))
+                LabeledContent("Total Income", value: budget.totalIncome, format: .currency(code: currencyManager.currencyCode))
+                LabeledContent("Total Expenses", value: budget.totalExpenses, format: .currency(code: currencyManager.currencyCode))
                 LabeledContent("Remaining") {
-                    Text(budget.remainingAmount, format: .currency(code: "USD"))
+                    Text(budget.remainingAmount, format: .currency(code: currencyManager.currencyCode))
                         .foregroundStyle(budget.remainingAmount >= 0 ? .green : .red)
                         .fontWeight(.semibold)
                 }
