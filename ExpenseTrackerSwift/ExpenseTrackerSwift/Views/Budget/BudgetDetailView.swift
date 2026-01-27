@@ -7,6 +7,7 @@ struct BudgetDetailView: View {
     
     @State private var categoryViewModel: CategoryViewModel?
     @State private var transactionViewModel: TransactionViewModel?
+    @State private var showingEditSheet = false
     
     var body: some View {
         List {
@@ -48,6 +49,19 @@ struct BudgetDetailView: View {
             }
         }
         .navigationTitle(budget.name)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Edit") {
+                    showingEditSheet = true
+                }
+            }
+        }
+        .sheet(isPresented: $showingEditSheet) {
+            BudgetFormView(
+                viewModel: BudgetViewModel(modelContext: modelContext),
+                existingBudget: budget
+            )
+        }
         .onAppear {
             if categoryViewModel == nil {
                 categoryViewModel = CategoryViewModel(modelContext: modelContext)

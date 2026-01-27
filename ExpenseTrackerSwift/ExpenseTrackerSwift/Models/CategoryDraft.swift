@@ -15,6 +15,8 @@ struct CategoryDraft: Identifiable {
     var totalInstallmentAmount: String
     var installmentMonths: String
     var installmentStartDate: Date
+    var originalCategory: Category?
+    var isActive: Bool
     
     init(id: UUID = UUID(), 
          name: String = "", 
@@ -23,7 +25,9 @@ struct CategoryDraft: Identifiable {
          isInstallment: Bool = false,
          totalInstallmentAmount: String = "0",
          installmentMonths: String = "12",
-         installmentStartDate: Date = Date()) {
+         installmentStartDate: Date = Date(),
+         originalCategory: Category? = nil,
+         isActive: Bool = true) {
         self.id = id
         self.name = name
         self.allocatedAmount = allocatedAmount
@@ -32,6 +36,8 @@ struct CategoryDraft: Identifiable {
         self.totalInstallmentAmount = totalInstallmentAmount
         self.installmentMonths = installmentMonths
         self.installmentStartDate = installmentStartDate
+        self.originalCategory = originalCategory
+        self.isActive = isActive
     }
     
     /// Computed property to get Decimal value from string input
