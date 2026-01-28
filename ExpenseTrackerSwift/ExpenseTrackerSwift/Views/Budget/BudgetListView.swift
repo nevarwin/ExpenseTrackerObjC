@@ -10,23 +10,29 @@ struct BudgetListView: View {
     }
     
     var body: some View {
-        Group {
-            if let viewModel = viewModel {
-                let _ = print("BudgetListView: showing content")
-                BudgetListContent(viewModel: viewModel)
-            } else {
-                ProgressView()
-                    .onAppear {
-                        print("BudgetListView: onAppear - Initializing ViewModel")
-                        // Initialize ViewModel exactly once
-                        let vm = BudgetViewModel(modelContext: modelContext)
-                        self.viewModel = vm
-                        // Load initial data
-                        vm.loadBudgets()
-                    }
-                    .onDisappear {
-                        print("BudgetListView: ProgressView Disappeared")
-                    }
+        NavigationStack {
+            Group {
+                if let viewModel = viewModel {
+                    let _ = print("BudgetListView: showing content")
+                    BudgetListContent(viewModel: viewModel)
+                } else {
+                    ProgressView()
+                        .onAppear {
+                            print("BudgetListView: onAppear - Initializing ViewModel")
+                            // Initialize ViewModel exactly once
+                            let vm = BudgetViewModel(modelContext: modelContext)
+                            self.viewModel = vm
+                            // Load initial data
+                            vm.loadBudgets()
+                        }
+                        .onDisappear {
+                            print("BudgetListView: ProgressView Disappeared")
+                        }
+                }
+            }
+            .navigationTitle("Budgets")
+            .navigationDestination(for: Budget.self) { budget in
+                BudgetDetailView(budget: budget)
             }
         }
     }
@@ -38,20 +44,14 @@ struct BudgetListContent: View {
     @State private var showingError = false
     
     var body: some View {
-        NavigationStack {
-            contentView
-                .navigationTitle("Budgets")
-                .navigationDestination(for: Budget.self) { budget in
-                    BudgetDetailView(budget: budget)
-                }
-                .toolbar {
-                    ToolbarItem(placement: .primaryAction) {
-                        Button(action: { showingAddBudget = true }) {
-                            Label("Add Budget", systemImage: "plus")
-                        }
+        contentView
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button(action: { showingAddBudget = true }) {
+                        Label("Add Budget", systemImage: "plus")
                     }
                 }
-        }
+            }
         .sheet(
             isPresented: $showingAddBudget,
             onDismiss: {
