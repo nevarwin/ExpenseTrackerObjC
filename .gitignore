@@ -13,3 +13,4 @@ buildServer.json
 
 node_modules/
 mcp_config.json
+.agent
