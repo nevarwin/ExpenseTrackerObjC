@@ -12,29 +12,22 @@ struct BudgetListView: View {
     
     init(viewModel: BudgetViewModel? = nil) {
         self.injectedViewModel = viewModel
-        print("BudgetListView: init")
     }
     
     var body: some View {
         NavigationStack {
             Group {
                 if let viewModel = viewModel {
-                    let _ = print("BudgetListView: showing content")
                     BudgetListContent(viewModel: viewModel)
                 } else {
                     ProgressView()
                         .onAppear {
-                            print("BudgetListView: onAppear - Initializing ViewModel")
                             // Initialize ViewModel exactly once if not injected
                             if injectedViewModel == nil {
                                 let vm = BudgetViewModel(modelContext: modelContext)
                                 self.internalViewModel = vm
-                                // Load initial data
                                 vm.loadBudgets()
                             }
-                        }
-                        .onDisappear {
-                            print("BudgetListView: ProgressView Disappeared")
                         }
                 }
             }
