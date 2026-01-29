@@ -10,7 +10,8 @@ final class BudgetViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     
-    private let modelContext: ModelContext
+    private let selectedBudgetKey = "SelectedBudgetID"
+    let modelContext: ModelContext
     
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -26,6 +27,16 @@ final class BudgetViewModel: ObservableObject {
         
         do {
             budgets = try modelContext.fetch(descriptor)
+            
+            // Restore selection or default to first active
+            if let savedIdString = UserDefaults.standard.string(forKey: selectedBudgetKey),
+               let savedId = UUID(uuidString: savedIdString),
+               let found = budgets.first(where: { $0.id == savedId }) {
+                selectedBudget = found
+            } else {
+                selectedBudget = budgets.first(where: { $0.isActive })
+            }
+            
             objectWillChange.send()
         } catch {
             errorMessage = "Failed to load budgets: \(error.localizedDescription)"
@@ -34,13 +45,21 @@ final class BudgetViewModel: ObservableObject {
         isLoading = false
     }
     
+    func selectBudget(_ budget: Budget) {
+        selectedBudget = budget
+        UserDefaults.standard.set(budget.id.uuidString, forKey: selectedBudgetKey)
+    }
+    
     @discardableResult
     func createBudget(name: String, totalAmount: Decimal) throws -> Budget {
         let budget = Budget(name: name, totalAmount: totalAmount)
         modelContext.insert(budget)
-        
-        try modelContext.save()
         budgets.insert(budget, at: 0)
+        
+        // Auto-select newly created budget
+        selectedBudget = budget
+        UserDefaults.standard.set(budget.id.uuidString, forKey: selectedBudgetKey)
+        
         return budget
     }
     
@@ -56,6 +75,16 @@ final class BudgetViewModel: ObservableObject {
         modelContext.delete(budget)
         try modelContext.save()
         budgets.removeAll { $0.id == budget.id }
+        
+        // If deleted budget was selected, select another one
+        if selectedBudget?.id == budget.id {
+            selectedBudget = budgets.first(where: { $0.isActive })
+            if let newSelection = selectedBudget {
+                UserDefaults.standard.set(newSelection.id.uuidString, forKey: selectedBudgetKey)
+            } else {
+                UserDefaults.standard.removeObject(forKey: selectedBudgetKey)
+            }
+        }
     }
     
     func toggleBudgetStatus(_ budget: Budget) throws {

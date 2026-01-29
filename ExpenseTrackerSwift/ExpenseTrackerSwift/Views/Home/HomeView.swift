@@ -3,8 +3,16 @@ import SwiftData
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(filter: #Predicate<Budget> { $0.isActive == true })
-    private var activeBudgets: [Budget]
+    @State private var internalViewModel: BudgetViewModel?
+    private let injectedViewModel: BudgetViewModel?
+    
+    private var viewModel: BudgetViewModel? {
+        injectedViewModel ?? internalViewModel
+    }
+    
+    init(viewModel: BudgetViewModel? = nil) {
+        self.injectedViewModel = viewModel
+    }
     
     var body: some View {
         NavigationStack {
@@ -12,39 +20,59 @@ struct HomeView: View {
                 // Background
                 Color.appLightGray.ignoresSafeArea()
                 
-                ScrollView {
-                    VStack(spacing: 24) {
-                        // Header
-                        WelcomeHeader()
-                            .padding(.horizontal)
-                            .padding(.top, 10)
-                        
-                        // Summary Cards
-                        if let currentBudget = activeBudgets.first {
-                            BudgetSummaryCard(budget: currentBudget)
+                if let viewModel = viewModel {
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            // Header
+                            WelcomeHeader(viewModel: viewModel)
                                 .padding(.horizontal)
-                        } else {
-                            EmptyBudgetCard()
-                                .padding(.horizontal)
+                                .padding(.top, 10)
+                            
+                            // Summary Cards
+                            if let currentBudget = viewModel.selectedBudget {
+                                BudgetSummaryCard(budget: currentBudget)
+                                    .padding(.horizontal)
+                            } else {
+                                EmptyBudgetCard(viewModel: viewModel)
+                                    .padding(.horizontal)
+                            }
+                            
+                            // Recent Transactions
+                            if let currentBudget = viewModel.selectedBudget {
+                                RecentTransactionsSection(budget: currentBudget)
+                                    .padding(.horizontal)
+                            }
+                            
+                            // Category Overview
+                            if let currentBudget = viewModel.selectedBudget {
+                                CategoryOverviewSection(budget: currentBudget)
+                                    .padding(.horizontal)
+                            }
                         }
-                        
-                        // Recent Transactions
-                        RecentTransactionsSection()
-                            .padding(.horizontal)
-                        
-                        // Category Overview
-                        CategoryOverviewSection()
-                            .padding(.horizontal)
+                        .padding(.bottom, 20)
                     }
-                    .padding(.bottom, 20)
+                    .refreshable {
+                        viewModel.loadBudgets()
+                    }
+                } else {
+                    ProgressView()
                 }
             }
             .navigationBarHidden(true)
+            .onAppear {
+                if injectedViewModel == nil && internalViewModel == nil {
+                    let vm = BudgetViewModel(modelContext: modelContext)
+                    self.internalViewModel = vm
+                    vm.loadBudgets()
+                }
+            }
         }
     }
 }
 
 struct WelcomeHeader: View {
+    @ObservedObject var viewModel: BudgetViewModel
+    
     private var dateString: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEE, MMMM d"
@@ -59,22 +87,44 @@ struct WelcomeHeader: View {
                     .fontWeight(.semibold)
                     .foregroundStyle(Color.appSecondary)
                 
-                Text("Dashboard")
+                Text(viewModel.selectedBudget?.name ?? "Dashboard")
                     .font(.system(.largeTitle, design: .rounded))
                     .fontWeight(.bold)
                     .foregroundStyle(Color.appPrimary)
             }
             Spacer()
             
-            // Profile or Notification placeholder could go here
-            Image(systemName: "person.crop.circle")
-                .font(.title)
-                .foregroundStyle(Color.appSecondary)
-                .opacity(0.8)
+            // Budget Switcher
+            Menu {
+                ForEach(viewModel.budgets.filter { $0.isActive }) { budget in
+                    Button {
+                        withAnimation {
+                            viewModel.selectBudget(budget)
+                        }
+                    } label: {
+                        HStack {
+                            Text(budget.name)
+                            if viewModel.selectedBudget?.id == budget.id {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+                
+                Divider()
+                
+                NavigationLink(destination: BudgetListView(viewModel: viewModel)) {
+                    Label("Manage Budgets", systemImage: "gearshape")
+                }
+            } label: {
+                Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
+                    .font(.title)
+                    .foregroundStyle(Color.appAccent)
+                    .opacity(0.8)
+            }
         }
     }
 }
-
 struct BudgetSummaryCard: View {
     let budget: Budget
     @EnvironmentObject var currencyManager: CurrencyManager
@@ -181,6 +231,8 @@ struct BudgetSummaryCard: View {
 }
 
 struct EmptyBudgetCard: View {
+    var viewModel: BudgetViewModel?
+    
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "plus.circle.fill")
@@ -199,7 +251,7 @@ struct EmptyBudgetCard: View {
                     .padding(.horizontal)
             }
             
-            NavigationLink(destination: BudgetListView()) {
+            NavigationLink(destination: BudgetListView(viewModel: viewModel)) {
                 Text("Create New Budget")
                     .font(.headline)
                     .foregroundStyle(.white)
@@ -217,12 +269,18 @@ struct EmptyBudgetCard: View {
 }
 
 struct RecentTransactionsSection: View {
-    @Query(
-        filter: #Predicate<Transaction> { $0.isActive == true },
-        sort: \Transaction.date,
-        order: .reverse
-    )
-    private var recentTransactions: [Transaction]
+    @Query private var recentTransactions: [Transaction]
+    
+    init(budget: Budget) {
+        let budgetId = budget.id
+        _recentTransactions = Query(
+            filter: #Predicate<Transaction> {
+                $0.budget?.id == budgetId && $0.isActive == true
+            },
+            sort: \Transaction.date,
+            order: .reverse
+        )
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -267,8 +325,16 @@ struct RecentTransactionsSection: View {
 }
 
 struct CategoryOverviewSection: View {
-    @Query(filter: #Predicate<Category> { $0.isActive == true })
-    private var categories: [Category]
+    @Query private var categories: [Category]
+    
+    init(budget: Budget) {
+        let budgetId = budget.id
+        _categories = Query(
+            filter: #Predicate<Category> {
+                $0.budget?.id == budgetId && $0.isActive == true
+            }
+        )
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {

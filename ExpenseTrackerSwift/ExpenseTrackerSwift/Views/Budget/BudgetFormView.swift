@@ -3,7 +3,6 @@ import SwiftData
 
 struct BudgetFormView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var currencyManager: CurrencyManager
     @ObservedObject var viewModel: BudgetViewModel
     
@@ -237,7 +236,7 @@ struct BudgetFormView: View {
                     category.name = draft.name.trimmingCharacters(in: .whitespaces)
                     category.allocatedAmount = draft.allocatedDecimal
                     category.isIncome = draft.isIncome
-                    category.isActive = draft.isActive // Update active state
+                    category.isActive = draft.isActive
                     category.updatedAt = Date()
                     
                     keptCategories.insert(original.persistentModelID)
@@ -250,9 +249,12 @@ struct BudgetFormView: View {
                         isInstallment: draft.isInstallment,
                         budget: budget
                     )
-                    // New categories are active by default, but relying on init
                     category.isActive = draft.isActive
-                    modelContext.insert(category)
+                    viewModel.modelContext.insert(category)
+                    
+                    // CRITICAL: Explicitly add to budget's categories array
+                    // The inverse relationship doesn't always update automatically
+                    budget.categories.append(category)
                 }
                 
                 // Update installment details
@@ -279,16 +281,13 @@ struct BudgetFormView: View {
             // Delete categories that are no longer in drafts (only for existing budget)
             if let existing = existingBudget {
                 for category in existing.categories {
-                    // If a category was in drafts but removed (not just archived, but removed from list)
-                    // then we delete it. Note: 'keptCategories' tracks categories we updated.
-                    // If a category is missing from drafts completely, it is deleted.
                     if !keptCategories.contains(category.persistentModelID) {
-                        modelContext.delete(category)
+                        viewModel.modelContext.delete(category)
                     }
                 }
             }
             
-            try modelContext.save()
+            try viewModel.modelContext.save()
             dismiss()
         } catch {
             errorMessage = error.localizedDescription

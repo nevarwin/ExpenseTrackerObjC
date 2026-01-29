@@ -3,9 +3,15 @@ import SwiftUI
 
 struct BudgetListView: View {
     @Environment(\.modelContext) private var modelContext
-    @State private var viewModel: BudgetViewModel?
+    @State private var internalViewModel: BudgetViewModel?
+    private let injectedViewModel: BudgetViewModel?
     
-    init() {
+    private var viewModel: BudgetViewModel? {
+        injectedViewModel ?? internalViewModel
+    }
+    
+    init(viewModel: BudgetViewModel? = nil) {
+        self.injectedViewModel = viewModel
         print("BudgetListView: init")
     }
     
@@ -19,11 +25,13 @@ struct BudgetListView: View {
                     ProgressView()
                         .onAppear {
                             print("BudgetListView: onAppear - Initializing ViewModel")
-                            // Initialize ViewModel exactly once
-                            let vm = BudgetViewModel(modelContext: modelContext)
-                            self.viewModel = vm
-                            // Load initial data
-                            vm.loadBudgets()
+                            // Initialize ViewModel exactly once if not injected
+                            if injectedViewModel == nil {
+                                let vm = BudgetViewModel(modelContext: modelContext)
+                                self.internalViewModel = vm
+                                // Load initial data
+                                vm.loadBudgets()
+                            }
                         }
                         .onDisappear {
                             print("BudgetListView: ProgressView Disappeared")

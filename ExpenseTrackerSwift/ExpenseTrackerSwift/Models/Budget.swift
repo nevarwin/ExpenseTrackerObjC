@@ -3,6 +3,7 @@ import Foundation
 
 @Model
 final class Budget {
+    var id: UUID = UUID()
     var name: String
     var totalAmount: Decimal
     var remainingAmount: Decimal
