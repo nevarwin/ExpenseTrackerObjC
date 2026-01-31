@@ -12,6 +12,7 @@
 #import "AppDelegate.h"
 #import "CoreDataManager.h"
 #import "PickerModalViewController.h"
+#import "DateHelper.h"
 
 @interface ViewController () <UITableViewDataSource, UITableViewDelegate, NSFetchedResultsControllerDelegate>
 
@@ -51,53 +52,12 @@
     NSCalendar *calendar = [NSCalendar currentCalendar];
     self.currentDateComponents = [calendar components:NSCalendarUnitYear | NSCalendarUnitMonth fromDate:today];
     
-    calendar.firstWeekday = 2; // 1 = Sunday, 2 = Monday
+    NSInteger weekIndex = [DateHelper weekIndexForTodayInMonth:self.currentDateComponents.month year:self.currentDateComponents.year];
     
-    // 1. Build a date from current year + month (day = 1)
-    NSDateComponents *components = [[NSDateComponents alloc] init];
-    components.year = self.currentDateComponents.year;
-    components.month = self.currentDateComponents.month;
-    components.day = 1;
-    NSDate *startOfMonth = [calendar dateFromComponents:components];
-    
-    // 2. Get the weekday of the first day
-    NSDateComponents *weekdayComponents = [calendar components:NSCalendarUnitWeekday fromDate:startOfMonth];
-    NSInteger weekday = weekdayComponents.weekday;
-    
-    // 3. Backtrack to Monday of that week (the first day visible in the calendar grid)
-    NSInteger daysToSubtract = (weekday == 1) ? 6 : (weekday - 2);
-    NSDate *firstMonday = [calendar dateByAddingUnit:NSCalendarUnitDay
-                                               value:-daysToSubtract
-                                              toDate:startOfMonth
-                                             options:0];
-    
-    // 4. Find which week 'today' falls into.
-    // Use `startOfDayForDate:` to compare dates at midnight and avoid time-of-day issues.
-    NSDate *startOfToday = [calendar startOfDayForDate:today];
-    
-    // 5. Calculate the number of days between the start of the grid (firstMonday) and today.
-    // `firstMonday` is already at midnight, so we can use it directly.
-    NSDateComponents *dayDifferenceComponents = [calendar components:NSCalendarUnitDay
-                                                            fromDate:firstMonday
-                                                              toDate:startOfToday
-                                                             options:0];
-    NSInteger dayDifference = dayDifferenceComponents.day;
-    
-    // 6. Divide by 7 to get the week index.
-    // (e.g., days 0-6 are index 0, days 7-13 are index 1, etc.)
-    NSInteger weekIndex = 0;
-    
-    // Ensure today is not before the grid start (can happen on day 1 of a month)
-    if (dayDifference >= 0) {
-        weekIndex = dayDifference / 7;
-    }
-    
-    // 7. Assign the calculated index.
     if (weekIndex < self.weekSegmentControl.numberOfSegments) {
         self.weekSegmentControl.selectedSegmentIndex = weekIndex;
         self.weekSegmentIndex = weekIndex;
     } else {
-        NSLog(@"Error: Calculated week index (%ld) is out of bounds.", (long)weekIndex);
         self.weekSegmentControl.selectedSegmentIndex = 0;
         self.weekSegmentIndex = 0;
     }
@@ -314,42 +274,7 @@
     ]];
 }
 
-- (NSInteger)weekIndexForTodayInMonth:(NSInteger)month year:(NSInteger)year {
-    NSCalendar *calendar = [NSCalendar currentCalendar];
-    calendar.firstWeekday = 2; // Monday
-    
-    // First day of month
-    NSDateComponents *components = [[NSDateComponents alloc] init];
-    components.year = year;
-    components.month = month;
-    components.day = 1;
-    NSDate *startOfMonth = [calendar dateFromComponents:components];
-    
-    // Find first Monday *inside* the month
-    NSDateComponents *weekdayComponents = [calendar components:NSCalendarUnitWeekday fromDate:startOfMonth];
-    NSInteger weekday = weekdayComponents.weekday;
-    NSInteger daysToAdd = (weekday == 2) ? 0 : (9 - weekday) % 7;
-    NSDate *firstMonday = [calendar dateByAddingUnit:NSCalendarUnitDay
-                                               value:daysToAdd
-                                              toDate:startOfMonth
-                                             options:0];
-    
-    // Today
-    NSDate *today = [NSDate date];
-    NSDateComponents *todayComp = [calendar components:NSCalendarUnitYear|NSCalendarUnitMonth fromDate:today];
-    
-    // Only compute if it's the same month & year
-    if (todayComp.year == year && todayComp.month == month) {
-        NSInteger daysDiff = [calendar components:NSCalendarUnitDay
-                                         fromDate:firstMonday
-                                           toDate:today
-                                          options:0].day;
-        if (daysDiff >= 0) {
-            return daysDiff / 7; // week index (0-based)
-        }
-    }
-    return 0; // default to week 0 if not current month
-}
+
 
 
 #pragma mark - setupSegmetControls
