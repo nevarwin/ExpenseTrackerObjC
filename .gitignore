@@ -1,15 +1,87 @@
-# VS Code local history and private settings
+## Xcode User-Specific Files
+## These files are auto-generated and user-specific
+
+# User state files
+*.xcuserstate
+*.xcuserdatad/
+xcuserdata/
+
+# Xcode workspace and project user settings
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+## Xcode Build Products
+
+# Build artifacts
+build/
+DerivedData/
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+## Swift Package Manager
+
+.swiftpm/
+.build/
+*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+
+## CocoaPods (if used)
+
+Pods/
+*.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+
+## Carthage (if used)
+
+Carthage/Build/
+
+## fastlane (if used)
+
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+## Playgrounds
+
+timeline.xctimeline
+playground.xcworkspace
+
+## Mac System Files
+
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+## VS Code
+
 .vscode/*
 .vscode/settings.json
 .vscode/tasks.json
 .vscode/launch.json
 .vscode/extensions.json
 
+## Other Development Tools
+
 # Generated Build Server config
 buildServer.json
 
-# Mac System files
-.DS_Store
-
+# Node modules (if applicable)
 node_modules/
+
+# MCP config
 mcp_config.json
+
+## IDE and Editor Files
+
+*~
+.swp
+.swo
+*.orig
