@@ -51,7 +51,6 @@
 		18AEAE962E867646003C31FA /* Transaction.sqlite-wal */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Transaction.sqlite-wal"; sourceTree = "<group>"; };
 		18E0C21B2E14E2C400CE9F57 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 		18E4B10A2F0F3DA1002E3CC1 /* ExpenseTracker.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = ExpenseTracker.xcodeproj; sourceTree = "<group>"; };
-		9749FEFB2F2FAA5200EE56B1 /* ExpenseTracker.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = ExpenseTracker.xcodeproj; sourceTree = "<group>"; };
 		97A7E0CC2F17C3190067DC97 /* ExpenseTracker.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = ExpenseTracker.xcodeproj; sourceTree = "<group>"; };
 		97FBC7B42F0D49A100C555BC /* Transaction+CoreDataProperties.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = "Transaction+CoreDataProperties.m"; path = "Models/Transaction+CoreDataProperties.m"; sourceTree = "<group>"; };
 		97FBC7B52F0D49A100C555BC /* Budget+CoreDataClass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Budget+CoreDataClass.h"; path = "Models/Budget+CoreDataClass.h"; sourceTree = "<group>"; };
@@ -231,13 +230,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		9749FEFC2F2FAA5200EE56B1 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		97A7E0CD2F17C3190067DC97 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -361,10 +353,6 @@
 				{
 					ProductGroup = 18E4B10B2F0F3DA1002E3CC1 /* Products */;
 					ProjectRef = 18E4B10A2F0F3DA1002E3CC1 /* ExpenseTracker.xcodeproj */;
-				},
-				{
-					ProductGroup = 9749FEFC2F2FAA5200EE56B1 /* Products */;
-					ProjectRef = 9749FEFB2F2FAA5200EE56B1 /* ExpenseTracker.xcodeproj */;
 				},
 			);
 			projectRoot = "";
