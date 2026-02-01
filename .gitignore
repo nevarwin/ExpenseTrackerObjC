@@ -85,3 +85,17 @@ mcp_config.json
 .swp
 .swo
 *.orig
+
+## SQLite Database Files (runtime data)
+
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+## Application Support (user data)
+
+Application Support/
+
+## Temporary Files
+
+eslogout.txt
