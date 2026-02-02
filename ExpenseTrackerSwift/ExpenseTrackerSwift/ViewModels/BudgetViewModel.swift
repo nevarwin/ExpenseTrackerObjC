@@ -74,17 +74,15 @@ final class BudgetViewModel: ObservableObject {
     func deleteBudget(_ budget: Budget) throws {
         modelContext.delete(budget)
         try modelContext.save()
-        budgets.removeAll { $0.id == budget.id }
         
-        // If deleted budget was selected, select another one
+        // If deleted budget was selected, select another one BEFORE reloading
         if selectedBudget?.id == budget.id {
-            selectedBudget = budgets.first(where: { $0.isActive })
-            if let newSelection = selectedBudget {
-                UserDefaults.standard.set(newSelection.id.uuidString, forKey: selectedBudgetKey)
-            } else {
-                UserDefaults.standard.removeObject(forKey: selectedBudgetKey)
-            }
+            selectedBudget = nil
         }
+        
+        // Reload budgets from database instead of manually manipulating array
+        // This prevents index mismatch with SwiftUI's list
+        loadBudgets()
     }
     
     func toggleBudgetStatus(_ budget: Budget) throws {

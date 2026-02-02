@@ -108,8 +108,11 @@ struct BudgetListContent: View {
     }
     
     private func deleteBudgets(at offsets: IndexSet) {
-        for index in offsets {
-            let budget = viewModel.budgets[index]
+        // Collect budgets to delete
+        let budgetsToDelete = offsets.map { viewModel.budgets[$0] }
+        
+        // Delete each budget
+        for budget in budgetsToDelete {
             do {
                 try viewModel.deleteBudget(budget)
             } catch {

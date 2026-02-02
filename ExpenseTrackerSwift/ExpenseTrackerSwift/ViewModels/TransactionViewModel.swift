@@ -149,6 +149,9 @@ final class TransactionViewModel {
     }
     
     func deleteTransaction(_ transaction: Transaction) throws {
+        // Store budget reference before deletion
+        let budget = transaction.budget
+        
         // Update category used amount
         if let category = transaction.category {
             category.usedAmount -= transaction.amount
@@ -156,11 +159,13 @@ final class TransactionViewModel {
         }
         
         // Update budget
-        transaction.budget?.updateRemainingAmount()
+        budget?.updateRemainingAmount()
         
         modelContext.delete(transaction)
         try modelContext.save()
-        transactions.removeAll { $0.id == transaction.id }
+        
+        // Reload transactions from database instead of manually manipulating array
+        loadTransactions(for: budget)
     }
     
     func softDeleteTransaction(_ transaction: Transaction) throws {
