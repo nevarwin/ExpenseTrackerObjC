@@ -21,39 +21,7 @@ struct HomeView: View {
                 Color.appLightGray.ignoresSafeArea()
                 
                 if let viewModel = viewModel {
-                    ScrollView {
-                        VStack(spacing: 24) {
-                            // Header
-                            WelcomeHeader(viewModel: viewModel)
-                                .padding(.horizontal)
-                                .padding(.top, 10)
-                            
-                            // Summary Cards
-                            if let currentBudget = viewModel.selectedBudget {
-                                BudgetSummaryCard(budget: currentBudget)
-                                    .padding(.horizontal)
-                            } else {
-                                EmptyBudgetCard(viewModel: viewModel)
-                                    .padding(.horizontal)
-                            }
-                            
-                            // Recent Transactions
-                            if let currentBudget = viewModel.selectedBudget {
-                                RecentTransactionsSection(budget: currentBudget)
-                                    .padding(.horizontal)
-                            }
-                            
-                            // Category Overview
-                            if let currentBudget = viewModel.selectedBudget {
-                                CategoryOverviewSection(budget: currentBudget)
-                                    .padding(.horizontal)
-                            }
-                        }
-                        .padding(.bottom, 20)
-                    }
-                    .refreshable {
-                        viewModel.loadBudgets()
-                    }
+                    HomeContent(viewModel: viewModel)
                 } else {
                     ProgressView()
                 }
@@ -66,6 +34,49 @@ struct HomeView: View {
                     vm.loadBudgets()
                 }
             }
+        }
+    }
+}
+
+struct HomeContent: View {
+    @ObservedObject var viewModel: BudgetViewModel
+    
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                // Header
+                WelcomeHeader(viewModel: viewModel)
+                    .padding(.horizontal)
+                    .padding(.top, 10)
+                
+                // Summary Cards
+                if let currentBudget = viewModel.selectedBudget {
+                    BudgetSummaryCard(budget: currentBudget)
+                        .padding(.horizontal)
+                        .id(currentBudget.id)
+                } else {
+                    EmptyBudgetCard(viewModel: viewModel)
+                        .padding(.horizontal)
+                }
+                
+                // Recent Transactions
+                if let currentBudget = viewModel.selectedBudget {
+                    RecentTransactionsSection(budget: currentBudget)
+                        .padding(.horizontal)
+                        .id(currentBudget.id)
+                }
+                
+                // Category Overview
+                if let currentBudget = viewModel.selectedBudget {
+                    CategoryOverviewSection(budget: currentBudget)
+                        .padding(.horizontal)
+                        .id(currentBudget.id)
+                }
+            }
+            .padding(.bottom, 20)
+        }
+        .refreshable {
+            viewModel.loadBudgets()
         }
     }
 }

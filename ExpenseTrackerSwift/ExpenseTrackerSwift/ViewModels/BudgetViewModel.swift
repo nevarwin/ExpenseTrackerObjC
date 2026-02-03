@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 
 final class BudgetViewModel: ObservableObject {
-    let objectWillChange = ObservableObjectPublisher()
+
     
     @Published var budgets: [Budget] = []
     @Published var selectedBudget: Budget?
@@ -37,7 +37,6 @@ final class BudgetViewModel: ObservableObject {
                 selectedBudget = budgets.first(where: { $0.isActive })
             }
             
-            objectWillChange.send()
         } catch {
             errorMessage = "Failed to load budgets: \(error.localizedDescription)"
         }
