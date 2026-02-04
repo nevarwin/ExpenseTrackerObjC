@@ -13,22 +13,34 @@ struct TransactionListView: View {
         NavigationStack {
             Group {
                 if let viewModel = viewModel {
-                    if viewModel.isLoading {
-                        ProgressView("Loading transactions...")
-                    } else if viewModel.transactions.isEmpty {
-                        ContentUnavailableView(
-                            "No Transactions",
-                            systemImage: "list.bullet",
-                            description: Text("Add your first transaction to get started")
-                        )
-                    } else {
-                        List {
-                            ForEach(viewModel.transactions) { transaction in
-                                TransactionDetailRow(transaction: transaction)
+                    VStack(spacing: 0) {
+                        // Custom Calendar View
+                        CalendarView(viewModel: viewModel)
+                            .padding(.bottom, 8)
+                        
+                        if viewModel.isLoading {
+                            ProgressView("Loading transactions...")
+                                .frame(maxHeight: .infinity)
+                        } else if viewModel.transactions.isEmpty {
+                            ContentUnavailableView(
+                                "No Transactions",
+                                systemImage: "list.bullet",
+                                description: Text("No transactions found for this period")
+                            )
+                            .frame(maxHeight: .infinity)
+                        } else {
+                            List {
+                                ForEach(viewModel.transactions) { transaction in
+                                    TransactionDetailRow(transaction: transaction)
+                                }
+                                .onDelete(perform: deleteTransactions)
                             }
-                            .onDelete(perform: deleteTransactions)
+                            // Header showing the range if needed, but we have the top bar now
                         }
                     }
+                    .onChange(of: viewModel.selectedDate) { _, _ in viewModel.loadTransactions() }
+                    .onChange(of: viewModel.selectedDateRange) { _, _ in viewModel.loadTransactions() }
+                    
                 } else {
                     ProgressView()
                 }
@@ -43,11 +55,11 @@ struct TransactionListView: View {
                 }
             }
             .sheet(isPresented: $showingAddTransaction) {
-                if let firstBudget = activeBudgets.first {
+                if let firstBudget = activeBudgets.first, let viewModel = viewModel {
                     TransactionFormView(
                         activeBudgets: activeBudgets,
                         initialBudget: firstBudget,
-                        viewModel: viewModel!
+                        viewModel: viewModel
                     )
                 }
             }
