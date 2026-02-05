@@ -1,5 +1,6 @@
-import SwiftData
 import SwiftUI
+import SwiftData
+import UniformTypeIdentifiers
 
 struct BudgetListView: View {
     @Environment(\.modelContext) private var modelContext
@@ -43,13 +44,22 @@ struct BudgetListContent: View {
     @ObservedObject var viewModel: BudgetViewModel
     @State private var showingAddBudget = false
     @State private var showingError = false
+    @State private var isImportingBudget = false
+    @State private var importSuccessMessage: String?
+    @State private var showingImportAlert = false
     
     var body: some View {
         contentView
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button(action: { showingAddBudget = true }) {
-                        Label("Add Budget", systemImage: "plus")
+                    HStack {
+                         Button(action: { isImportingBudget = true }) {
+                            Label("Import Budget", systemImage: "square.and.arrow.down")
+                        }
+                        
+                        Button(action: { showingAddBudget = true }) {
+                            Label("Add Budget", systemImage: "plus")
+                        }
                     }
                 }
             }
@@ -62,6 +72,18 @@ struct BudgetListContent: View {
         ) {
             BudgetFormView(viewModel: viewModel)
         }
+        .fileImporter(
+            isPresented: $isImportingBudget,
+            allowedContentTypes: [.commaSeparatedText, .plainText],
+            allowsMultipleSelection: false
+        ) { result in
+            handleImport(result)
+        }
+        .alert("Import Result", isPresented: $showingImportAlert) {
+            Button("OK") { }
+        } message: {
+            Text(importSuccessMessage ?? "Unknown result")
+        }
         .alert("Error", isPresented: $showingError) {
             Button("OK") {
                 viewModel.errorMessage = nil
@@ -71,6 +93,38 @@ struct BudgetListContent: View {
         }
         .onChange(of: viewModel.errorMessage) { _, newValue in
             showingError = newValue != nil
+        }
+    }
+    
+    private func handleImport(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            
+            // Security: Access the security scoped resource
+            guard url.startAccessingSecurityScopedResource() else {
+                viewModel.errorMessage = "Permission denied to access the file."
+                return
+            }
+            defer { url.stopAccessingSecurityScopedResource() }
+            
+            do {
+                let parser = CSVParser.shared
+                let importManager = ImportManager(modelContext: viewModel.modelContext)
+                
+                let csvBudget = try parser.parseBudget(from: url)
+                let newBudget = try importManager.importBudget(from: csvBudget)
+                
+                importSuccessMessage = "Successfully imported budget '\(newBudget.name)'."
+                showingImportAlert = true
+                viewModel.loadBudgets()
+                
+            } catch {
+                viewModel.errorMessage = "Import failed: \(error.localizedDescription)"
+            }
+            
+        case .failure(let error):
+            viewModel.errorMessage = "Import failed: \(error.localizedDescription)"
         }
     }
     

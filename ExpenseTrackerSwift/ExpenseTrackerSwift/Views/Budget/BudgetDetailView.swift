@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 struct BudgetDetailView: View {
     @Environment(\.modelContext) private var modelContext
@@ -9,6 +10,13 @@ struct BudgetDetailView: View {
     @State private var categoryViewModel: CategoryViewModel?
     @State private var transactionViewModel: TransactionViewModel?
     @State private var showingEditSheet = false
+    
+    // Import States
+    @State private var isImportingTransactions = false
+    @State private var importMessage: String?
+    @State private var showingImportAlert = false
+    @State private var importErrorMessage: String?
+    @State private var showingImportError = false
     
     var body: some View {
         List {
@@ -52,8 +60,20 @@ struct BudgetDetailView: View {
         .navigationTitle(budget.name)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button("Edit") {
-                    showingEditSheet = true
+                Menu {
+                    Button {
+                        isImportingTransactions = true
+                    } label: {
+                        Label("Import Transactions", systemImage: "square.and.arrow.down")
+                    }
+                    
+                    Button {
+                        showingEditSheet = true
+                    } label: {
+                        Label("Edit Budget", systemImage: "pencil")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
                 }
             }
         }
@@ -62,6 +82,23 @@ struct BudgetDetailView: View {
                 viewModel: BudgetViewModel(modelContext: modelContext),
                 existingBudget: budget
             )
+        }
+        .fileImporter(
+            isPresented: $isImportingTransactions,
+            allowedContentTypes: [.commaSeparatedText, .plainText],
+            allowsMultipleSelection: false
+        ) { result in
+            handleTransactionImport(result)
+        }
+        .alert("Import Success", isPresented: $showingImportAlert) {
+             Button("OK") { }
+        } message: {
+            Text(importMessage ?? "Import complete")
+        }
+        .alert("Import Failed", isPresented: $showingImportError) {
+            Button("OK") { }
+        } message: {
+             Text(importErrorMessage ?? "Unknown error")
         }
         .onAppear {
             if categoryViewModel == nil {
@@ -75,6 +112,42 @@ struct BudgetDetailView: View {
             }
         }
     }
+    
+    private func handleTransactionImport(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            guard url.startAccessingSecurityScopedResource() else {
+                importErrorMessage = "Permission denied."
+                showingImportError = true
+                return
+            }
+            defer { url.stopAccessingSecurityScopedResource() }
+            
+            do {
+                let parser = CSVParser.shared
+                let importManager = ImportManager(modelContext: modelContext)
+                
+                let transactions = try parser.parseTransactions(from: url)
+                let count = try importManager.importTransactions(from: transactions, into: budget)
+                
+                importMessage = "Successfully imported \(count) transactions."
+                showingImportAlert = true
+                
+                // Refresh data
+                transactionViewModel?.loadTransactions(for: budget)
+                categoryViewModel?.loadCategories(for: budget)
+                
+            } catch {
+                importErrorMessage = error.localizedDescription
+                showingImportError = true
+            }
+            
+        case .failure(let error):
+            importErrorMessage = error.localizedDescription
+            showingImportError = true
+        }
+    }
 }
 
 #Preview {
@@ -86,5 +159,6 @@ struct BudgetDetailView: View {
     return NavigationStack {
         BudgetDetailView(budget: budget)
             .modelContainer(container)
+            .environmentObject(CurrencyManager())
     }
 }
