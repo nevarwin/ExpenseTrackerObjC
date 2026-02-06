@@ -14,25 +14,25 @@ struct CategoryRowView: View {
                 if category.isInstallment {
                     Image(systemName: "clock.arrow.circlepath")
                         .font(.caption)
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(Color.appAccent)
                 }
                 
                 Spacer()
                 
                 Text("\(Int(category.usagePercentage * 100))%")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appSecondary)
             }
             
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     Rectangle()
-                        .fill(Color.gray.opacity(0.2))
+                        .fill(Color.appLightGray)
                         .frame(height: 4)
                         .cornerRadius(2)
                     
                     Rectangle()
-                        .fill(category.isOverBudget ? Color.red : Color.blue)
+                        .fill(category.isOverBudget ? Color.red : Color.appAccent)
                         .frame(width: geometry.size.width * min(category.usagePercentage, 1.0), height: 4)
                         .cornerRadius(2)
                 }
@@ -48,7 +48,7 @@ struct CategoryRowView: View {
                     }
                 }
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.appSecondary)
             }
         }
         .padding(.horizontal)

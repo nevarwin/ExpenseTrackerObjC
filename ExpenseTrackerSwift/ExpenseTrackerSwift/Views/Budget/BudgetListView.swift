@@ -193,7 +193,7 @@ struct BudgetRowView: View {
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.gray.opacity(0.2))
+                        .background(Color.appLightGray)
                         .cornerRadius(4)
                 }
             }
@@ -202,7 +202,7 @@ struct BudgetRowView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Total")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appSecondary)
                     Text(budget.totalAmount, format: .currency(code: currencyManager.currencyCode))
                         .font(.subheadline)
                         .fontWeight(.medium)
@@ -213,7 +213,7 @@ struct BudgetRowView: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("Remaining")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appSecondary)
                     Text(budget.remainingAmount, format: .currency(code: currencyManager.currencyCode))
                         .font(.subheadline)
                         .fontWeight(.medium)
@@ -225,7 +225,7 @@ struct BudgetRowView: View {
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     Rectangle()
-                        .fill(Color.gray.opacity(0.2))
+                        .fill(Color.appLightGray)
                         .frame(height: 6)
                         .cornerRadius(3)
                     
@@ -238,7 +238,7 @@ struct BudgetRowView: View {
                         1.0) : 0
                     
                     Rectangle()
-                        .fill(progress > 0.9 ? Color.red : Color.blue)
+                        .fill(progress > 0.9 ? Color.red : Color.appAccent)
                         .frame(width: geometry.size.width * progress, height: 6)
                         .cornerRadius(3)
                 }

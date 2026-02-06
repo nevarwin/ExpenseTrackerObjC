@@ -69,7 +69,7 @@ struct CalendarView: View {
                 ForEach(daysOfWeek, id: \.self) { day in
                     Text(day)
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appSecondary)
                 }
                 
                 ForEach(generateDaysInMonth(), id: \.self) { date in
@@ -86,7 +86,7 @@ struct CalendarView: View {
             .padding(.horizontal)
         }
         .padding(.vertical)
-        .background(Color(UIColor.secondarySystemGroupedBackground))
+        .background(Color.appBackground)
     }
     
     private func generateDaysInMonth() -> [Date?] {

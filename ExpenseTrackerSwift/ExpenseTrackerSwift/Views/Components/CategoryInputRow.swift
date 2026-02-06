@@ -24,9 +24,10 @@ struct CategoryInputRow: View {
                     VStack(alignment: .leading) {
                         Text("Monthly:")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.appSecondary)
                         Text(formatCurrency(draft.allocatedDecimal))
                             .fontWeight(.medium)
+                            .foregroundStyle(Color.appPrimary)
                     }
                     .frame(maxWidth: 120, alignment: .leading)
                 } else {
@@ -45,10 +46,10 @@ struct CategoryInputRow: View {
                     }
                 }) {
                     Text(draft.isIncome ? "Income" : "Expense")
-                        .foregroundStyle(draft.isIncome ? .green : .primary)
+                        .foregroundStyle(draft.isIncome ? .green : Color.appPrimary)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(draft.isIncome ? Color.green.opacity(0.2) : Color.blue.opacity(0.2))
+                        .background(draft.isIncome ? Color.green.opacity(0.2) : Color.appAccent.opacity(0.2))
                         .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
@@ -56,7 +57,7 @@ struct CategoryInputRow: View {
             
             if !draft.isIncome {
                 Toggle("Installment", isOn: $draft.isInstallment)
-                    .toggleStyle(SwitchToggleStyle(tint: .blue))
+                    .toggleStyle(SwitchToggleStyle(tint: Color.appAccent))
                     .font(.subheadline)
             }
             

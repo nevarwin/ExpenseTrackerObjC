@@ -306,18 +306,18 @@ struct RecentTransactionsSection: View {
                 }
             }
             
-            if recentTransactions.isEmpty {
+                if recentTransactions.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "list.bullet.clipboard")
                         .font(.largeTitle)
-                        .foregroundStyle(Color.gray.opacity(0.3))
+                        .foregroundStyle(Color.appSecondary.opacity(0.3))
                     Text("No recent transactions")
                         .font(.subheadline)
-                        .foregroundStyle(Color.secondary)
+                        .foregroundStyle(Color.appSecondary)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 30)
-                .background(Color.white)
+                .background(Color.appSurface)
                 .cornerRadius(16)
             } else {
                 VStack(spacing: 0) {
@@ -359,7 +359,7 @@ struct CategoryOverviewSection: View {
             if categories.isEmpty {
                  Text("No categories found")
                     .font(.subheadline)
-                    .foregroundStyle(Color.secondary)
+                    .foregroundStyle(Color.appSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
             } else {
@@ -386,7 +386,7 @@ struct CategorySummaryCard: View {
             // Icon & Name
             HStack {
                 Image(systemName: IconHelper.icon(for: category.name))
-                    .foregroundStyle(Color.white)
+                    .foregroundStyle(Color.white) // Icon on accent color remains white
                     .font(.caption)
                     .padding(8)
                     .background(Color.appAccent)
@@ -403,7 +403,7 @@ struct CategorySummaryCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Available")
                     .font(.caption2)
-                    .foregroundStyle(Color.secondary)
+                    .foregroundStyle(Color.appSecondary)
                 
                 Text(category.remainingAmount, format: .currency(code: currencyManager.currencyCode))
                     .font(.system(.body, design: .rounded))
@@ -433,11 +433,11 @@ struct CategorySummaryCard: View {
                 Text("of \(category.allocatedAmount.formatted(.currency(code: currencyManager.currencyCode)))")
             }
             .font(.caption2)
-            .foregroundStyle(Color.secondary)
+            .foregroundStyle(Color.appSecondary)
         }
         .padding(16)
         .frame(width: 160)
-        .background(Color.white)
+        .background(Color.appSurface)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
     }
@@ -474,7 +474,7 @@ struct TransactionRowView: View {
                 
                 Text(transaction.date, style: .date)
                     .font(.caption)
-                    .foregroundStyle(Color.gray)
+                    .foregroundStyle(Color.appSecondary)
             }
             
             Spacer()
@@ -485,7 +485,7 @@ struct TransactionRowView: View {
                 .foregroundStyle(transaction.isIncome ? Color.green : Color.appPrimary)
         }
         .padding()
-        .background(Color.white)
+        .background(Color.appSurface)
     }
 }
 

@@ -27,18 +27,11 @@ extension Color {
     }
 
     struct Theme {
-        static let primary = Color(hex: "18181B")
-        static let secondary = Color(hex: "3F3F46")
-        static let accent = Color(hex: "2563EB")
-        static let background = Color(hex: "FAFAFA")
-        static let surface = Color(hex: "FFFFFF")
-        static let lightGray = Color(hex: "F4F4F5")
+        static let primary = Color("appPrimary", bundle: .main)
+        static let secondary = Color("appSecondary", bundle: .main)
+        static let accent = Color("appAccent", bundle: .main)
+        static let background = Color("appBackground", bundle: .main)
+        static let surface = Color("appSurface", bundle: .main)
+        static let lightGray = Color("appLightGray", bundle: .main)
     }
-    
-    static let appPrimary = Theme.primary
-    static let appSecondary = Theme.secondary
-    static let appAccent = Theme.accent
-    static let appBackground = Theme.background
-    static let appSurface = Theme.surface
-    static let appLightGray = Theme.lightGray
 }

@@ -97,7 +97,7 @@ struct TransactionDetailRow: View {
                     if let category = transaction.category {
                         Text(category.name)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.appSecondary)
                     }
                 }
                 
@@ -111,7 +111,7 @@ struct TransactionDetailRow: View {
                     
                     Text(transaction.date, style: .date)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appSecondary)
                 }
             }
         }
@@ -194,14 +194,14 @@ struct TransactionFormView: View {
                 if let category = selectedCategory, category.isInstallment {
                     LabeledContent("Monthly Installment") {
                         Text(category.allocatedAmount, format: .currency(code: currencyManager.currencyCode))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.appSecondary)
                     }
                     
                     if let decimalAmount = Decimal(string: amount), decimalAmount > 0 {
                         if decimalAmount > category.allocatedAmount {
                             Text("Extra payment of \(decimalAmount - category.allocatedAmount, format: .currency(code: currencyManager.currencyCode)) will reduce the term.")
                                 .font(.caption)
-                                .foregroundStyle(.blue)
+                                .foregroundStyle(Color.appAccent)
                         } else if decimalAmount < category.allocatedAmount {
                             Text("Payment is less than the monthly installment.")
                                 .font(.caption)

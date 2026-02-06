@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CardStyle: ViewModifier {
-    var backgroundColor: Color = .white
+    var backgroundColor: Color = .appSurface
     var padding: CGFloat = 16
     
     func body(content: Content) -> some View {
@@ -14,7 +14,7 @@ struct CardStyle: ViewModifier {
 }
 
 extension View {
-    func cardStyle(backgroundColor: Color = .white, padding: CGFloat = 16) -> some View {
+    func cardStyle(backgroundColor: Color = .appSurface, padding: CGFloat = 16) -> some View {
         modifier(CardStyle(backgroundColor: backgroundColor, padding: padding))
     }
     
