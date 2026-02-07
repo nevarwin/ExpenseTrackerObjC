@@ -30,10 +30,38 @@ struct TransactionListView: View {
                             .frame(maxHeight: .infinity)
                         } else {
                             List {
+                                // Scroll detection helper
+                                GeometryReader { proxy in
+                                    Color.clear
+                                        .preference(
+                                            key: ScrollOffsetPreferenceKey.self,
+                                            value: proxy.frame(in: .named("scroll")).minY
+                                        )
+                                }
+                                .frame(height: 0)
+                                .listRowInsets(EdgeInsets())
+                                .listRowSeparator(.hidden)
+                                
                                 ForEach(viewModel.transactions) { transaction in
                                     TransactionDetailRow(transaction: transaction)
                                 }
                                 .onDelete(perform: deleteTransactions)
+                            }
+                            .listStyle(.plain)
+                            .coordinateSpace(name: "scroll")
+                            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                                // Collapsing logic
+                                // If scrolling down (value goes negative), collapse to week
+                                // If scrolling up near top (value goes near 0), expand to month
+                                if value < -20 && viewModel.calendarScope == .month {
+                                    withAnimation {
+                                        viewModel.calendarScope = .week
+                                    }
+                                } else if value > 0 && viewModel.calendarScope == .week {
+                                    withAnimation {
+                                        viewModel.calendarScope = .month
+                                    }
+                                }
                             }
                             // Header showing the range if needed, but we have the top bar now
                         }
@@ -116,6 +144,13 @@ struct TransactionDetailRow: View {
             }
         }
         .padding(.vertical, 4)
+    }
+}
+
+private struct ScrollOffsetPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 

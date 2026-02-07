@@ -14,6 +14,8 @@ final class TransactionViewModel {
     var selectedDate: Date = Date() // Main focus date (or start of single selection)
     var selectedDateRange: ClosedRange<Date>? = nil // For range selection
     var isRangeMode: Bool = false
+    var calendarScope: CalendarScope = .month
+    var transactionDates: Set<Date> = []
     
     // Derived Calendar Properties
     var currentYear: Int {
@@ -308,4 +310,103 @@ final class TransactionViewModel {
         try modelContext.save()
         loadTransactions(for: transaction.budget)
     }
+    
+    // MARK: - Calendar Data
+    
+    func loadTransactionDates(for budget: Budget? = nil) {
+        // Optimize: verify if we need to fetch all or just for the current month/view
+        // For indicators, fetching for the current month is usually enough.
+        // Let's fetch for the current viewed month.
+        
+        let calendar = Calendar.current
+        guard let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: selectedDate)),
+              let monthEnd = calendar.date(byAdding: .month, value: 1, to: monthStart) else {
+            return
+        }
+        
+        let descriptor = FetchDescriptor<Transaction>(
+            predicate: #Predicate<Transaction> { transaction in
+                transaction.isActive == true &&
+                transaction.date >= monthStart &&
+                transaction.date < monthEnd
+            }
+        )
+        
+        do {
+            let fetchedTransactions = try modelContext.fetch(descriptor)
+            let dates = fetchedTransactions.map { calendar.startOfDay(for: $0.date) }
+            transactionDates = Set(dates)
+        } catch {
+            print("Failed to load transaction dates: \(error)")
+        }
+    }
+    
+    func generateCalendarDays() -> [Date?] {
+        let calendar = Calendar.current
+        
+        switch calendarScope {
+        case .month:
+            let components = DateComponents(year: currentYear, month: currentMonth)
+            guard let startOfMonth = calendar.date(from: components),
+                  let range = calendar.range(of: .day, in: .month, for: startOfMonth) else {
+                return []
+            }
+            
+            let weekday = calendar.component(.weekday, from: startOfMonth) // 1 = Sun
+            let offset = weekday - 1
+            
+            var days: [Date?] = Array(repeating: nil, count: offset)
+            
+            for day in 1...range.count {
+                if let date = calendar.date(byAdding: .day, value: day - 1, to: startOfMonth) {
+                    days.append(date)
+                }
+            }
+            return days
+            
+        case .week:
+            // Find start of the week for selectedDate
+            guard let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: selectedDate)) else {
+                return []
+            }
+            
+            var days: [Date?] = []
+            for day in 0..<7 {
+                if let date = calendar.date(byAdding: .day, value: day, to: startOfWeek) {
+                    days.append(date)
+                }
+            }
+            return days
+        }
+    }
+    func nextPage() {
+        let calendar = Calendar.current
+        let component: Calendar.Component = calendarScope == .month ? .month : .weekOfYear
+        
+        if let newDate = calendar.date(byAdding: component, value: 1, to: selectedDate) {
+            selectedDate = newDate
+            if !isRangeMode {
+                loadTransactions()
+            }
+            loadTransactionDates() // Reload indicators for new month/week
+        }
+    }
+    
+    func previousPage() {
+        let calendar = Calendar.current
+        let component: Calendar.Component = calendarScope == .month ? .month : .weekOfYear
+        
+        if let newDate = calendar.date(byAdding: component, value: -1, to: selectedDate) {
+            selectedDate = newDate
+             if !isRangeMode {
+                loadTransactions()
+            }
+            loadTransactionDates()
+        }
+    }
+}
+
+enum CalendarScope {
+    case month
+    case week
 }

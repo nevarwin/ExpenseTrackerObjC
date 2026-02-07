@@ -3,23 +3,34 @@ import SwiftUI
 struct CalendarView: View {
     @Bindable var viewModel: TransactionViewModel
     
+    @State private var showingDatePicker = false
+    @State private var selectedMonth = 1
+    @State private var selectedYear = 2024
+    
     private let calendar = Calendar.current
     private let daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     
     var body: some View {
         VStack(spacing: 20) {
-            // Header: Dropdowns & Range Toggle
+            // Header: Navigation & Range Toggle
             HStack(spacing: 16) {
-                // Year Dropdown
-                Menu {
-                    ForEach((viewModel.currentYear - 5)...(viewModel.currentYear + 5), id: \.self) { year in
-                        Button(String(year)) {
-                            viewModel.updateMonth(year: year, month: viewModel.currentMonth)
-                        }
-                    }
-                } label: {
+                // Previous Button
+                Button(action: { 
+                    withAnimation { viewModel.previousPage() }
+                }) {
+                    Image(systemName: "chevron.left")
+                        .font(.caption)
+                        .padding(8)
+                        .background(Color.secondary.opacity(0.1))
+                        .clipShape(Circle())
+                        .foregroundStyle(.primary)
+                }
+                
+                // Month/Year Title (Unified Picker)
+                Button(action: { showingDatePicker = true }) {
                     HStack(spacing: 4) {
-                        Text(String(viewModel.currentYear))
+                        Text(monthYearString)
+                            .font(.headline)
                             .fontWeight(.bold)
                         Image(systemName: "chevron.down")
                             .font(.caption)
@@ -29,25 +40,56 @@ struct CalendarView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .foregroundStyle(.primary)
                 }
-                
-                // Month Dropdown
-                Menu {
-                    ForEach(1...12, id: \.self) { month in
-                        Button(Calendar.current.monthSymbols[month - 1]) {
-                            viewModel.updateMonth(year: viewModel.currentYear, month: month)
+                .sheet(isPresented: $showingDatePicker) {
+                    VStack(spacing: 20) {
+                        Text("Select Month & Year")
+                            .font(.headline)
+                            .padding(.top)
+                        
+                        HStack(spacing: 0) {
+                            Picker("Month", selection: $selectedMonth) {
+                                ForEach(1...12, id: \.self) { month in
+                                    Text(Calendar.current.monthSymbols[month - 1]).tag(month)
+                                }
+                            }
+                            .pickerStyle(.wheel)
+                            .frame(width: 150)
+                            
+                            Picker("Year", selection: $selectedYear) {
+                                ForEach((viewModel.currentYear - 10)...(viewModel.currentYear + 10), id: \.self) { year in
+                                    Text(String(year).replacingOccurrences(of: ",", with: "")).tag(year)
+                                }
+                            }
+                            .pickerStyle(.wheel)
+                            .frame(width: 100)
                         }
+                        
+                        Button("Done") {
+                            viewModel.updateMonth(year: selectedYear, month: selectedMonth)
+                            showingDatePicker = false
+                            viewModel.loadTransactions()
+                            viewModel.loadTransactionDates()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .padding(.bottom)
                     }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text(Calendar.current.monthSymbols[viewModel.currentMonth - 1])
-                            .fontWeight(.bold)
-                        Image(systemName: "chevron.down")
-                            .font(.caption)
+                    .presentationDetents([.height(300)])
+                    .onAppear {
+                        selectedMonth = viewModel.currentMonth
+                        selectedYear = viewModel.currentYear
                     }
-                    .padding(8)
-                    .background(Color.secondary.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .foregroundStyle(.primary)
+                }
+                
+                // Next Button
+                Button(action: { 
+                    withAnimation { viewModel.nextPage() }
+                }) {
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .padding(8)
+                        .background(Color.secondary.opacity(0.1))
+                        .clipShape(Circle())
+                        .foregroundStyle(.primary)
                 }
                 
                 Spacer()
@@ -72,7 +114,7 @@ struct CalendarView: View {
                         .foregroundStyle(Color.appSecondary)
                 }
                 
-                ForEach(generateDaysInMonth(), id: \.self) { date in
+                ForEach(viewModel.generateCalendarDays(), id: \.self) { date in
                     if let date = date {
                         DayCell(date: date, viewModel: viewModel)
                             .onTapGesture {
@@ -84,30 +126,33 @@ struct CalendarView: View {
                 }
             }
             .padding(.horizontal)
+            .gesture(
+                DragGesture()
+                    .onEnded { value in
+                        if value.translation.width < -50 {
+                            withAnimation { viewModel.nextPage() }
+                        } else if value.translation.width > 50 {
+                            withAnimation { viewModel.previousPage() }
+                        }
+                    }
+            )
+            .animation(.easeInOut, value: viewModel.calendarScope)
+            .animation(.easeInOut, value: viewModel.selectedDate)
         }
         .padding(.vertical)
         .background(Color.appBackground)
+        .onAppear {
+            viewModel.loadTransactionDates()
+        }
+        .onChange(of: viewModel.selectedDate) { _, _ in
+            viewModel.loadTransactionDates()
+        }
     }
     
-    private func generateDaysInMonth() -> [Date?] {
-        let components = DateComponents(year: viewModel.currentYear, month: viewModel.currentMonth)
-        guard let startOfMonth = calendar.date(from: components),
-              let range = calendar.range(of: .day, in: .month, for: startOfMonth) else {
-            return []
-        }
-        
-        let weekday = calendar.component(.weekday, from: startOfMonth) // 1 = Sun, 2 = Mon...
-        let offset = weekday - 1
-        
-        var days: [Date?] = Array(repeating: nil, count: offset)
-        
-        for day in 1...range.count {
-            if let date = calendar.date(byAdding: .day, value: day - 1, to: startOfMonth) {
-                days.append(date)
-            }
-        }
-        
-        return days
+    private var monthYearString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: viewModel.selectedDate)
     }
 }
 
@@ -138,21 +183,38 @@ struct DayCell: View {
         Calendar.current.isDateInToday(date)
     }
     
+    private var hasTransaction: Bool {
+        viewModel.transactionDates.contains(Calendar.current.startOfDay(for: date))
+    }
+    
     enum SelectionState {
         case none, single, start, middle, end
     }
     
     var body: some View {
-        Text("\(Calendar.current.component(.day, from: date))")
-            .font(.callout)
-            .fontWeight(selectionState != .none ? .semibold : .regular)
-            .frame(maxWidth: .infinity, minHeight: 32)
-            .background(backgroundView)
-            .foregroundStyle(selectionState != .none ? .white : .primary)
-            .overlay(
-                // Today indicator (only if not selected)
-                selectionState == .none && isToday ? Circle().stroke(Color.blue, lineWidth: 1) : nil
-            )
+        VStack(spacing: 4) {
+            Text("\(Calendar.current.component(.day, from: date))")
+                .font(.callout)
+                .fontWeight(selectionState != .none ? .semibold : .regular)
+                .frame(maxWidth: .infinity, minHeight: 32)
+                .background(backgroundView)
+                .foregroundStyle(selectionState != .none ? .white : .primary)
+                .overlay(
+                    // Today indicator (only if not selected)
+                    selectionState == .none && isToday ? Circle().stroke(Color.blue, lineWidth: 1) : nil
+                )
+            
+            // Transaction Indicator
+            if hasTransaction {
+                Circle()
+                    .fill(Color.red)
+                    .frame(width: 4, height: 4)
+            } else {
+                Circle()
+                    .fill(Color.clear)
+                    .frame(width: 4, height: 4)
+            }
+        }
     }
     
     @ViewBuilder
