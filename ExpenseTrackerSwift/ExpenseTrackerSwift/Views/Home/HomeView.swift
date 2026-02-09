@@ -17,8 +17,7 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background
-                Color.appLightGray.ignoresSafeArea()
+                Color(uiColor: .systemGroupedBackground).ignoresSafeArea()
                 
                 if let viewModel = viewModel {
                     HomeContent(viewModel: viewModel)
@@ -323,6 +322,7 @@ struct RecentTransactionsSection: View {
                 VStack(spacing: 0) {
                     ForEach(recentTransactions.prefix(5)) { transaction in
                         TransactionRowView(transaction: transaction)
+                            .padding()
                         if transaction != recentTransactions.prefix(5).last {
                             Divider()
                                 .padding(.leading, 70) // Indented divider
@@ -440,91 +440,6 @@ struct CategorySummaryCard: View {
         .background(Color.appSurface)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
-    }
-}
-
-struct TransactionRowView: View {
-    let transaction: Transaction
-    @EnvironmentObject var currencyManager: CurrencyManager
-    
-    @State private var isRevealed: Bool = false
-
-    var body: some View {
-        HStack(spacing: 16) {
-            // Icon
-            ZStack {
-                Circle()
-                    .fill(Color.appLightGray)
-                    .frame(width: 40, height: 40)
-                
-                if let category = transaction.category {
-                    Image(systemName: IconHelper.icon(for: category.name))
-                        .foregroundStyle(Color.appAccent)
-                        .font(.system(size: 16))
-                } else {
-                    Image(systemName: "bag.fill")
-                    .foregroundStyle(Color.appSecondary)
-                    .font(.caption)
-                }
-            }
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(transaction.desc)
-                    .font(.system(.body, design: .rounded))
-                    .fontWeight(.medium)
-                    .foregroundStyle(Color.appPrimary)
-                
-                Text(transaction.date, style: .date)
-                    .font(.caption)
-                    .foregroundStyle(Color.appSecondary)
-            }
-            
-            Spacer()
-            
-            if transaction.shouldCensorAmount && !isRevealed {
-                Text("****")
-                    .font(.system(.body, design: .rounded))
-                    .fontWeight(.bold)
-                    .foregroundStyle(transaction.isIncome ? Color.green : Color.appPrimary)
-                    .onTapGesture {
-                        withAnimation {
-                            isRevealed.toggle()
-                        }
-                    }
-            } else {
-                Text(transaction.amount, format: .currency(code: currencyManager.currencyCode))
-                    .font(.system(.body, design: .rounded))
-                    .fontWeight(.bold)
-                    .foregroundStyle(transaction.isIncome ? Color.green : Color.appPrimary)
-                    .onTapGesture {
-                        if transaction.shouldCensorAmount {
-                            withAnimation {
-                                isRevealed.toggle()
-                            }
-                        }
-                    }
-            }
-        }
-        .padding()
-        .background(Color.appSurface)
-    }
-}
-
-// MARK: - Helper
-
-struct IconHelper {
-    static func icon(for name: String) -> String {
-        let n = name.lowercased()
-        if n.contains("food") || n.contains("eat") || n.contains("restaurant") { return "fork.knife" }
-        if n.contains("transport") || n.contains("travel") || n.contains("gas") || n.contains("car") { return "car.fill" }
-        if n.contains("shop") || n.contains("cloth") || n.contains("buy") { return "bag.fill" }
-        if n.contains("house") || n.contains("rent") || n.contains("home") { return "house.fill" }
-        if n.contains("bill") || n.contains("utility") || n.contains("electric") { return "bolt.fill" }
-        if n.contains("entertainment") || n.contains("movie") || n.contains("game") { return "tv.fill" }
-        if n.contains("health") || n.contains("med") || n.contains("doctor") { return "heart.fill" }
-        if n.contains("work") || n.contains("salary") { return "briefcase.fill" }
-        if n.contains("money") || n.contains("cash") { return "banknote.fill" }
-        return "tag.fill"
     }
 }
 

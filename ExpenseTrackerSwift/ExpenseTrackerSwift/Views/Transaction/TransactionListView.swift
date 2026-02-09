@@ -30,24 +30,30 @@ struct TransactionListView: View {
                             .frame(maxHeight: .infinity)
                         } else {
                             List {
-                                // Scroll detection helper
-                                GeometryReader { proxy in
-                                    Color.clear
-                                        .preference(
-                                            key: ScrollOffsetPreferenceKey.self,
-                                            value: proxy.frame(in: .named("scroll")).minY
-                                        )
+                                Section {
+                                    ForEach(Array(viewModel.transactions.enumerated()), id: \.element.id) { index, transaction in
+                                        TransactionRowView(transaction: transaction)
+                                            .background {
+                                                if index == 0 {
+                                                    GeometryReader { proxy in
+                                                        Color.clear
+                                                            .preference(
+                                                                key: ScrollOffsetPreferenceKey.self,
+                                                                value: proxy.frame(in: .named("scroll")).minY
+                                                            )
+                                                    }
+                                                }
+                                            }
+                                    }
+                                    .onDelete(perform: deleteTransactions)
+                                } header: {
+                                    EmptyView()
+                                } footer: {
+                                    EmptyView()
                                 }
-                                .frame(height: 0)
-                                .listRowInsets(EdgeInsets())
-                                .listRowSeparator(.hidden)
-                                
-                                ForEach(viewModel.transactions) { transaction in
-                                    TransactionDetailRow(transaction: transaction)
-                                }
-                                .onDelete(perform: deleteTransactions)
                             }
-                            .listStyle(.plain)
+                            .listStyle(.insetGrouped)
+                            .listSectionSpacing(0)
                             .coordinateSpace(name: "scroll")
                             .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
                                 // Collapsing logic
@@ -110,64 +116,6 @@ struct TransactionListView: View {
     }
 }
 
-struct TransactionDetailRow: View {
-    let transaction: Transaction
-    @EnvironmentObject var currencyManager: CurrencyManager
-    
-    @State private var isRevealed: Bool = false
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(transaction.desc)
-                        .font(.body)
-                        .fontWeight(.medium)
-                    
-                    if let category = transaction.category {
-                        Text(category.name)
-                            .font(.caption)
-                            .foregroundStyle(Color.appSecondary)
-                    }
-                }
-                
-                Spacer()
-                
-                VStack(alignment: .trailing, spacing: 4) {
-                    if transaction.shouldCensorAmount && !isRevealed {
-                        Text("****")
-                            .font(.body)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(transaction.isIncome ? .green : .red)
-                            .onTapGesture {
-                                withAnimation {
-                                    isRevealed.toggle()
-                                }
-                            }
-                    } else {
-                        Text(transaction.amount, format: .currency(code: currencyManager.currencyCode))
-                            .font(.body)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(transaction.isIncome ? .green : .red)
-                            .onTapGesture {
-                                if transaction.shouldCensorAmount {
-                                    withAnimation {
-                                        isRevealed.toggle()
-                                    }
-                                }
-                            }
-                    }
-                    
-                    Text(transaction.date, style: .date)
-                        .font(.caption)
-                        .foregroundStyle(Color.appSecondary)
-                }
-            }
-        }
-        .padding(.vertical, 4)
-    }
-}
-
 private struct ScrollOffsetPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
@@ -188,7 +136,7 @@ struct TransactionFormView: View {
     @State private var amount: String = ""
     @State private var description: String = ""
     @State private var date: Date = Date()
-
+    
     @State private var selectedCategory: Category?
     @State private var showingOverflowAlert = false
     @State private var showingError = false
@@ -219,7 +167,7 @@ struct TransactionFormView: View {
                             Text(budget.name).tag(budget)
                         }
                     }
-
+                    
                     
                     TextField("Amount", text: $amount)
                         .keyboardType(.decimalPad)
@@ -295,7 +243,7 @@ struct TransactionFormView: View {
         .onAppear {
             loadCategories()
         }
-
+        
         .onChange(of: date) { _, _ in loadCategories() }
         .onChange(of: selectedBudget) { _, _ in
             selectedCategory = nil
