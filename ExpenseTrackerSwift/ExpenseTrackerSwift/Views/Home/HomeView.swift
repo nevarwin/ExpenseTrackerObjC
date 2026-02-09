@@ -447,6 +447,8 @@ struct TransactionRowView: View {
     let transaction: Transaction
     @EnvironmentObject var currencyManager: CurrencyManager
     
+    @State private var isRevealed: Bool = false
+
     var body: some View {
         HStack(spacing: 16) {
             // Icon
@@ -461,8 +463,8 @@ struct TransactionRowView: View {
                         .font(.system(size: 16))
                 } else {
                     Image(systemName: "bag.fill")
-                        .foregroundStyle(Color.appSecondary)
-                        .font(.caption)
+                    .foregroundStyle(Color.appSecondary)
+                    .font(.caption)
                 }
             }
             
@@ -479,10 +481,29 @@ struct TransactionRowView: View {
             
             Spacer()
             
-            Text(transaction.amount, format: .currency(code: currencyManager.currencyCode))
-                .font(.system(.body, design: .rounded))
-                .fontWeight(.bold)
-                .foregroundStyle(transaction.isIncome ? Color.green : Color.appPrimary)
+            if transaction.shouldCensorAmount && !isRevealed {
+                Text("****")
+                    .font(.system(.body, design: .rounded))
+                    .fontWeight(.bold)
+                    .foregroundStyle(transaction.isIncome ? Color.green : Color.appPrimary)
+                    .onTapGesture {
+                        withAnimation {
+                            isRevealed.toggle()
+                        }
+                    }
+            } else {
+                Text(transaction.amount, format: .currency(code: currencyManager.currencyCode))
+                    .font(.system(.body, design: .rounded))
+                    .fontWeight(.bold)
+                    .foregroundStyle(transaction.isIncome ? Color.green : Color.appPrimary)
+                    .onTapGesture {
+                        if transaction.shouldCensorAmount {
+                            withAnimation {
+                                isRevealed.toggle()
+                            }
+                        }
+                    }
+            }
         }
         .padding()
         .background(Color.appSurface)

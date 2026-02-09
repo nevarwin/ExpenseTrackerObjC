@@ -114,6 +114,8 @@ struct TransactionDetailRow: View {
     let transaction: Transaction
     @EnvironmentObject var currencyManager: CurrencyManager
     
+    @State private var isRevealed: Bool = false
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -132,10 +134,29 @@ struct TransactionDetailRow: View {
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text(transaction.amount, format: .currency(code: currencyManager.currencyCode))
-                        .font(.body)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(transaction.isIncome ? .green : .red)
+                    if transaction.shouldCensorAmount && !isRevealed {
+                        Text("****")
+                            .font(.body)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(transaction.isIncome ? .green : .red)
+                            .onTapGesture {
+                                withAnimation {
+                                    isRevealed.toggle()
+                                }
+                            }
+                    } else {
+                        Text(transaction.amount, format: .currency(code: currencyManager.currencyCode))
+                            .font(.body)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(transaction.isIncome ? .green : .red)
+                            .onTapGesture {
+                                if transaction.shouldCensorAmount {
+                                    withAnimation {
+                                        isRevealed.toggle()
+                                    }
+                                }
+                            }
+                    }
                     
                     Text(transaction.date, style: .date)
                         .font(.caption)
