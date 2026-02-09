@@ -104,6 +104,14 @@ struct WelcomeHeader: View {
             }
             Spacer()
             
+            // Settings
+            NavigationLink(destination: SettingsView()) {
+                Image(systemName: "gear")
+                    .font(.title2)
+                    .foregroundStyle(Color.appSecondary)
+            }
+            .padding(.trailing, 8)
+            
             // Budget Switcher
             Menu {
                 ForEach(viewModel.budgets.filter { $0.isActive }) { budget in

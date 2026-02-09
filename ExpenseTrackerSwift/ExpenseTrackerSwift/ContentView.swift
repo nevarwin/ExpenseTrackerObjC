@@ -6,6 +6,9 @@ struct ContentView: View {
     @StateObject private var currencyManager = CurrencyManager()
     @State private var budgetViewModel: BudgetViewModel?
     
+    @Query(filter: #Predicate<Budget> { $0.isActive == true })
+    private var activeBudgets: [Budget]
+    
     var body: some View {
         Group {
             if let viewModel = budgetViewModel {
@@ -23,11 +26,6 @@ struct ContentView: View {
                     TransactionListView()
                         .tabItem {
                             Label("Transactions", systemImage: "list.bullet")
-                        }
-                    
-                    SettingsView()
-                        .tabItem {
-                            Label("Settings", systemImage: "gear")
                         }
                 }
             } else {
