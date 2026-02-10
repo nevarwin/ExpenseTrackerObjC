@@ -59,6 +59,57 @@ final class Category {
         usedAmount > allocatedAmount
     }
     
+    
+    // MARK: - Monthly Period Filtering
+    
+    /// Get transactions for a specific month
+    /// - Parameter date: The date within the month to filter (defaults to current date)
+    /// - Returns: Array of active transactions assigned to that month
+    func transactionsInMonth(_ date: Date = Date()) -> [Transaction] {
+        let bounds = DateRangeHelper.monthBounds(for: date)
+        return transactions.filter { transaction in
+            transaction.isActive &&
+            DateRangeHelper.isSameMonth(transaction.budgetPeriod, bounds.start)
+        }
+    }
+    
+    /// Used amount for the current month only
+    var currentMonthUsedAmount: Decimal {
+        transactionsInMonth()
+            .reduce(Decimal.zero) { $0 + $1.amount }
+    }
+    
+    /// Calculate used amount for a specific month
+    /// - Parameter date: The date within the month to calculate
+    /// - Returns: Total used amount for that month
+    func usedAmountInMonth(_ date: Date) -> Decimal {
+        transactionsInMonth(date)
+            .reduce(Decimal.zero) { $0 + $1.amount }
+    }
+    
+    /// Remaining amount for the current month (allocated - used in current month)
+    var currentMonthRemainingAmount: Decimal {
+        allocatedAmount - currentMonthUsedAmount
+    }
+    
+    /// Calculate remaining amount for a specific month
+    /// - Parameter date: The date within the month to calculate
+    /// - Returns: Remaining amount for that month
+    func remainingAmountInMonth(_ date: Date) -> Decimal {
+        allocatedAmount - usedAmountInMonth(date)
+    }
+    
+    /// Usage percentage for the current month
+    var currentMonthUsagePercentage: Double {
+        guard allocatedAmount > 0 else { return 0 }
+        return Double(truncating: (currentMonthUsedAmount / allocatedAmount) as NSDecimalNumber)
+    }
+    
+    /// Check if over budget in current month
+    var isOverBudgetThisMonth: Bool {
+        currentMonthUsedAmount > allocatedAmount
+    }
+    
     // MARK: - Business Logic
     
     func isValid(for date: Date) -> Bool {

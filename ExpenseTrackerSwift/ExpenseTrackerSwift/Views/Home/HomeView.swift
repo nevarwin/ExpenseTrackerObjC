@@ -157,7 +157,7 @@ struct BudgetSummaryCard: View {
                         .fontWeight(.bold)
                         .foregroundStyle(Color.appPrimary)
                     
-                    Text("Monthly Budget")
+                    Text("\(DateRangeHelper.monthYearString(from: Date())) Budget")
                         .subheaderStyle()
                 }
                 
@@ -189,7 +189,7 @@ struct BudgetSummaryCard: View {
                         Text("Spent")
                             .font(.caption)
                             .foregroundStyle(Color.secondary)
-                        Text(budget.totalExpenses, format: .currency(code: currencyManager.currencyCode))
+                        Text(budget.currentMonthExpenses, format: .currency(code: currencyManager.currencyCode))
                             .font(.system(.title2, design: .rounded))
                             .fontWeight(.bold)
                             .foregroundStyle(Color.appPrimary)
@@ -201,10 +201,10 @@ struct BudgetSummaryCard: View {
                         Text("Remaining")
                             .font(.caption)
                             .foregroundStyle(Color.secondary)
-                        Text(budget.remainingAmount, format: .currency(code: currencyManager.currencyCode))
+                        Text(budget.currentMonthRemaining, format: .currency(code: currencyManager.currencyCode))
                             .font(.system(.title2, design: .rounded))
                             .fontWeight(.bold)
-                            .foregroundStyle(budget.remainingAmount >= 0 ? Color.green : Color.red)
+                            .foregroundStyle(budget.currentMonthRemaining >= 0 ? Color.green : Color.red)
                     }
                 }
                 
@@ -219,8 +219,8 @@ struct BudgetSummaryCard: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        budget.remainingAmount >= 0 ? Color.appAccent : Color.red,
-                                        budget.remainingAmount >= 0 ? Color.cyan : Color.orange
+                                        budget.currentMonthRemaining >= 0 ? Color.appAccent : Color.red,
+                                        budget.currentMonthRemaining >= 0 ? Color.cyan : Color.orange
                                     ],
                                     startPoint: .leading,
                                     endPoint: .trailing
@@ -234,12 +234,12 @@ struct BudgetSummaryCard: View {
         }
         .cardStyle()
         .onAppear {
-            let progress = min(max(0, Double(truncating: (budget.totalExpenses / budget.totalAmount) as NSDecimalNumber)), 1.0)
+            let progress = min(max(0, Double(truncating: (budget.currentMonthExpenses / budget.totalAmount) as NSDecimalNumber)), 1.0)
             withAnimation(.spring(duration: 1.0)) {
                 animatedProgress = progress
             }
         }
-        .onChange(of: budget.totalExpenses) { oldVal, newVal in
+        .onChange(of: budget.currentMonthExpenses) { oldVal, newVal in
              let progress = min(max(0, Double(truncating: (newVal / budget.totalAmount) as NSDecimalNumber)), 1.0)
              withAnimation(.spring(duration: 1.0)) {
                  animatedProgress = progress
@@ -413,10 +413,10 @@ struct CategorySummaryCard: View {
                     .font(.caption2)
                     .foregroundStyle(Color.appSecondary)
                 
-                Text(category.remainingAmount, format: .currency(code: currencyManager.currencyCode))
+                Text(category.currentMonthRemainingAmount, format: .currency(code: currencyManager.currencyCode))
                     .font(.system(.body, design: .rounded))
                     .fontWeight(.bold)
-                    .foregroundStyle(category.remainingAmount >= 0 ? Color.appPrimary : Color.red)
+                    .foregroundStyle(category.currentMonthRemainingAmount >= 0 ? Color.appPrimary : Color.red)
             }
             
             // Progress Bar
@@ -426,9 +426,9 @@ struct CategorySummaryCard: View {
                         .fill(Color.appLightGray)
                         .frame(height: 6)
                     
-                    let progress = min(max(0, category.usagePercentage), 1.0)
+                    let progress = min(max(0, category.currentMonthUsagePercentage), 1.0)
                     Capsule()
-                        .fill(category.isOverBudget ? Color.red : Color.appAccent)
+                        .fill(category.isOverBudgetThisMonth ? Color.red : Color.appAccent)
                         .frame(width: geo.size.width * progress, height: 6)
                 }
             }
@@ -436,7 +436,7 @@ struct CategorySummaryCard: View {
             
             // Details text (Spent / Total)
             HStack {
-                Text("\(category.usedAmount.formatted(.currency(code: currencyManager.currencyCode))) spent")
+                Text("\(category.currentMonthUsedAmount.formatted(.currency(code: currencyManager.currencyCode))) spent")
                 Spacer()
                 Text("of \(category.allocatedAmount.formatted(.currency(code: currencyManager.currencyCode)))")
             }

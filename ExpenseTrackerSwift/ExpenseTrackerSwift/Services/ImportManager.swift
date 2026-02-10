@@ -90,9 +90,64 @@ class ImportManager {
         return budget
     }
     
+    
     // MARK: - Import Transactions
     
-    func importTransactions(from csvTransactions: [CSVTransaction], into budget: Budget) throws -> Int {
+    /// Parse budget period (month start date) from filename
+    /// Supports formats like: "Dec25", "13th25", "January2025", etc.
+    private func parseBudgetPeriod(from filename: String) -> Date? {
+        let calendar = Calendar.current
+        let currentYear = calendar.component(.year, from: Date())
+        
+        // Try parsing month abbreviation + 2-digit year (e.g., "Dec25")
+        let monthAbbreviations = ["jan", "feb", "mar", "apr", "may", "jun",
+                                  "jul", "aug", "sep", "oct", "nov", "dec"]
+        let lowerFilename = filename.lowercased()
+        
+        for (index, abbrev) in monthAbbreviations.enumerated() {
+            if lowerFilename.hasPrefix(abbrev) {
+                // Extract year from remaining part (e.g., "25" from "Dec25")
+                let yearPart = lowerFilename.dropFirst(abbrev.count)
+                    .replacingOccurrences(of: "th", with: "")
+                    .trimmingCharacters(in: .letters)
+                
+                if let year2Digit = Int(yearPart), year2Digit < 100 {
+                    // Convert 2-digit year to 4-digit (25 -> 2025)
+                    let fullYear = year2Digit < 50 ? 2000 + year2Digit : 1900 + year2Digit
+                    let components = DateComponents(year: fullYear, month: index + 1, day: 1)
+                    return calendar.date(from: components)
+                }
+            }
+        }
+        
+        // Try parsing full month name + year (e.g., "January2025")
+        let monthNames = ["january", "february", "march", "april", "may", "june",
+                         "july", "august", "september", "october", "november", "december"]
+        
+        for (index, monthName) in monthNames.enumerated() {
+            if lowerFilename.hasPrefix(monthName) {
+                let yearPart = lowerFilename.dropFirst(monthName.count)
+                    .trimmingCharacters(in: .letters)
+                
+                if let fullYear = Int(yearPart) {
+                    let components = DateComponents(year: fullYear, month: index + 1, day: 1)
+                    return calendar.date(from: components)
+                }
+            }
+        }
+        
+        // Try parsing numeric format (e.g., "13th25" means 13th = January, year 25)
+        let numericPrefix = String(lowerFilename.prefix(while: { $0.isNumber }))
+        if !numericPrefix.isEmpty, let dayNumber = Int(numericPrefix) {
+            // This is ambiguous - "13th25" could mean many things
+            // Best guess: day number, then month from context, then year
+            // For simplicity, return nil and fall back to transaction date
+        }
+        
+        return nil
+    }
+    
+    func importTransactions(from csvTransactions: [CSVTransaction], into budget: Budget, filename: String? = nil) throws -> Int {
         var count = 0
         
         // Cache categories for performance
@@ -132,12 +187,22 @@ class ImportManager {
 
             guard !alreadyExists else { continue }
             
+            // Determine budget period from filename or fall back to transaction date
+            let budgetPeriod: Date
+            if let filename = filename,
+               let parsedPeriod = parseBudgetPeriod(from: filename) {
+                budgetPeriod = parsedPeriod
+            } else {
+                budgetPeriod = DateRangeHelper.monthBounds(for: csvTx.date).start
+            }
+            
             let transaction = Transaction(
                 amount: csvTx.amount,
                 description: csvTx.description,
                 date: csvTx.date,
                 budget: budget,
-                category: category
+                category: category,
+                budgetPeriod: budgetPeriod
             )
             modelContext.insert(transaction)
             

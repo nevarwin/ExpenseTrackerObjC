@@ -11,6 +11,10 @@ struct BudgetDetailView: View {
     @State private var transactionViewModel: TransactionViewModel?
     @State private var showingEditSheet = false
     
+    // Month Selection
+    @State private var selectedMonth: Date = Date()
+    @State private var showingMonthPicker = false
+    
     // Import States
     @State private var isImportingTransactions = false
     @State private var importMessage: String?
@@ -20,13 +24,39 @@ struct BudgetDetailView: View {
     
     var body: some View {
         List {
+            // Month Selector
+            Section {
+                Button {
+                    showingMonthPicker = true
+                } label: {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Viewing Period")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(DateRangeHelper.monthYearString(from: selectedMonth))
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "calendar")
+                            .foregroundStyle(Color.appAccent)
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            
             Section("Budget Overview") {
                 LabeledContent("Total Budget", value: budget.totalAmount, format: .currency(code: currencyManager.currencyCode))
-                LabeledContent("Total Income", value: budget.totalIncome, format: .currency(code: currencyManager.currencyCode))
-                LabeledContent("Total Expenses", value: budget.totalExpenses, format: .currency(code: currencyManager.currencyCode))
+                LabeledContent("Total Income", value: budget.incomeInMonth(selectedMonth), format: .currency(code: currencyManager.currencyCode))
+                LabeledContent("Total Expenses", value: budget.expensesInMonth(selectedMonth), format: .currency(code: currencyManager.currencyCode))
                 LabeledContent("Remaining") {
-                    Text(budget.remainingAmount, format: .currency(code: currencyManager.currencyCode))
-                        .foregroundStyle(budget.remainingAmount >= 0 ? .green : .red)
+                    Text(budget.remainingInMonth(selectedMonth), format: .currency(code: currencyManager.currencyCode))
+                        .foregroundStyle(budget.remainingInMonth(selectedMonth) >= 0 ? .green : .red)
                         .fontWeight(.semibold)
                 }
             }
@@ -38,7 +68,7 @@ struct BudgetDetailView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(viewModel.categories) { category in
-                            CategoryRowView(category: category)
+                            CategoryRowView(category: category, month: selectedMonth)
                         }
                     }
                 }
@@ -61,6 +91,14 @@ struct BudgetDetailView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
+                    NavigationLink {
+                        BudgetHistoryView(budget: budget)
+                    } label: {
+                        Label("View History", systemImage: "chart.line.uptrend.xyaxis")
+                    }
+                    
+                    Divider()
+                    
                     Button {
                         isImportingTransactions = true
                     } label: {
@@ -82,6 +120,9 @@ struct BudgetDetailView: View {
                 viewModel: BudgetViewModel(modelContext: modelContext),
                 existingBudget: budget
             )
+        }
+        .sheet(isPresented: $showingMonthPicker) {
+            MonthPickerView(selectedDate: $selectedMonth)
         }
         .fileImporter(
             isPresented: $isImportingTransactions,
@@ -129,7 +170,8 @@ struct BudgetDetailView: View {
                 let importManager = ImportManager(modelContext: modelContext)
                 
                 let transactions = try parser.parseTransactions(from: url)
-                let count = try importManager.importTransactions(from: transactions, into: budget)
+                let filename = url.deletingPathExtension().lastPathComponent
+                let count = try importManager.importTransactions(from: transactions, into: budget, filename: filename)
                 
                 importMessage = "Successfully imported \(count) transactions."
                 showingImportAlert = true

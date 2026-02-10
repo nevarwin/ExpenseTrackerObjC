@@ -136,11 +136,13 @@ struct TransactionFormView: View {
     @State private var amount: String = ""
     @State private var description: String = ""
     @State private var date: Date = Date()
+    @State private var selectedBudgetPeriod: Date = Date()
     
     @State private var selectedCategory: Category?
     @State private var showingOverflowAlert = false
     @State private var showingError = false
     @State private var errorMessage = ""
+    @State private var showingBudgetPeriodPicker = false
     
     init(activeBudgets: [Budget], initialBudget: Budget, viewModel: TransactionViewModel, existingTransaction: Transaction? = nil) {
         self.availableBudgets = activeBudgets
@@ -155,6 +157,10 @@ struct TransactionFormView: View {
             _description = State(initialValue: transaction.desc)
             _date = State(initialValue: transaction.date)
             _selectedCategory = State(initialValue: transaction.category)
+            _selectedBudgetPeriod = State(initialValue: transaction.budgetPeriod)
+        } else {
+            // For new transactions, default to current month
+            _selectedBudgetPeriod = State(initialValue: DateRangeHelper.monthBounds(for: Date()).start)
         }
     }
     
@@ -175,6 +181,23 @@ struct TransactionFormView: View {
                     TextField("Description", text: $description)
                     
                     DatePicker("Date", selection: $date, displayedComponents: .date)
+                }
+                
+                Section("Budget Period") {
+                    Button {
+                        showingBudgetPeriodPicker = true
+                    } label: {
+                        HStack {
+                            Text("Assign to Month")
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Text(DateRangeHelper.monthYearString(from: selectedBudgetPeriod))
+                                .foregroundStyle(.secondary)
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
                 }
                 
                 Section("Category") {
@@ -240,11 +263,18 @@ struct TransactionFormView: View {
                 Text(errorMessage)
             }
         }
+        .sheet(isPresented: $showingBudgetPeriodPicker) {
+            MonthPickerView(selectedDate: $selectedBudgetPeriod)
+        }
         .onAppear {
             loadCategories()
         }
         
-        .onChange(of: date) { _, _ in loadCategories() }
+        .onChange(of: date) { _, newDate in
+            // Auto-sync budget period when transaction date changes
+            selectedBudgetPeriod = DateRangeHelper.monthBounds(for: newDate).start
+            loadCategories()
+        }
         .onChange(of: selectedBudget) { _, _ in
             selectedCategory = nil
             loadCategories()
@@ -303,6 +333,7 @@ struct TransactionFormView: View {
                 date: date,
                 budget: selectedBudget,
                 category: category,
+                budgetPeriod: selectedBudgetPeriod,
                 existing: existingTransaction
             )
             dismiss()

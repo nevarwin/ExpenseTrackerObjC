@@ -3,6 +3,7 @@ import SwiftData
 
 struct CategoryRowView: View {
     let category: Category
+    let month: Date?  // Optional month to display specific period data
     @EnvironmentObject var currencyManager: CurrencyManager
     
     var body: some View {
@@ -19,7 +20,7 @@ struct CategoryRowView: View {
                 
                 Spacer()
                 
-                Text("\(Int(category.usagePercentage * 100))%")
+                Text("\(Int(usagePercentage * 100))%")
                     .font(.caption)
                     .foregroundStyle(Color.appSecondary)
             }
@@ -32,8 +33,8 @@ struct CategoryRowView: View {
                         .cornerRadius(2)
                     
                     Rectangle()
-                        .fill(category.isOverBudget ? Color.red : Color.appAccent)
-                        .frame(width: geometry.size.width * min(category.usagePercentage, 1.0), height: 4)
+                        .fill(isOverBudget ? Color.red : Color.appAccent)
+                        .frame(width: geometry.size.width * min(usagePercentage, 1.0), height: 4)
                         .cornerRadius(2)
                 }
             }
@@ -53,6 +54,28 @@ struct CategoryRowView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
+    }
+    
+    // MARK: - Computed Properties
+    
+    private var usagePercentage: Double {
+        if let month = month {
+            // Guard against division by zero
+            guard category.allocatedAmount > 0 else { return 0.0 }
+            
+            let used = category.usedAmountInMonth(month)
+            return Double(truncating: NSDecimalNumber(decimal: used / category.allocatedAmount))
+        } else {
+            return category.usagePercentage
+        }
+    }
+    
+    private var isOverBudget: Bool {
+        if let month = month {
+            return category.usedAmountInMonth(month) > category.allocatedAmount
+        } else {
+            return category.isOverBudget
+        }
     }
     
     private func formatCurrency(_ amount: Decimal) -> String {

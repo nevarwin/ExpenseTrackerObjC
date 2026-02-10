@@ -225,6 +225,7 @@ final class TransactionViewModel {
         date: Date,
         budget: Budget,
         category: Category,
+        budgetPeriod: Date,
         existing: Transaction? = nil
     ) throws {
         // Update old category if editing and category changed
@@ -254,6 +255,7 @@ final class TransactionViewModel {
             existing.amount = amount
             existing.desc = description
             existing.date = date
+            existing.budgetPeriod = budgetPeriod
             existing.budget = budget
             existing.category = category
             existing.updatedAt = Date()
@@ -263,7 +265,8 @@ final class TransactionViewModel {
                 description: description,
                 date: date,
                 budget: budget,
-                category: category
+                category: category,
+                budgetPeriod: budgetPeriod
             )
             modelContext.insert(transaction)
             transactions.insert(transaction, at: 0)
