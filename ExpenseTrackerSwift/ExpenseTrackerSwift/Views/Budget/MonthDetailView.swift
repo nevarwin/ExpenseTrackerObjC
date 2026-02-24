@@ -75,7 +75,9 @@ struct MonthDetailView: View {
                         .padding()
                 } else {
                     ForEach(categories) { category in
-                        CategoryMonthDetailRow(category: category, month: month)
+                        NavigationLink(destination: CategoryTransactionsView(category: category, month: month)) {
+                            CategoryMonthDetailRow(category: category, month: month)
+                        }
                     }
                 }
             }

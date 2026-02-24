@@ -5,6 +5,7 @@ struct TransactionListView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel: TransactionViewModel?
     @State private var showingAddTransaction = false
+    @State private var selectedTransaction: Transaction?
     
     @Query(filter: #Predicate<Budget> { $0.isActive == true })
     private var activeBudgets: [Budget]
@@ -32,18 +33,23 @@ struct TransactionListView: View {
                             List {
                                 Section {
                                     ForEach(Array(viewModel.transactions.enumerated()), id: \.element.id) { index, transaction in
-                                        TransactionRowView(transaction: transaction)
-                                            .background {
-                                                if index == 0 {
-                                                    GeometryReader { proxy in
-                                                        Color.clear
-                                                            .preference(
-                                                                key: ScrollOffsetPreferenceKey.self,
-                                                                value: proxy.frame(in: .named("scroll")).minY
-                                                            )
+                                        Button {
+                                            selectedTransaction = transaction
+                                        } label: {
+                                            TransactionRowView(transaction: transaction)
+                                                .background {
+                                                    if index == 0 {
+                                                        GeometryReader { proxy in
+                                                            Color.clear
+                                                                .preference(
+                                                                    key: ScrollOffsetPreferenceKey.self,
+                                                                    value: proxy.frame(in: .named("scroll")).minY
+                                                                )
+                                                        }
                                                     }
                                                 }
-                                            }
+                                        }
+                                        .buttonStyle(.plain)
                                     }
                                     .onDelete(perform: deleteTransactions)
                                 } header: {
@@ -94,6 +100,17 @@ struct TransactionListView: View {
                         activeBudgets: activeBudgets,
                         initialBudget: firstBudget,
                         viewModel: viewModel
+                    )
+                }
+            }
+            .sheet(item: $selectedTransaction) { transaction in
+                if let viewModel = viewModel,
+                   let budget = transaction.budget ?? activeBudgets.first {
+                    TransactionFormView(
+                        activeBudgets: activeBudgets,
+                        initialBudget: budget,
+                        viewModel: viewModel,
+                        existingTransaction: transaction
                     )
                 }
             }

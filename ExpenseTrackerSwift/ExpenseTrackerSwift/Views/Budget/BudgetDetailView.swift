@@ -68,7 +68,9 @@ struct BudgetDetailView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(viewModel.categories) { category in
-                            CategoryRowView(category: category, month: selectedMonth)
+                            NavigationLink(destination: CategoryTransactionsView(category: category, month: selectedMonth)) {
+                                CategoryRowView(category: category, month: selectedMonth)
+                            }
                         }
                     }
                 }
