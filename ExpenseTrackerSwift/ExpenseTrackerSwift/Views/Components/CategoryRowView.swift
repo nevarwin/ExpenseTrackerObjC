@@ -40,6 +40,15 @@ struct CategoryRowView: View {
             }
             .frame(height: 4)
             
+            HStack {
+                Text(formatCurrency(spentAmount))
+                    .foregroundStyle(isOverBudget ? Color.red : Color.appSecondary)
+                Text("of \(formatCurrency(category.allocatedAmount))")
+                    .foregroundStyle(Color.appSecondary)
+                Spacer()
+            }
+            .font(.caption2)
+            
             if category.isInstallment {
                 HStack {
                     Text(category.remainingInstallmentMonths.map { "\($0) months left" } ?? "")
@@ -57,6 +66,14 @@ struct CategoryRowView: View {
     }
     
     // MARK: - Computed Properties
+    
+    private var spentAmount: Decimal {
+        if let month = month {
+            return category.usedAmountInMonth(month)
+        } else {
+            return category.usedAmount
+        }
+    }
     
     private var usagePercentage: Double {
         if let month = month {
