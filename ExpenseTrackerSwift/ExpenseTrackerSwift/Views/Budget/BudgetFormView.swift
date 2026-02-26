@@ -5,22 +5,25 @@ struct BudgetFormView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var currencyManager: CurrencyManager
     @ObservedObject var viewModel: BudgetViewModel
-    
+
     @State private var name: String = ""
     @State private var categoryDrafts: [CategoryDraft] = []
     @State private var showingError = false
     @State private var errorMessage = ""
-    
+
+    // Sheet state: editing index (nil = adding new)
+    @State private var editingDraftIndex: Int? = nil
+    @State private var showingCategorySheet = false
+    @State private var newDraft: CategoryDraft = CategoryDraft(name: "", allocatedAmount: "0", isIncome: false)
+
     let existingBudget: Budget?
-    
+
     init(viewModel: BudgetViewModel, existingBudget: Budget? = nil) {
         self.viewModel = viewModel
         self.existingBudget = existingBudget
-        
+
         if let budget = existingBudget {
             _name = State(initialValue: budget.name)
-            
-            // Load existing categories into drafts
             _categoryDrafts = State(initialValue: budget.categories.map { category in
                 CategoryDraft(
                     name: category.name,
@@ -35,83 +38,68 @@ struct BudgetFormView: View {
                 )
             })
         } else {
-            // Initialize with one default category for new budget
             _categoryDrafts = State(initialValue: [
                 CategoryDraft(name: "", allocatedAmount: "0", isIncome: true)
             ])
         }
     }
-    
+
     var body: some View {
         NavigationStack {
             Form {
+                // MARK: Budget Name
                 Section("Budget Details") {
                     TextField("Budget Name", text: $name)
                 }
-                
+
+                // MARK: Active Categories
                 Section {
-                    ForEach($categoryDrafts) { $draft in
+                    ForEach(Array(categoryDrafts.enumerated()), id: \.element.id) { index, draft in
                         if draft.isActive {
-                            CategoryInputRow(draft: $draft) {
-                                deleteOrArchiveCategory(draft)
+                            Button {
+                                editingDraftIndex = index
+                                showingCategorySheet = true
+                            } label: {
+                                CategorySummaryRow(draft: draft)
                             }
+                            .buttonStyle(.plain)
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                // Archive for existing, delete for new
                                 if draft.originalCategory != nil {
                                     Button {
-                                        withAnimation {
-                                            draft.isActive = false
-                                        }
+                                        withAnimation { categoryDrafts[index].isActive = false }
                                     } label: {
                                         Label("Archive", systemImage: "archivebox")
                                     }
                                     .tint(.orange)
+                                } else {
+                                    Button(role: .destructive) {
+                                        categoryDrafts.removeAll { $0.id == draft.id }
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
                                 }
                             }
                         }
                     }
-                    
-                    Button(action: addCategory) {
+
+                    Button {
+                        newDraft = CategoryDraft(name: "", allocatedAmount: "0", isIncome: false)
+                        editingDraftIndex = nil
+                        showingCategorySheet = true
+                    } label: {
                         Label("Add Category", systemImage: "plus.circle.fill")
                     }
                 } header: {
                     Text("Categories")
                 } footer: {
-                    VStack(alignment: .leading, spacing: 8) {
-                        let activeDrafts = categoryDrafts.filter { $0.isActive }
-                        let incomeTotal = activeDrafts.filter({ $0.isIncome }).reduce(Decimal.zero) { $0 + $1.allocatedDecimal }
-                        let expenseTotal = activeDrafts.filter({ !$0.isIncome }).reduce(Decimal.zero) { $0 + $1.allocatedDecimal }
-                        
-                        HStack {
-                            Text("Total Income:")
-                            Spacer()
-                            Text(formatCurrency(incomeTotal))
-                                .fontWeight(.medium)
-                                .foregroundStyle(.green)
-                        }
-                        
-                        HStack {
-                            Text("Total Expenses:")
-                            Spacer()
-                            Text(formatCurrency(expenseTotal))
-                                .fontWeight(.medium)
-                                .foregroundStyle(.red)
-                        }
-                        
-                        Divider()
-                        
-                        HStack {
-                            Text("Budget Total:")
-                            Spacer()
-                            Text(formatCurrency(incomeTotal))
-                                .fontWeight(.bold)
-                        }
-                    }
-                    .font(.subheadline)
+                    categoryTotalsFooter
                 }
-                
-                if !categoryDrafts.filter({ !$0.isActive }).isEmpty {
+
+                // MARK: Archived Categories
+                if categoryDrafts.contains(where: { !$0.isActive }) {
                     Section("Archived Categories") {
-                        ForEach($categoryDrafts) { $draft in
+                        ForEach(Array(categoryDrafts.enumerated()), id: \.element.id) { index, draft in
                             if !draft.isActive {
                                 HStack {
                                     Text(draft.name)
@@ -123,9 +111,7 @@ struct BudgetFormView: View {
                                 }
                                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                     Button {
-                                        withAnimation {
-                                            draft.isActive = true
-                                        }
+                                        withAnimation { categoryDrafts[index].isActive = true }
                                     } label: {
                                         Label("Restore", systemImage: "arrow.uturn.backward")
                                     }
@@ -135,7 +121,8 @@ struct BudgetFormView: View {
                         }
                     }
                 }
-                
+
+                // MARK: Delete Budget
                 if existingBudget != nil {
                     Section {
                         Button(role: .destructive) {
@@ -152,7 +139,6 @@ struct BudgetFormView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
-                
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { saveBudget() }
                         .disabled(!isValid)
@@ -163,85 +149,101 @@ struct BudgetFormView: View {
             } message: {
                 Text(errorMessage)
             }
-        }
-    }
-    
-    private var isValid: Bool {
-        let activeDrafts = categoryDrafts.filter { $0.isActive }
-        let incomeTotal = activeDrafts.filter({ $0.isIncome }).reduce(Decimal.zero) { $0 + $1.allocatedDecimal }
-        
-        guard !name.trimmingCharacters(in: .whitespaces).isEmpty,
-              incomeTotal > 0,
-              activeDrafts.filter({ $0.isIncome }).count > 0 else {
-            return false
-        }
-        
-        // Check for duplicate category names (among active ones)
-        let categoryNames = activeDrafts.map { $0.name.trimmingCharacters(in: .whitespaces).lowercased() }
-        let uniqueNames = Set(categoryNames)
-        guard categoryNames.count == uniqueNames.count else {
-            return false
-        }
-        
-        // All active categories must be valid
-        return activeDrafts.allSatisfy { $0.isValid }
-    }
-    
-    private func addCategory() {
-        categoryDrafts.append(CategoryDraft(
-            name: "",
-            allocatedAmount: "0",
-            isIncome: false
-        ))
-    }
-    
-    private func deleteOrArchiveCategory(_ draft: CategoryDraft) {
-        if draft.originalCategory != nil {
-            // If it's an existing category, just archive it
-            if let index = categoryDrafts.firstIndex(where: { $0.id == draft.id }) {
-                withAnimation {
-                    categoryDrafts[index].isActive = false
+            // Sheet: add new category
+            .sheet(isPresented: $showingCategorySheet) {
+                if let index = editingDraftIndex {
+                    CategoryDetailSheet(draft: $categoryDrafts[index], isNew: false)
+                } else {
+                    CategoryDetailSheet(draft: $newDraft, isNew: true)
+                        .onDisappear {
+                            // Only append if the user tapped Done (name is non-empty)
+                            if !newDraft.name.trimmingCharacters(in: .whitespaces).isEmpty {
+                                categoryDrafts.append(newDraft)
+                            }
+                        }
                 }
             }
-        } else {
-            // If it's a new draft, actually delete it
-            categoryDrafts.removeAll { $0.id == draft.id }
         }
     }
-    
+
+    // MARK: - Footer
+
+    @ViewBuilder
+    private var categoryTotalsFooter: some View {
+        let activeDrafts = categoryDrafts.filter { $0.isActive }
+        let incomeTotal = activeDrafts.filter(\.isIncome).reduce(Decimal.zero) { $0 + $1.allocatedDecimal }
+        let expenseTotal = activeDrafts.filter { !$0.isIncome }.reduce(Decimal.zero) { $0 + $1.allocatedDecimal }
+
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Total Income:")
+                Spacer()
+                Text(formatCurrency(incomeTotal))
+                    .fontWeight(.medium)
+                    .foregroundStyle(.green)
+            }
+            HStack {
+                Text("Total Expenses:")
+                Spacer()
+                Text(formatCurrency(expenseTotal))
+                    .fontWeight(.medium)
+                    .foregroundStyle(.red)
+            }
+            Divider()
+            HStack {
+                Text("Budget Total:")
+                Spacer()
+                Text(formatCurrency(incomeTotal))
+                    .fontWeight(.bold)
+            }
+        }
+        .font(.subheadline)
+    }
+
+    // MARK: - Validation
+
+    private var isValid: Bool {
+        let activeDrafts = categoryDrafts.filter { $0.isActive }
+        let incomeTotal = activeDrafts.filter(\.isIncome).reduce(Decimal.zero) { $0 + $1.allocatedDecimal }
+
+        guard !name.trimmingCharacters(in: .whitespaces).isEmpty,
+              incomeTotal > 0,
+              activeDrafts.contains(where: { $0.isIncome }) else { return false }
+
+        let categoryNames = activeDrafts.map { $0.name.trimmingCharacters(in: .whitespaces).lowercased() }
+        guard categoryNames.count == Set(categoryNames).count else { return false }
+
+        return activeDrafts.allSatisfy { $0.isValid }
+    }
+
+    // MARK: - Actions
+
     private func saveBudget() {
-        // Calculate total from income categories
-        let amount = categoryDrafts.filter({ $0.isIncome }).reduce(Decimal.zero) { $0 + $1.allocatedDecimal }
-        
+        let amount = categoryDrafts.filter(\.isIncome).reduce(Decimal.zero) { $0 + $1.allocatedDecimal }
+
         do {
             let budget: Budget
             var keptCategories: Set<PersistentIdentifier> = []
-            
+
             if let existing = existingBudget {
-                // Update existing budget
                 try viewModel.updateBudget(existing, name: name, totalAmount: amount)
                 budget = existing
             } else {
-                // Create new budget and get the returned instance
                 budget = try viewModel.createBudget(name: name, totalAmount: amount)
             }
-            
-            // Process drafts
+
             for draft in categoryDrafts where draft.isValid {
                 let category: Category
-                
+
                 if let original = draft.originalCategory {
-                    // Update existing category
                     category = original
                     category.name = draft.name.trimmingCharacters(in: .whitespaces)
                     category.allocatedAmount = draft.allocatedDecimal
                     category.isIncome = draft.isIncome
                     category.isActive = draft.isActive
                     category.updatedAt = Date()
-                    
                     keptCategories.insert(original.persistentModelID)
                 } else {
-                    // Create new category
                     category = Category(
                         name: draft.name.trimmingCharacters(in: .whitespaces),
                         allocatedAmount: draft.allocatedDecimal,
@@ -251,17 +253,12 @@ struct BudgetFormView: View {
                     )
                     category.isActive = draft.isActive
                     viewModel.modelContext.insert(category)
-                    
-                    // CRITICAL: Explicitly add to budget's categories array
-                    // The inverse relationship doesn't always update automatically
                     budget.categories.append(category)
                 }
-                
-                // Update installment details
+
                 if draft.isInstallment {
                     let total = Decimal(string: draft.totalInstallmentAmount) ?? 0
                     let months = Int(draft.installmentMonths) ?? 1
-                    
                     category.configureInstallment(
                         monthlyPayment: draft.allocatedDecimal,
                         totalAmount: total,
@@ -277,8 +274,7 @@ struct BudgetFormView: View {
                     category.installmentEndDate = nil
                 }
             }
-            
-            // Delete categories that are no longer in drafts (only for existing budget)
+
             if let existing = existingBudget {
                 for category in existing.categories {
                     if !keptCategories.contains(category.persistentModelID) {
@@ -286,7 +282,7 @@ struct BudgetFormView: View {
                     }
                 }
             }
-            
+
             try viewModel.modelContext.save()
             dismiss()
         } catch {
@@ -294,10 +290,9 @@ struct BudgetFormView: View {
             showingError = true
         }
     }
-    
+
     private func deleteBudget() {
         guard let budget = existingBudget else { return }
-        
         do {
             try viewModel.deleteBudget(budget)
             dismiss()
@@ -306,7 +301,59 @@ struct BudgetFormView: View {
             showingError = true
         }
     }
-    
+
+    private func formatCurrency(_ amount: Decimal) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = currencyManager.currencyCode
+        return formatter.string(from: amount as NSDecimalNumber) ?? "\(currencyManager.currencySymbol)0.00"
+    }
+}
+
+// MARK: - Category Summary Row
+
+/// Read-only summary row shown in the category list
+private struct CategorySummaryRow: View {
+    let draft: CategoryDraft
+    @EnvironmentObject var currencyManager: CurrencyManager
+
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(draft.name.isEmpty ? "Unnamed Category" : draft.name)
+                    .foregroundStyle(draft.name.isEmpty ? .secondary : .primary)
+
+                if draft.isInstallment {
+                    Text("Installment · \(draft.installmentMonths) mo")
+                        .font(.caption)
+                        .foregroundStyle(Color.appSecondary)
+                }
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 3) {
+                Text(formatCurrency(draft.allocatedDecimal))
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(draft.isIncome ? .green : Color.appPrimary)
+
+                Text(draft.isIncome ? "Income" : "Expense")
+                    .font(.caption)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 2)
+                    .background(draft.isIncome ? Color.green.opacity(0.15) : Color.appAccent.opacity(0.15))
+                    .foregroundStyle(draft.isIncome ? .green : Color.appAccent)
+                    .clipShape(Capsule())
+            }
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.vertical, 4)
+    }
+
     private func formatCurrency(_ amount: Decimal) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
@@ -319,6 +366,6 @@ struct BudgetFormView: View {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: Budget.self, configurations: config)
     let viewModel = BudgetViewModel(modelContext: container.mainContext)
-    
+
     BudgetFormView(viewModel: viewModel)
 }
