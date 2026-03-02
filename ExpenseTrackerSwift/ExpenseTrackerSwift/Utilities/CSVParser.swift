@@ -30,7 +30,9 @@ struct CSVBudget {
 
 struct CSVBudgetItem {
     let categoryName: String
-    let amount: Decimal
+    let plannedAmount: Decimal
+    let actualAmount: Decimal
+    let differenceAmount: Decimal
     let isIncome: Bool
 }
 
@@ -130,32 +132,40 @@ class CSVParser {
     
     private func parseComplexBudget(rows: [String], name: String) -> CSVBudget {
         var items: [CSVBudgetItem] = []
-        var parsingData = false
         
         for row in rows {
             let columns = parseCSVRow(row)
             
-            // Start parsing after finding the sub-header row or just skip until we find data
-            // Based on analysis: Row 24 starts data.
-            // Heuristic: Look for row with "Totals" or verify if it's a data row
-            
-            // If col 1 has text and col 3 has amount -> Expense
-            // If col 7 has text and col 9 has amount -> Income
-            
-            if columns.indices.contains(9) {
-                // Check Expense (Left)
-                // Col 1: Category Name, Col 3: Planned Amount
-                if !columns[1].isEmpty && columns[1] != "Totals" && columns[1] != "Expenses" {
-                    if let amount = parseCurrency(columns[3]), amount > 0 {
-                        items.append(CSVBudgetItem(categoryName: columns[1], amount: amount, isIncome: false))
+            // Expense columns: B(1), C(2) for names. D(3) for planned, E(4) for actual, F(5) for diff
+            if columns.indices.contains(3) {
+                let expenseSub1 = columns.indices.contains(1) ? columns[1].trimmingCharacters(in: .whitespaces) : ""
+                let expenseSub2 = columns.indices.contains(2) ? columns[2].trimmingCharacters(in: .whitespaces) : ""
+                
+                let expenseNameParts = [expenseSub1, expenseSub2].filter { !$0.isEmpty }
+                let expenseName = expenseNameParts.joined(separator: " - ")
+                
+                if !expenseName.isEmpty && expenseSub1 != "Totals" && expenseSub1 != "Expenses" {
+                    if let planned = parseCurrency(columns[3]), planned > 0 {
+                        let actual = columns.indices.contains(4) ? (parseCurrency(columns[4]) ?? 0) : 0
+                        let diff = columns.indices.contains(5) ? (parseCurrency(columns[5]) ?? 0) : 0
+                        items.append(CSVBudgetItem(categoryName: expenseName, plannedAmount: planned, actualAmount: actual, differenceAmount: diff, isIncome: false))
                     }
                 }
+            }
+            
+            // Income columns: H(7), I(8) for names. J(9) for planned, K(10) for actual, L(11) for diff
+            if columns.indices.contains(9) {
+                let incomeSub1 = columns.indices.contains(7) ? columns[7].trimmingCharacters(in: .whitespaces) : ""
+                let incomeSub2 = columns.indices.contains(8) ? columns[8].trimmingCharacters(in: .whitespaces) : ""
                 
-                // Check Income (Right)
-                // Col 7: Category Name, Col 9: Planned Amount
-                if !columns[7].isEmpty && columns[7] != "Totals" && columns[7] != "Income" {
-                    if let amount = parseCurrency(columns[9]), amount > 0 {
-                        items.append(CSVBudgetItem(categoryName: columns[7], amount: amount, isIncome: true))
+                let incomeNameParts = [incomeSub1, incomeSub2].filter { !$0.isEmpty }
+                let incomeName = incomeNameParts.joined(separator: " - ")
+                
+                if !incomeName.isEmpty && incomeSub1 != "Totals" && incomeSub1 != "Income" {
+                    if let planned = parseCurrency(columns[9]), planned > 0 {
+                        let actual = columns.indices.contains(10) ? (parseCurrency(columns[10]) ?? 0) : 0
+                        let diff = columns.indices.contains(11) ? (parseCurrency(columns[11]) ?? 0) : 0
+                        items.append(CSVBudgetItem(categoryName: incomeName, plannedAmount: planned, actualAmount: actual, differenceAmount: diff, isIncome: true))
                     }
                 }
             }
@@ -180,7 +190,7 @@ class CSVParser {
                 if !categoryName.isEmpty, let amount = parseCurrency(amountStr), amount > 0 {
                     // Assume expense by default for simple budget lists unless specified
                     // Or maybe check if name indicates income? For 13th25.csv it seems to be allocations.
-                    items.append(CSVBudgetItem(categoryName: categoryName, amount: amount, isIncome: false))
+                    items.append(CSVBudgetItem(categoryName: categoryName, plannedAmount: amount, actualAmount: 0, differenceAmount: 0, isIncome: false))
                 }
             }
         }

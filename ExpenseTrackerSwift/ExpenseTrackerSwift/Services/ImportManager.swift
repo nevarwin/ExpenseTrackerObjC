@@ -42,7 +42,7 @@ class ImportManager {
             
             let totalIncome = csvBudget.items
                 .filter { $0.isIncome }
-                .reduce(Decimal.zero) { $0 + $1.amount }
+                .reduce(Decimal.zero) { $0 + $1.plannedAmount }
                 
             let totalInitial = totalIncome > 0 ? totalIncome : 0
             
@@ -65,13 +65,11 @@ class ImportManager {
             if let existingCategory = budget.categories.first(where: { $0.name.caseInsensitiveCompare(categoryName) == .orderedSame }) {
                 category = existingCategory
                 // Update allocation if imported
-                if !item.isIncome {
-                    category.allocatedAmount = item.amount
-                }
+                category.allocatedAmount = item.plannedAmount
             } else {
                 category = Category(
                     name: categoryName,
-                    allocatedAmount: item.isIncome ? 0 : item.amount,
+                    allocatedAmount: item.plannedAmount,
                     isIncome: item.isIncome,
                     budget: budget
                 )
@@ -97,7 +95,7 @@ class ImportManager {
     /// Supports formats like: "Dec25", "13th25", "January2025", etc.
     private func parseBudgetPeriod(from filename: String) -> Date? {
         let calendar = Calendar.current
-        let currentYear = calendar.component(.year, from: Date())
+        let _ = calendar.component(.year, from: Date())
         
         // Try parsing month abbreviation + 2-digit year (e.g., "Dec25")
         let monthAbbreviations = ["jan", "feb", "mar", "apr", "may", "jun",
@@ -138,7 +136,7 @@ class ImportManager {
         
         // Try parsing numeric format (e.g., "13th25" means 13th = January, year 25)
         let numericPrefix = String(lowerFilename.prefix(while: { $0.isNumber }))
-        if !numericPrefix.isEmpty, let dayNumber = Int(numericPrefix) {
+        if !numericPrefix.isEmpty, let _ = Int(numericPrefix) {
             // This is ambiguous - "13th25" could mean many things
             // Best guess: day number, then month from context, then year
             // For simplicity, return nil and fall back to transaction date
