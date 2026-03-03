@@ -22,6 +22,11 @@ struct BudgetDetailView: View {
     @State private var importErrorMessage: String?
     @State private var showingImportError = false
     
+    // Import month selection
+    @State private var pendingImportURL: URL?
+    @State private var importMonth: Date = Date()
+    @State private var showingImportMonthPicker = false
+    
     var body: some View {
         List {
             // Month Selector
@@ -131,7 +136,15 @@ struct BudgetDetailView: View {
             allowedContentTypes: [.commaSeparatedText, .plainText],
             allowsMultipleSelection: false
         ) { result in
-            handleTransactionImport(result)
+            handleFilePicked(result)
+        }
+        .sheet(isPresented: $showingImportMonthPicker, onDismiss: {
+            if let url = pendingImportURL {
+                executeTransactionImport(from: url)
+                pendingImportURL = nil
+            }
+        }) {
+            MonthPickerView(selectedDate: $importMonth)
         }
         .alert("Import Success", isPresented: $showingImportAlert) {
              Button("OK") { }
@@ -156,7 +169,8 @@ struct BudgetDetailView: View {
         }
     }
     
-    private func handleTransactionImport(_ result: Result<[URL], Error>) {
+    // Step 1: File picked → copy to temp, show month picker
+    private func handleFilePicked(_ result: Result<[URL], Error>) {
         switch result {
         case .success(let urls):
             guard let url = urls.first else { return }
@@ -165,29 +179,57 @@ struct BudgetDetailView: View {
                 showingImportError = true
                 return
             }
-            defer { url.stopAccessingSecurityScopedResource() }
             
+            // Copy to temp so we can access it after the security scope ends
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(url.lastPathComponent)
             do {
-                let parser = CSVParser.shared
-                let importManager = ImportManager(modelContext: modelContext)
-                
-                let transactions = try parser.parseTransactions(from: url)
-                let filename = url.deletingPathExtension().lastPathComponent
-                let count = try importManager.importTransactions(from: transactions, into: budget, filename: filename)
-                
-                importMessage = "Successfully imported \(count) transactions."
-                showingImportAlert = true
-                
-                // Refresh data
-                transactionViewModel?.loadTransactions(for: budget)
-                categoryViewModel?.loadCategories(for: budget)
-                
+                if FileManager.default.fileExists(atPath: tempURL.path) {
+                    try FileManager.default.removeItem(at: tempURL)
+                }
+                try FileManager.default.copyItem(at: url, to: tempURL)
             } catch {
-                importErrorMessage = error.localizedDescription
+                url.stopAccessingSecurityScopedResource()
+                importErrorMessage = "Failed to prepare file: \(error.localizedDescription)"
                 showingImportError = true
+                return
             }
+            url.stopAccessingSecurityScopedResource()
+            
+            // Pre-fill with current viewing month, then show picker
+            importMonth = selectedMonth
+            pendingImportURL = tempURL
+            showingImportMonthPicker = true
             
         case .failure(let error):
+            importErrorMessage = error.localizedDescription
+            showingImportError = true
+        }
+    }
+    
+    // Step 2: Month selected → run import
+    private func executeTransactionImport(from url: URL) {
+        do {
+            let parser = CSVParser.shared
+            let importManager = ImportManager(modelContext: modelContext)
+            
+            let transactions = try parser.parseTransactions(from: url)
+            let count = try importManager.importTransactions(
+                from: transactions,
+                into: budget,
+                budgetPeriod: importMonth
+            )
+            
+            importMessage = "Successfully imported \(count) transactions."
+            showingImportAlert = true
+            
+            // Refresh data
+            transactionViewModel?.loadTransactions(for: budget)
+            categoryViewModel?.loadCategories(for: budget)
+            
+            // Clean up temp file
+            try? FileManager.default.removeItem(at: url)
+            
+        } catch {
             importErrorMessage = error.localizedDescription
             showingImportError = true
         }

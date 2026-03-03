@@ -145,12 +145,8 @@ class ImportManager {
         return nil
     }
     
-    func importTransactions(from csvTransactions: [CSVTransaction], into budget: Budget, filename: String? = nil) throws -> Int {
+    func importTransactions(from csvTransactions: [CSVTransaction], into budget: Budget, filename: String? = nil, budgetPeriod overridePeriod: Date? = nil) throws -> Int {
         var count = 0
-        
-        // Cache categories for performance
-        // (Re-fetch budget to ensure we have latest categories if just imported)
-        // But `budget` object should be managed.
         
         let existingCategories = budget.categories
         
@@ -159,7 +155,6 @@ class ImportManager {
             let categoryName = csvTx.category
             
             // 1. Find or Create Category
-            // In transaction import, if category doesn't exist, we create it (with 0 allocation)
             let category: Category
             if let existing = existingCategories.first(where: { $0.name.caseInsensitiveCompare(categoryName) == .orderedSame }) {
                 category = existing
@@ -170,9 +165,7 @@ class ImportManager {
                 budget.categories.append(category)
             }
             
-            // 2. Create Transaction
-            // Check Logic: Deduplication?
-            // Simple check: Same date, same amount, same description.
+            // 2. Deduplication check
             let alreadyExists = budget.transactions.contains { tx in
                 Calendar.current.isDate(tx.date, inSameDayAs: csvTx.date) &&
                 tx.amount == csvTx.amount &&
@@ -185,9 +178,11 @@ class ImportManager {
 
             guard !alreadyExists else { continue }
             
-            // Determine budget period from filename or fall back to transaction date
+            // Determine budget period: user-selected > filename-parsed > transaction date
             let budgetPeriod: Date
-            if let filename = filename,
+            if let overridePeriod = overridePeriod {
+                budgetPeriod = DateRangeHelper.monthBounds(for: overridePeriod).start
+            } else if let filename = filename,
                let parsedPeriod = parseBudgetPeriod(from: filename) {
                 budgetPeriod = parsedPeriod
             } else {
