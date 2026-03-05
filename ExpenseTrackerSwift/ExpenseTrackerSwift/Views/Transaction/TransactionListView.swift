@@ -86,6 +86,7 @@ struct TransactionListView: View {
                 }
             }
             .navigationTitle("Transactions")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showingAddTransaction = true }) {
@@ -191,11 +192,16 @@ struct TransactionFormView: View {
                         }
                     }
                     
+                    LabeledContent("Amount") {
+                        TextField("0.00", text: $amount)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                    }
                     
-                    TextField("Amount", text: $amount)
-                        .keyboardType(.decimalPad)
-                    
-                    TextField("Description", text: $description)
+                    LabeledContent("Description") {
+                        TextField("Enter description", text: $description)
+                            .multilineTextAlignment(.trailing)
+                    }
                     
                     DatePicker("Date", selection: $date, displayedComponents: .date)
                 }
@@ -234,8 +240,6 @@ struct TransactionFormView: View {
                         }
                     }
                 }
-                
-
             }
             .navigationTitle(existingTransaction == nil ? "New Transaction" : "Edit Transaction")
             .navigationBarTitleDisplayMode(.inline)

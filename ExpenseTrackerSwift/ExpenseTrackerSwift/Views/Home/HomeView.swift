@@ -92,40 +92,12 @@ struct WelcomeHeader: View {
             
             // Settings
             NavigationLink(destination: SettingsView()) {
-                Image(systemName: "gear")
+                Image(systemName: "gearshape.fill")
                     .font(.title2)
                     .foregroundStyle(Color.appSecondary)
             }
             .padding(.trailing, 8)
             
-            // Budget Switcher
-            Menu {
-                ForEach(viewModel.budgets.filter { $0.isActive }) { budget in
-                    Button {
-                        withAnimation {
-                            viewModel.selectBudget(budget)
-                        }
-                    } label: {
-                        HStack {
-                            Text(budget.name)
-                            if viewModel.selectedBudget?.id == budget.id {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                }
-                
-                Divider()
-                
-                NavigationLink(destination: BudgetListView(viewModel: viewModel)) {
-                    Label("Manage Budgets", systemImage: "gearshape")
-                }
-            } label: {
-                Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
-                    .font(.title)
-                    .foregroundStyle(Color.appAccent)
-                    .opacity(0.8)
-            }
         }
     }
 }

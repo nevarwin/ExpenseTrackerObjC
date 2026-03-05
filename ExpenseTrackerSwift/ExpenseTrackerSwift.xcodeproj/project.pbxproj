@@ -54,7 +54,6 @@
 		A9F96494DFE72180287E0651 /* BudgetFormView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BudgetFormView.swift; path = ExpenseTrackerSwift/Views/Budget/BudgetFormView.swift; sourceTree = "<group>"; };
 		C2A1B8F3E45D6789ABCD1234 /* CategoryDraft.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CategoryDraft.swift; path = ExpenseTrackerSwift/Models/CategoryDraft.swift; sourceTree = "<group>"; };
 		D8835E64B3CA4489ABEE6BA3 /* TransactionListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TransactionListView.swift; path = ExpenseTrackerSwift/Views/Transaction/TransactionListView.swift; sourceTree = "<group>"; };
-		E9F3A7B2C56D4890EFAB5678 /* CategoryInputRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CategoryInputRow.swift; path = ExpenseTrackerSwift/Views/Components/CategoryInputRow.swift; sourceTree = "<group>"; };
 		F11AC8DD9DB4B72157C4BD1F /* TransactionViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TransactionViewModel.swift; path = ExpenseTrackerSwift/ViewModels/TransactionViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -166,7 +165,6 @@
 		A1B2C3D4E5F6789012345678 /* Components */ = {
 			isa = PBXGroup;
 			children = (
-				E9F3A7B2C56D4890EFAB5678 /* CategoryInputRow.swift */,
 			);
 			name = Components;
 			sourceTree = "<group>";
