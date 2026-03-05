@@ -13,7 +13,9 @@ struct BudgetDetailView: View {
     
     // Month Selection
     @State private var selectedMonth: Date = Date()
-    @State private var showingMonthPicker = false
+    @State private var showingDatePicker = false
+    @State private var pickerMonth: Int = Calendar.current.component(.month, from: Date())
+    @State private var pickerYear: Int = Calendar.current.component(.year, from: Date())
     
     // Import States
     @State private var isImportingTransactions = false
@@ -30,27 +32,61 @@ struct BudgetDetailView: View {
     var body: some View {
         List {
             // Month Selector
-            Section {
-                Button {
-                    showingMonthPicker = true
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Viewing Period")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+            Section("Period") {
+                Button(action: { showingDatePicker = true }) {
+                    LabeledContent("Viewing Period") {
+                        HStack(spacing: 4) {
                             Text(DateRangeHelper.monthYearString(from: selectedMonth))
-                                .font(.headline)
-                                .foregroundStyle(.primary)
+                                .font(.body)
+                                .fontWeight(.medium)
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .foregroundStyle(.primary)
+                .sheet(isPresented: $showingDatePicker) {
+                    VStack(spacing: 20) {
+                        Text("Select Month & Year")
+                            .font(.headline)
+                            .padding(.top)
+                        
+                        HStack(spacing: 0) {
+                            Picker("Month", selection: $pickerMonth) {
+                                ForEach(1...12, id: \.self) { month in
+                                    Text(Calendar.current.monthSymbols[month - 1]).tag(month)
+                                }
+                            }
+                            .pickerStyle(.wheel)
+                            .frame(width: 150)
+                            
+                            Picker("Year", selection: $pickerYear) {
+                                let currentYear = Calendar.current.component(.year, from: Date())
+                                ForEach((currentYear - 10)...(currentYear + 10), id: \.self) { year in
+                                    Text(String(year).replacingOccurrences(of: ",", with: "")).tag(year)
+                                }
+                            }
+                            .pickerStyle(.wheel)
+                            .frame(width: 100)
                         }
                         
-                        Spacer()
-                        
-                        Image(systemName: "calendar")
-                            .foregroundStyle(Color.appAccent)
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        Button("Done") {
+                            var components = DateComponents()
+                            components.year = pickerYear
+                            components.month = pickerMonth
+                            if let newDate = Calendar.current.date(from: components) {
+                                selectedMonth = newDate
+                            }
+                            showingDatePicker = false
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .padding(.bottom)
+                    }
+                    .presentationDetents([.height(300)])
+                    .onAppear {
+                        pickerMonth = Calendar.current.component(.month, from: selectedMonth)
+                        pickerYear = Calendar.current.component(.year, from: selectedMonth)
                     }
                 }
             }
@@ -127,9 +163,6 @@ struct BudgetDetailView: View {
                 viewModel: BudgetViewModel(modelContext: modelContext),
                 existingBudget: budget
             )
-        }
-        .sheet(isPresented: $showingMonthPicker) {
-            MonthPickerView(selectedDate: $selectedMonth)
         }
         .fileImporter(
             isPresented: $isImportingTransactions,
