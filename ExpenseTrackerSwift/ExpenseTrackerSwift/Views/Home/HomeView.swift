@@ -57,7 +57,6 @@ struct HomeContent: View {
                     EmptyBudgetCard(viewModel: viewModel)
                         .padding(.horizontal)
                 }
-
             }
             .padding(.bottom, 20)
         }
@@ -227,10 +226,10 @@ struct BudgetSummaryCard: View {
             }
         }
         .onChange(of: budget.currentMonthExpenses) { oldVal, newVal in
-             let progress = min(max(0, Double(truncating: (newVal / budget.totalAmount) as NSDecimalNumber)), 1.0)
-             withAnimation(.spring(duration: 1.0)) {
-                 animatedProgress = progress
-             }
+            let progress = min(max(0, Double(truncating: (newVal / budget.totalAmount) as NSDecimalNumber)), 1.0)
+            withAnimation(.spring(duration: 1.0)) {
+                animatedProgress = progress
+            }
         }
     }
 }

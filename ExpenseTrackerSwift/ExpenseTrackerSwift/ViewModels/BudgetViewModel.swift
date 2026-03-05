@@ -3,8 +3,6 @@ import SwiftData
 import SwiftUI
 
 final class BudgetViewModel: ObservableObject {
-
-    
     @Published var budgets: [Budget] = []
     @Published var selectedBudget: Budget?
     @Published var isLoading = false

@@ -12,8 +12,6 @@ struct CategoryRowView: View {
                 Text(category.name)
                     .font(.body)
                 
-
-                
                 Spacer()
                 
                 Text("\(Int(usagePercentage * 100))%")

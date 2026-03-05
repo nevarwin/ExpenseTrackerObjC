@@ -27,6 +27,24 @@ struct ContentView: View {
                         .tabItem {
                             Label("Transactions", systemImage: "list.bullet")
                         }
+                    Color.clear
+                        .tabItem {
+                            Menu {
+                                Button(action: { /* Action 1 */ }) {
+                                    Label("Add Income", systemImage: "plus.circle")
+                                }
+                                
+                                Button(action: { /* Action 2 */ }) {
+                                    Label("Add Expense", systemImage: "minus.circle")
+                                }
+                                
+                                Button(action: { /* Action 3 */ }) {
+                                    Label("Import PDF", systemImage: "doc.text")
+                                }
+                            } label: {
+                                Label("Actions", systemImage: "plus.square.fill")
+                            }
+                        }
                 }
             } else {
                 ProgressView()
