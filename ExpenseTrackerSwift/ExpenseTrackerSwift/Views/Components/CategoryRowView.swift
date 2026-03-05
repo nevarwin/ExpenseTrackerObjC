@@ -12,11 +12,7 @@ struct CategoryRowView: View {
                 Text(category.name)
                     .font(.body)
                 
-                if category.isInstallment {
-                    Image(systemName: "clock.arrow.circlepath")
-                        .font(.caption)
-                        .foregroundStyle(Color.appAccent)
-                }
+
                 
                 Spacer()
                 
@@ -49,17 +45,7 @@ struct CategoryRowView: View {
             }
             .font(.caption2)
             
-            if category.isInstallment {
-                HStack {
-                    Text(category.remainingInstallmentMonths.map { "\($0) months left" } ?? "")
-                    Spacer()
-                    if let total = category.totalInstallmentAmount {
-                        Text("Total: \(formatCurrency(total))")
-                    }
-                }
-                .font(.caption2)
-                .foregroundStyle(Color.appSecondary)
-            }
+
         }
         .padding(.horizontal)
         .padding(.vertical, 8)

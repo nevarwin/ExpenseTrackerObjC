@@ -235,24 +235,7 @@ struct TransactionFormView: View {
                     }
                 }
                 
-                if let category = selectedCategory, category.isInstallment {
-                    LabeledContent("Monthly Installment") {
-                        Text(category.allocatedAmount, format: .currency(code: currencyManager.currencyCode))
-                            .foregroundStyle(Color.appSecondary)
-                    }
-                    
-                    if let decimalAmount = Decimal(string: amount), decimalAmount > 0 {
-                        if decimalAmount > category.allocatedAmount {
-                            Text("Extra payment of \(decimalAmount - category.allocatedAmount, format: .currency(code: currencyManager.currencyCode)) will reduce the term.")
-                                .font(.caption)
-                                .foregroundStyle(Color.appAccent)
-                        } else if decimalAmount < category.allocatedAmount {
-                            Text("Payment is less than the monthly installment.")
-                                .font(.caption)
-                                .foregroundStyle(.orange)
-                        }
-                    }
-                }
+
             }
             .navigationTitle(existingTransaction == nil ? "New Transaction" : "Edit Transaction")
             .navigationBarTitleDisplayMode(.inline)

@@ -66,34 +66,7 @@ final class CategoryViewModel {
         categories.insert(category, at: 0)
     }
     
-    func createInstallmentCategory(
-        name: String,
-        allocatedAmount: Decimal,
-        monthlyPayment: Decimal,
-        totalAmount: Decimal,
-        months: Int,
-        startDate: Date,
-        budget: Budget?
-    ) throws {
-        let category = Category(
-            name: name,
-            allocatedAmount: allocatedAmount,
-            isIncome: false,
-            isInstallment: true,
-            budget: budget
-        )
-        
-        category.configureInstallment(
-            monthlyPayment: monthlyPayment,
-            totalAmount: totalAmount,
-            months: months,
-            startDate: startDate
-        )
-        
-        modelContext.insert(category)
-        try modelContext.save()
-        categories.insert(category, at: 0)
-    }
+
     
     func updateCategory(_ category: Category, name: String, allocatedAmount: Decimal) throws {
         category.name = name

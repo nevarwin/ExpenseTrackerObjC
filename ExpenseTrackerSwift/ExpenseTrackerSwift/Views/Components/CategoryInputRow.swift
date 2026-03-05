@@ -20,30 +20,16 @@ struct CategoryInputRow: View {
             }
             
             HStack {
-                if draft.isInstallment {
-                    VStack(alignment: .leading) {
-                        Text("Monthly:")
-                            .font(.caption)
-                            .foregroundStyle(Color.appSecondary)
-                        Text(formatCurrency(draft.allocatedDecimal))
-                            .fontWeight(.medium)
-                            .foregroundStyle(Color.appPrimary)
-                    }
-                    .frame(maxWidth: 120, alignment: .leading)
-                } else {
-                    TextField("Amount", text: $draft.allocatedAmount)
-                        .keyboardType(.decimalPad)
-                        .textFieldStyle(.plain)
-                        .frame(maxWidth: 120)
-                }
+                TextField("Amount", text: $draft.allocatedAmount)
+                    .keyboardType(.decimalPad)
+                    .textFieldStyle(.plain)
+                    .frame(maxWidth: 120)
                 
                 Spacer()
                 
                 Button(action: {
                     draft.isIncome.toggle()
-                    if draft.isIncome {
-                        draft.isInstallment = false
-                    }
+
                 }) {
                     Text(draft.isIncome ? "Income" : "Expense")
                         .foregroundStyle(draft.isIncome ? .green : Color.appPrimary)
@@ -55,24 +41,7 @@ struct CategoryInputRow: View {
                 .buttonStyle(.plain)
             }
             
-            if !draft.isIncome {
-                Toggle("Installment", isOn: $draft.isInstallment)
-                    .toggleStyle(SwitchToggleStyle(tint: Color.appAccent))
-                    .font(.subheadline)
-            }
-            
-            if draft.isInstallment {
-                HStack {
-                    TextField("Total", text: $draft.totalInstallmentAmount)
-                        .keyboardType(.decimalPad)
-                    
-                    TextField("Months", text: $draft.installmentMonths)
-                        .keyboardType(.numberPad)
-                }
-                .textFieldStyle(.roundedBorder)
-                
-                DatePicker("Start Date", selection: $draft.installmentStartDate, displayedComponents: [.date])
-            }
+
             
             // Validation feedback
             if !draft.name.trimmingCharacters(in: .whitespaces).isEmpty && 

@@ -186,12 +186,7 @@ final class TransactionViewModel {
                 // Must belong to the same budget
                 guard category.budget?.id == budget.id else { return false }
                 
-                // Check installment duplicate rule
-                if category.isInstallment {
-                    if category.hasTransactionInMonth(of: transactionDate, excluding: excluding) {
-                        return false
-                    }
-                }
+
                 
                 // Check if category is valid for the date
                 return category.isValid(for: transactionDate)

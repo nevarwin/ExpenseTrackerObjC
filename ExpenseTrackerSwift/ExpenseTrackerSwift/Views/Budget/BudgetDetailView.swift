@@ -116,19 +116,6 @@ struct BudgetDetailView: View {
                     }
                 }
             }
-            
-            Section("Recent Transactions") {
-                if let viewModel = transactionViewModel {
-                    if viewModel.transactions.isEmpty {
-                        Text("No transactions")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(viewModel.transactions.prefix(10)) { transaction in
-                            TransactionRowView(transaction: transaction)
-                        }
-                    }
-                }
-            }
         }
         .navigationTitle(budget.name)
         .toolbar {

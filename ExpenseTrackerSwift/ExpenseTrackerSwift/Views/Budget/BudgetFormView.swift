@@ -29,10 +29,6 @@ struct BudgetFormView: View {
                     name: category.name,
                     allocatedAmount: "\(category.allocatedAmount)",
                     isIncome: category.isIncome,
-                    isInstallment: category.isInstallment,
-                    totalInstallmentAmount: category.totalInstallmentAmount?.description ?? "0",
-                    installmentMonths: category.installmentMonths?.description ?? "12",
-                    installmentStartDate: category.installmentStartDate ?? Date(),
                     originalCategory: category,
                     isActive: category.isActive
                 )
@@ -248,7 +244,6 @@ struct BudgetFormView: View {
                         name: draft.name.trimmingCharacters(in: .whitespaces),
                         allocatedAmount: draft.allocatedDecimal,
                         isIncome: draft.isIncome,
-                        isInstallment: draft.isInstallment,
                         budget: budget
                     )
                     category.isActive = draft.isActive
@@ -256,23 +251,7 @@ struct BudgetFormView: View {
                     budget.categories.append(category)
                 }
 
-                if draft.isInstallment {
-                    let total = Decimal(string: draft.totalInstallmentAmount) ?? 0
-                    let months = Int(draft.installmentMonths) ?? 1
-                    category.configureInstallment(
-                        monthlyPayment: draft.allocatedDecimal,
-                        totalAmount: total,
-                        months: months,
-                        startDate: draft.installmentStartDate
-                    )
-                } else {
-                    category.isInstallment = false
-                    category.monthlyPayment = nil
-                    category.totalInstallmentAmount = nil
-                    category.installmentMonths = nil
-                    category.installmentStartDate = nil
-                    category.installmentEndDate = nil
-                }
+
             }
 
             if let existing = existingBudget {
@@ -323,11 +302,7 @@ private struct CategorySummaryRow: View {
                 Text(draft.name.isEmpty ? "Unnamed Category" : draft.name)
                     .foregroundStyle(draft.name.isEmpty ? .secondary : .primary)
 
-                if draft.isInstallment {
-                    Text("Installment · \(draft.installmentMonths) mo")
-                        .font(.caption)
-                        .foregroundStyle(Color.appSecondary)
-                }
+
             }
 
             Spacer()
