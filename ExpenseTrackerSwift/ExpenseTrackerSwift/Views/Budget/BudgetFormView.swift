@@ -7,15 +7,12 @@ struct BudgetFormView: View {
     @ObservedObject var viewModel: BudgetViewModel
 
     @State private var name: String = ""
-    @State private var categoryDrafts: [CategoryDraft] = []
+    @State private var categoryDrafts: [BudgetCategoryDraft] = []
     @State private var showingError = false
     @State private var errorMessage = ""
-
-    // Sheet state: editing index (nil = adding new)
-    @State private var editingDraftIndex: Int? = nil
-    @State private var showingCategorySheet = false
-    @State private var newDraft: CategoryDraft = CategoryDraft(name: "", allocatedAmount: "0", isIncome: false)
-
+    
+    // Track focused field if you want, but simple textfields work fine
+    
     let existingBudget: Budget?
 
     init(viewModel: BudgetViewModel, existingBudget: Budget? = nil) {
@@ -25,7 +22,7 @@ struct BudgetFormView: View {
         if let budget = existingBudget {
             _name = State(initialValue: budget.name)
             _categoryDrafts = State(initialValue: budget.categories.map { category in
-                CategoryDraft(
+                BudgetCategoryDraft(
                     name: category.name,
                     allocatedAmount: "\(category.allocatedAmount)",
                     isIncome: category.isIncome,
@@ -35,7 +32,7 @@ struct BudgetFormView: View {
             })
         } else {
             _categoryDrafts = State(initialValue: [
-                CategoryDraft(name: "", allocatedAmount: "0", isIncome: true)
+                BudgetCategoryDraft(name: "", allocatedAmount: "0", isIncome: true)
             ])
         }
     }
@@ -50,39 +47,35 @@ struct BudgetFormView: View {
 
                 // MARK: Active Categories
                 Section {
-                    ForEach(Array(categoryDrafts.enumerated()), id: \.element.id) { index, draft in
+                    ForEach($categoryDrafts) { $draft in
                         if draft.isActive {
-                            Button {
-                                editingDraftIndex = index
-                                showingCategorySheet = true
-                            } label: {
-                                CategorySummaryRow(draft: draft)
-                            }
-                            .buttonStyle(.plain)
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                // Archive for existing, delete for new
-                                if draft.originalCategory != nil {
-                                    Button {
-                                        withAnimation { categoryDrafts[index].isActive = false }
-                                    } label: {
-                                        Label("Archive", systemImage: "archivebox")
-                                    }
-                                    .tint(.orange)
-                                } else {
-                                    Button(role: .destructive) {
-                                        categoryDrafts.removeAll { $0.id == draft.id }
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
+                            EditableCategoryRow(draft: $draft)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    // Archive for existing, delete for new
+                                    if draft.originalCategory != nil {
+                                        Button {
+                                            if let index = categoryDrafts.firstIndex(where: { $0.id == draft.id }) {
+                                                withAnimation { categoryDrafts[index].isActive = false }
+                                            }
+                                        } label: {
+                                            Label("Archive", systemImage: "archivebox")
+                                        }
+                                        .tint(.orange)
+                                    } else {
+                                        Button(role: .destructive) {
+                                            categoryDrafts.removeAll { $0.id == draft.id }
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
                                     }
                                 }
-                            }
                         }
                     }
 
                     Button {
-                        newDraft = CategoryDraft(name: "", allocatedAmount: "0", isIncome: false)
-                        editingDraftIndex = nil
-                        showingCategorySheet = true
+                        withAnimation {
+                            categoryDrafts.append(BudgetCategoryDraft(name: "", allocatedAmount: "0", isIncome: false))
+                        }
                     } label: {
                         Label("Add Category", systemImage: "plus.circle.fill")
                     }
@@ -144,20 +137,6 @@ struct BudgetFormView: View {
                 Button("OK") { }
             } message: {
                 Text(errorMessage)
-            }
-            // Sheet: add new category
-            .sheet(isPresented: $showingCategorySheet) {
-                if let index = editingDraftIndex {
-                    CategoryDetailSheet(draft: $categoryDrafts[index], isNew: false)
-                } else {
-                    CategoryDetailSheet(draft: $newDraft, isNew: true)
-                        .onDisappear {
-                            // Only append if the user tapped Done (name is non-empty)
-                            if !newDraft.name.trimmingCharacters(in: .whitespaces).isEmpty {
-                                categoryDrafts.append(newDraft)
-                            }
-                        }
-                }
             }
         }
     }
@@ -289,51 +268,37 @@ struct BudgetFormView: View {
     }
 }
 
-// MARK: - Category Summary Row
+// MARK: - Editable Category Row
 
-/// Read-only summary row shown in the category list
-private struct CategorySummaryRow: View {
-    let draft: CategoryDraft
+/// Inline editable row shown in the category list
+private struct EditableCategoryRow: View {
+    @Binding var draft: BudgetCategoryDraft
     @EnvironmentObject var currencyManager: CurrencyManager
 
     var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(draft.name.isEmpty ? "Unnamed Category" : draft.name)
-                    .foregroundStyle(draft.name.isEmpty ? .secondary : .primary)
-
-
+        VStack(spacing: 8) {
+            HStack {
+                TextField("Category Name", text: $draft.name)
+                    .textFieldStyle(.roundedBorder)
+                
+                TextField("Amount", text: $draft.allocatedAmount)
+                    .keyboardType(.decimalPad)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 100)
             }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 3) {
-                Text(formatCurrency(draft.allocatedDecimal))
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(draft.isIncome ? .green : Color.appPrimary)
-
-                Text(draft.isIncome ? "Income" : "Expense")
-                    .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
-                    .background(draft.isIncome ? Color.green.opacity(0.15) : Color.appAccent.opacity(0.15))
-                    .foregroundStyle(draft.isIncome ? .green : Color.appAccent)
-                    .clipShape(Capsule())
+            
+            HStack {
+                Picker("Type", selection: $draft.isIncome) {
+                    Text("Expense").tag(false)
+                    Text("Income").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 200)
+                
+                Spacer()
             }
-
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
         }
         .padding(.vertical, 4)
-    }
-
-    private func formatCurrency(_ amount: Decimal) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = currencyManager.currencyCode
-        return formatter.string(from: amount as NSDecimalNumber) ?? "\(currencyManager.currencySymbol)0.00"
     }
 }
 
@@ -343,4 +308,42 @@ private struct CategorySummaryRow: View {
     let viewModel = BudgetViewModel(modelContext: container.mainContext)
 
     BudgetFormView(viewModel: viewModel)
+}
+
+// MARK: - Local Category Draft
+
+/// Temporary model for category data during budget creation/editing
+/// Used to hold category information before persisting to SwiftData
+struct BudgetCategoryDraft: Identifiable {
+    let id: UUID
+    var name: String
+    var allocatedAmount: String
+    var isIncome: Bool
+    var originalCategory: Category?
+    var isActive: Bool
+    
+    init(id: UUID = UUID(), 
+         name: String = "", 
+         allocatedAmount: String = "0", 
+         isIncome: Bool = false,
+         originalCategory: Category? = nil,
+         isActive: Bool = true) {
+        self.id = id
+        self.name = name
+        self.allocatedAmount = allocatedAmount
+        self.isIncome = isIncome
+        self.originalCategory = originalCategory
+        self.isActive = isActive
+    }
+    
+    /// Computed property to get Decimal value from string input
+    var allocatedDecimal: Decimal {
+        return Decimal(string: allocatedAmount) ?? 0
+    }
+    
+    /// Validation: Check if the draft has valid data
+    var isValid: Bool {
+        return !name.trimmingCharacters(in: .whitespaces).isEmpty &&
+               allocatedDecimal > 0
+    }
 }

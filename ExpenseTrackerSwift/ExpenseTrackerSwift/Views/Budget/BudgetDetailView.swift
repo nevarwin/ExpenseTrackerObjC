@@ -29,6 +29,11 @@ struct BudgetDetailView: View {
     @State private var importMonth: Date = Date()
     @State private var showingImportMonthPicker = false
     
+    // Inline Category Creation
+    @State private var newCategoryName: String = ""
+    @State private var newCategoryAmount: String = ""
+    @State private var newCategoryIsIncome: Bool = false
+    
     var body: some View {
         List {
             // Month Selector
@@ -114,6 +119,42 @@ struct BudgetDetailView: View {
                             }
                         }
                     }
+                    
+                    // MARK: - Inline Quick Create Row
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Quick Add Category").font(.caption).foregroundStyle(.secondary)
+                        
+                        HStack(spacing: 12) {
+                            TextField("Name", text: $newCategoryName)
+                                .textFieldStyle(.roundedBorder)
+                            
+                            TextField("Amount", text: $newCategoryAmount)
+                                .keyboardType(.decimalPad)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 100)
+                        }
+                        
+                        HStack {
+                            Picker("Type", selection: $newCategoryIsIncome) {
+                                Text("Expense").tag(false)
+                                Text("Income").tag(true)
+                            }
+                            .pickerStyle(.segmented)
+                            .frame(maxWidth: 160)
+                            
+                            Spacer()
+                            
+                            Button(action: addInlineCategory) {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.title2)
+                                    .foregroundStyle(Color.appAccent)
+                            }
+                            .disabled(newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty || (Decimal(string: newCategoryAmount) ?? 0) <= 0)
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
                 }
             }
         }
@@ -252,6 +293,30 @@ struct BudgetDetailView: View {
         } catch {
             importErrorMessage = error.localizedDescription
             showingImportError = true
+        }
+    }
+    
+    // Step 3: Add Inline Category
+    private func addInlineCategory() {
+        guard let viewModel = categoryViewModel else { return }
+        let amount = Decimal(string: newCategoryAmount) ?? 0
+        
+        do {
+            try viewModel.createCategory(
+                name: newCategoryName.trimmingCharacters(in: .whitespaces),
+                allocatedAmount: amount,
+                isIncome: newCategoryIsIncome,
+                budget: budget
+            )
+            
+            // Reset fields on success
+            withAnimation {
+                newCategoryName = ""
+                newCategoryAmount = ""
+                newCategoryIsIncome = false
+            }
+        } catch {
+            print("Failed to create category: \(error.localizedDescription)")
         }
     }
 }
