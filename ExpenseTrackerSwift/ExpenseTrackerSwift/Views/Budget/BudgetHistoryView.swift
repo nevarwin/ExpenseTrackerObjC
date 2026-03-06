@@ -14,10 +14,10 @@ struct BudgetHistoryView: View {
         
         var displayName: String {
             switch self {
-            case .threeMonths: return "3 Months"
-            case .sixMonths: return "6 Months"
-            case .oneYear: return "1 Year"
-            case .all: return "All Time"
+                case .threeMonths: return "3 Months"
+                case .sixMonths: return "6 Months"
+                case .oneYear: return "1 Year"
+                case .all: return "All Time"
             }
         }
     }
@@ -28,14 +28,14 @@ struct BudgetHistoryView: View {
         let startDate: Date
         
         switch selectedRange {
-        case .threeMonths:
-            startDate = calendar.date(byAdding: .month, value: -3, to: Date()) ?? Date()
-        case .sixMonths:
-            startDate = calendar.date(byAdding: .month, value: -6, to: Date()) ?? Date()
-        case .oneYear:
-            startDate = calendar.date(byAdding: .year, value: -1, to: Date()) ?? Date()
-        case .all:
-            startDate = oldestTransaction
+            case .threeMonths:
+                startDate = calendar.date(byAdding: .month, value: -3, to: Date()) ?? Date()
+            case .sixMonths:
+                startDate = calendar.date(byAdding: .month, value: -6, to: Date()) ?? Date()
+            case .oneYear:
+                startDate = calendar.date(byAdding: .year, value: -1, to: Date()) ?? Date()
+            case .all:
+                startDate = oldestTransaction
         }
         
         return DateRangeHelper.monthsBetween(start: startDate, end: Date())
@@ -162,63 +162,59 @@ struct MonthSummaryRow: View {
     }
     
     var body: some View {
-        NavigationLink {
-            MonthDetailView(budget: budget, month: month)
-        } label: {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text(DateRangeHelper.monthYearString(from: month))
-                        .font(.headline)
-                    
-                    if isCurrentMonth {
-                        Text("Current")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.appAccent)
-                            .cornerRadius(6)
-                    }
-                    
-                    Spacer()
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(DateRangeHelper.monthYearString(from: month))
+                    .font(.headline)
+                
+                if isCurrentMonth {
+                    Text("Current")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.appAccent)
+                        .cornerRadius(6)
                 }
                 
-                HStack(spacing: 20) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Income")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(budget.incomeInMonth(month), format: .currency(code: currencyManager.currencyCode))
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.green)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Spent")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(budget.expensesInMonth(month), format: .currency(code: currencyManager.currencyCode))
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                    }
-                    
-                    Spacer()
-                    
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text("Remaining")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(budget.remainingInMonth(month), format: .currency(code: currencyManager.currencyCode))
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(budget.remainingInMonth(month) >= 0 ? .green : .red)
-                    }
+                Spacer()
+            }
+            
+            HStack(spacing: 20) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Income")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(budget.incomeInMonth(month), format: .currency(code: currencyManager.currencyCode))
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.green)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Spent")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(budget.expensesInMonth(month), format: .currency(code: currencyManager.currencyCode))
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("Remaining")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(budget.remainingInMonth(month), format: .currency(code: currencyManager.currencyCode))
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(budget.remainingInMonth(month) >= 0 ? .green : .red)
                 }
             }
-            .padding(.vertical, 4)
         }
+        .padding(.vertical, 4)
     }
 }
 
