@@ -14,3 +14,11 @@ buildServer.json
 node_modules/
 mcp_config.json
 .agent
+
+# Xcode user-specific files  
+xcuserdata/  
+*.xcworkspace/xcuserdata/  
+*.xcodeproj/xcuserdata/  
+*.xcdebugger  
+*.xccheckout  
+DerivedData/
