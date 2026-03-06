@@ -16,8 +16,10 @@ struct TransactionListView: View {
                 if let viewModel = viewModel {
                     VStack(spacing: 0) {
                         // Custom Calendar View
-                        CalendarView(viewModel: viewModel)
-                            .padding(.bottom, 8)
+                        CalendarView(viewModel: viewModel) {
+                            showingAddTransaction = true
+                        }
+                        .padding(.bottom, 8)
                         
                         if viewModel.isLoading {
                             ProgressView("Loading transactions...")
@@ -100,10 +102,10 @@ struct TransactionListView: View {
             }
             .sheet(isPresented: $showingAddTransaction) {
                 if let firstBudget = activeBudgets.first, let viewModel = viewModel {
-                    TransactionFormView(
+                    QuickAddTransactionSheet(
+                        viewModel: viewModel,
                         activeBudgets: activeBudgets,
-                        initialBudget: firstBudget,
-                        viewModel: viewModel
+                        initialBudget: firstBudget
                     )
                 }
             }
