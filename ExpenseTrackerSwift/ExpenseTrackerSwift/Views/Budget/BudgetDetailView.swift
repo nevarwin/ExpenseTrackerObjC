@@ -107,57 +107,79 @@ struct BudgetDetailView: View {
                 }
             }
             
-            Section("Categories") {
-                if let viewModel = categoryViewModel {
-                    if viewModel.categories.isEmpty {
+            if let viewModel = categoryViewModel {
+                let expenses = viewModel.categories.filter { !$0.isIncome }
+                let incomes = viewModel.categories.filter { $0.isIncome }
+                
+                if viewModel.categories.isEmpty {
+                    Section("Categories") {
                         Text("No categories")
                             .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(viewModel.categories) { category in
-                            NavigationLink(destination: CategoryTransactionsView(category: category, month: selectedMonth)) {
-                                CategoryRowView(category: category, month: selectedMonth)
+                    }
+                } else {
+                    if !expenses.isEmpty {
+                        Section("Expense Categories") {
+                            ForEach(expenses) { category in
+                                NavigationLink(destination: CategoryTransactionsView(category: category, month: selectedMonth)) {
+                                    CategoryRowView(category: category, month: selectedMonth)
+                                }
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                             }
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                        }
+                    }
+                    
+                    if !incomes.isEmpty {
+                        Section("Income Categories") {
+                            ForEach(incomes) { category in
+                                NavigationLink(destination: CategoryTransactionsView(category: category, month: selectedMonth)) {
+                                    CategoryRowView(category: category, month: selectedMonth)
+                                }
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                            }
+                        }
+                    }
+                }
+                
+                // MARK: - Inline Quick Create Row
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Quick Add Category").font(.caption).foregroundStyle(.secondary)
+                        
+                        HStack(spacing: 12) {
+                            TextField("Name", text: $newCategoryName)
+                                .textFieldStyle(.roundedBorder)
+                            
+                            TextField("Amount", text: $newCategoryAmount)
+                                .keyboardType(.decimalPad)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 100)
                         }
                         
-                        // MARK: - Inline Quick Create Row
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Quick Add Category").font(.caption).foregroundStyle(.secondary)
-                            
-                            HStack(spacing: 12) {
-                                TextField("Name", text: $newCategoryName)
-                                    .textFieldStyle(.roundedBorder)
-                                
-                                TextField("Amount", text: $newCategoryAmount)
-                                    .keyboardType(.decimalPad)
-                                    .textFieldStyle(.roundedBorder)
-                                    .frame(width: 100)
+                        HStack {
+                            Picker("Type", selection: $newCategoryIsIncome) {
+                                Text("Expense").tag(false)
+                                Text("Income").tag(true)
                             }
+                            .pickerStyle(.segmented)
+                            .frame(maxWidth: 160)
                             
-                            HStack {
-                                Picker("Type", selection: $newCategoryIsIncome) {
-                                    Text("Expense").tag(false)
-                                    Text("Income").tag(true)
-                                }
-                                .pickerStyle(.segmented)
-                                .frame(maxWidth: 160)
-                                
-                                Spacer()
-                                
-                                Button(action: addInlineCategory) {
-                                    Image(systemName: "plus.circle.fill")
-                                        .font(.title2)
-                                        .foregroundStyle(Color.appAccent)
-                                }
-                                .disabled(newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty || (Decimal(string: newCategoryAmount) ?? 0) <= 0)
-                                .buttonStyle(.plain)
+                            Spacer()
+                            
+                            Button(action: addInlineCategory) {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.title2)
+                                    .foregroundStyle(Color.appAccent)
                             }
+                            .disabled(newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty || (Decimal(string: newCategoryAmount) ?? 0) <= 0)
+                            .buttonStyle(.plain)
                         }
-                        .padding(.vertical, 8)
-                        .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
                     }
+                    .padding(.vertical, 8)
+                    .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
                 }
             }
         }

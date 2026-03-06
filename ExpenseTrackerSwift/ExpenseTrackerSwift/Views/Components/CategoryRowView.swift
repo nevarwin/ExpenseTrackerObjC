@@ -7,43 +7,56 @@ struct CategoryRowView: View {
     @EnvironmentObject var currencyManager: CurrencyManager
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(category.name)
-                    .font(.body)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading) {
+                    Text(category.name)
+                        .font(.headline)
+                    if let month = month {
+                        Text(DateRangeHelper.monthYearString(from: month))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
                 
                 Spacer()
                 
-                Text("\(Int(usagePercentage * 100))%")
-                    .font(.caption)
-                    .foregroundStyle(Color.appSecondary)
-            }
-            
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    Rectangle()
-                        .fill(Color.appLightGray)
-                        .frame(height: 4)
-                        .cornerRadius(2)
-                    
-                    Rectangle()
-                        .fill(isOverBudget ? Color.red : Color.appAccent)
-                        .frame(width: geometry.size.width * min(usagePercentage, 1.0), height: 4)
-                        .cornerRadius(2)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(spentAmount, format: .currency(code: currencyManager.currencyCode))
+                        .font(.system(.headline, design: .rounded))
+                        .fontWeight(.semibold)
+                        .foregroundStyle(isOverBudget ? .red : Color.appPrimary)
+                    Text("of \(formatCurrency(category.allocatedAmount))")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
             }
-            .frame(height: 4)
+            
+            // Progress bar
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.appLightGray)
+                        .frame(height: 6)
+                    Capsule()
+                        .fill(isOverBudget ? Color.red : Color.appAccent)
+                        .frame(width: geometry.size.width * min(max(0, usagePercentage), 1.0), height: 6)
+                }
+            }
+            .frame(height: 6)
             
             HStack {
-                Text(formatCurrency(spentAmount))
-                    .foregroundStyle(isOverBudget ? Color.red : Color.appSecondary)
-                Text("of \(formatCurrency(category.allocatedAmount))")
-                    .foregroundStyle(Color.appSecondary)
+                Label("\(Int(usagePercentage * 100))% used", systemImage: "chart.bar.fill")
+                    .font(.caption)
+                    .foregroundStyle(isOverBudget ? .red : Color.appAccent)
                 Spacer()
+                Text("\(transactionsCount) transaction\(transactionsCount == 1 ? "" : "s")")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-            .font(.caption2)
-            
         }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
         .appCardStyle()
     }
     
@@ -74,6 +87,14 @@ struct CategoryRowView: View {
             return category.usedAmountInMonth(month) > category.allocatedAmount
         } else {
             return category.isOverBudget
+        }
+    }
+    
+    private var transactionsCount: Int {
+        if let month = month {
+            return category.transactionsInMonth(month).count
+        } else {
+            return category.transactions.count
         }
     }
     
