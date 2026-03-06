@@ -285,7 +285,7 @@ struct BudgetSummaryCard: View {
                 .frame(height: 12)
             }
         }
-        .cardStyle()
+        .appCardStyle()
         .onAppear {
             let progress = min(max(0, Double(truncating: (budget.currentMonthExpenses / budget.totalAmount) as NSDecimalNumber)), 1.0)
             withAnimation(.spring(duration: 1.0)) {
@@ -336,7 +336,7 @@ struct EmptyBudgetCard: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 8)
         }
-        .cardStyle()
+        .appCardStyle()
     }
 }
 

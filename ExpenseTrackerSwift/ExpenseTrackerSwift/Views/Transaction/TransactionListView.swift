@@ -50,6 +50,9 @@ struct TransactionListView: View {
                                                 }
                                         }
                                         .buttonStyle(.plain)
+                                        .listRowBackground(Color.clear)
+                                        .listRowSeparator(.hidden)
+                                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                                     }
                                     .onDelete(perform: deleteTransactions)
                                 } header: {

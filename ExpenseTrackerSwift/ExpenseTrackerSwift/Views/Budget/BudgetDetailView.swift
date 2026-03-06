@@ -117,117 +117,120 @@ struct BudgetDetailView: View {
                             NavigationLink(destination: CategoryTransactionsView(category: category, month: selectedMonth)) {
                                 CategoryRowView(category: category, month: selectedMonth)
                             }
-                        }
-                    }
-                    
-                    // MARK: - Inline Quick Create Row
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Quick Add Category").font(.caption).foregroundStyle(.secondary)
-                        
-                        HStack(spacing: 12) {
-                            TextField("Name", text: $newCategoryName)
-                                .textFieldStyle(.roundedBorder)
-                            
-                            TextField("Amount", text: $newCategoryAmount)
-                                .keyboardType(.decimalPad)
-                                .textFieldStyle(.roundedBorder)
-                                .frame(width: 100)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                         }
                         
-                        HStack {
-                            Picker("Type", selection: $newCategoryIsIncome) {
-                                Text("Expense").tag(false)
-                                Text("Income").tag(true)
-                            }
-                            .pickerStyle(.segmented)
-                            .frame(maxWidth: 160)
+                        // MARK: - Inline Quick Create Row
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Quick Add Category").font(.caption).foregroundStyle(.secondary)
                             
-                            Spacer()
-                            
-                            Button(action: addInlineCategory) {
-                                Image(systemName: "plus.circle.fill")
-                                    .font(.title2)
-                                    .foregroundStyle(Color.appAccent)
+                            HStack(spacing: 12) {
+                                TextField("Name", text: $newCategoryName)
+                                    .textFieldStyle(.roundedBorder)
+                                
+                                TextField("Amount", text: $newCategoryAmount)
+                                    .keyboardType(.decimalPad)
+                                    .textFieldStyle(.roundedBorder)
+                                    .frame(width: 100)
                             }
-                            .disabled(newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty || (Decimal(string: newCategoryAmount) ?? 0) <= 0)
-                            .buttonStyle(.plain)
+                            
+                            HStack {
+                                Picker("Type", selection: $newCategoryIsIncome) {
+                                    Text("Expense").tag(false)
+                                    Text("Income").tag(true)
+                                }
+                                .pickerStyle(.segmented)
+                                .frame(maxWidth: 160)
+                                
+                                Spacer()
+                                
+                                Button(action: addInlineCategory) {
+                                    Image(systemName: "plus.circle.fill")
+                                        .font(.title2)
+                                        .foregroundStyle(Color.appAccent)
+                                }
+                                .disabled(newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty || (Decimal(string: newCategoryAmount) ?? 0) <= 0)
+                                .buttonStyle(.plain)
+                            }
                         }
+                        .padding(.vertical, 8)
+                        .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
                     }
-                    .padding(.vertical, 8)
-                    .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
                 }
             }
         }
         .navigationTitle(budget.name)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Menu {
-                    NavigationLink {
-                        BudgetHistoryView(budget: budget)
+                    Menu {
+                        NavigationLink {
+                            BudgetHistoryView(budget: budget)
+                        } label: {
+                            Label("View History", systemImage: "chart.line.uptrend.xyaxis")
+                        }
+                        
+                        Divider()
+                        
+                        Button {
+                            isImportingTransactions = true
+                        } label: {
+                            Label("Import Transactions", systemImage: "square.and.arrow.down")
+                        }
+                        
+                        Button {
+                            showingEditSheet = true
+                        } label: {
+                            Label("Edit Budget", systemImage: "pencil")
+                        }
                     } label: {
-                        Label("View History", systemImage: "chart.line.uptrend.xyaxis")
+                        Image(systemName: "ellipsis.circle")
                     }
-                    
-                    Divider()
-                    
-                    Button {
-                        isImportingTransactions = true
-                    } label: {
-                        Label("Import Transactions", systemImage: "square.and.arrow.down")
-                    }
-                    
-                    Button {
-                        showingEditSheet = true
-                    } label: {
-                        Label("Edit Budget", systemImage: "pencil")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
                 }
             }
-        }
-        .sheet(isPresented: $showingEditSheet) {
-            BudgetFormView(
-                viewModel: BudgetViewModel(modelContext: modelContext),
-                existingBudget: budget
-            )
-        }
-        .fileImporter(
-            isPresented: $isImportingTransactions,
-            allowedContentTypes: [.commaSeparatedText, .plainText],
-            allowsMultipleSelection: false
-        ) { result in
-            handleFilePicked(result)
-        }
-        .sheet(isPresented: $showingImportMonthPicker, onDismiss: {
-            if let url = pendingImportURL {
-                executeTransactionImport(from: url)
-                pendingImportURL = nil
+            .sheet(isPresented: $showingEditSheet) {
+                BudgetFormView(
+                    viewModel: BudgetViewModel(modelContext: modelContext),
+                    existingBudget: budget
+                )
             }
-        }) {
-            MonthPickerView(selectedDate: $importMonth)
-        }
-        .alert("Import Success", isPresented: $showingImportAlert) {
-             Button("OK") { }
-        } message: {
-            Text(importMessage ?? "Import complete")
-        }
-        .alert("Import Failed", isPresented: $showingImportError) {
-            Button("OK") { }
-        } message: {
-             Text(importErrorMessage ?? "Unknown error")
-        }
-        .onAppear {
-            if categoryViewModel == nil {
-                categoryViewModel = CategoryViewModel(modelContext: modelContext)
-                categoryViewModel?.loadCategories(for: budget)
+            .fileImporter(
+                isPresented: $isImportingTransactions,
+                allowedContentTypes: [.commaSeparatedText, .plainText],
+                allowsMultipleSelection: false
+            ) { result in
+                handleFilePicked(result)
             }
-            
-            if transactionViewModel == nil {
-                transactionViewModel = TransactionViewModel(modelContext: modelContext)
-                transactionViewModel?.loadTransactions(for: budget)
+            .sheet(isPresented: $showingImportMonthPicker, onDismiss: {
+                if let url = pendingImportURL {
+                    executeTransactionImport(from: url)
+                    pendingImportURL = nil
+                }
+            }) {
+                MonthPickerView(selectedDate: $importMonth)
             }
-        }
+            .alert("Import Success", isPresented: $showingImportAlert) {
+                Button("OK") { }
+            } message: {
+                Text(importMessage ?? "Import complete")
+            }
+            .alert("Import Failed", isPresented: $showingImportError) {
+                Button("OK") { }
+            } message: {
+                Text(importErrorMessage ?? "Unknown error")
+            }
+            .onAppear {
+                if categoryViewModel == nil {
+                    categoryViewModel = CategoryViewModel(modelContext: modelContext)
+                    categoryViewModel?.loadCategories(for: budget)
+                }
+                
+                if transactionViewModel == nil {
+                    transactionViewModel = TransactionViewModel(modelContext: modelContext)
+                    transactionViewModel?.loadTransactions(for: budget)
+                }
+            }
     }
     
     // Step 1: File picked → copy to temp, show month picker

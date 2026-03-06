@@ -62,5 +62,6 @@ struct TransactionRowView: View {
                     }
             }
         }
+        .appCardStyle()
     }
 }

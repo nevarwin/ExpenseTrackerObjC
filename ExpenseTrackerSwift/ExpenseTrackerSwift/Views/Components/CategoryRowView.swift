@@ -43,10 +43,8 @@ struct CategoryRowView: View {
             }
             .font(.caption2)
             
-
         }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
+        .appCardStyle()
     }
     
     // MARK: - Computed Properties

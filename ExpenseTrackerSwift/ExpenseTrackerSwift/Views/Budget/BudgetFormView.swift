@@ -10,6 +10,7 @@ struct BudgetFormView: View {
     @State private var categoryDrafts: [BudgetCategoryDraft] = []
     @State private var showingError = false
     @State private var errorMessage = ""
+    @State private var newCategoryName = ""
     
     // Track focused field if you want, but simple textfields work fine
     
@@ -72,12 +73,19 @@ struct BudgetFormView: View {
                         }
                     }
 
-                    Button {
-                        withAnimation {
-                            categoryDrafts.append(BudgetCategoryDraft(name: "", allocatedAmount: "0", isIncome: false))
-                        }
-                    } label: {
-                        Label("Add Category", systemImage: "plus.circle.fill")
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(.accentColor)
+                        TextField("Add new category...", text: $newCategoryName)
+                            .onSubmit {
+                                let trimmedName = newCategoryName.trimmingCharacters(in: .whitespaces)
+                                if !trimmedName.isEmpty {
+                                    withAnimation {
+                                        categoryDrafts.append(BudgetCategoryDraft(name: trimmedName, allocatedAmount: "0", isIncome: false))
+                                        newCategoryName = ""
+                                    }
+                                }
+                            }
                     }
                 } header: {
                     Text("Categories")

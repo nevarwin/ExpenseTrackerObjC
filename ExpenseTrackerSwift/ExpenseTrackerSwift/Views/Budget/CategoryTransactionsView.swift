@@ -111,6 +111,9 @@ struct CategoryTransactionsView: View {
                             TransactionRowView(transaction: transaction)
                         }
                         .buttonStyle(.plain)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                     }
                 }
             } header: {
@@ -120,12 +123,11 @@ struct CategoryTransactionsView: View {
         .navigationTitle(category.name)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $selectedTransaction) { transaction in
-            if let vm = transactionViewModel,
-               let budget = transaction.budget ?? activeBudgets.first {
+            if let budget = transaction.budget {
                 TransactionFormView(
-                    activeBudgets: activeBudgets,
+                    activeBudgets: activeBudgets.isEmpty ? [budget] : activeBudgets,
                     initialBudget: budget,
-                    viewModel: vm,
+                    viewModel: transactionViewModel ?? TransactionViewModel(modelContext: modelContext),
                     existingTransaction: transaction
                 )
             }
@@ -135,8 +137,8 @@ struct CategoryTransactionsView: View {
                 transactionViewModel = TransactionViewModel(modelContext: modelContext)
             }
         }
-    } // end body
-} // end CategoryTransactionsView
+    }
+}
 
 #Preview {
     @Previewable @State var category: Category = {
