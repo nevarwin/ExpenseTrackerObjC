@@ -87,12 +87,26 @@ struct BudgetHistoryView: View {
                             }
                         }
                         .frame(height: 200)
+                        .chartScrollableAxes(.horizontal)
+                        // 183 days is approximately 6 months (in seconds)
+                        .chartXVisibleDomain(length: 3600 * 24 * 183)
                         .chartXAxis {
+                            // Since it's scrollable, we can safely show every month
                             AxisMarks(values: .stride(by: .month)) { value in
                                 if let date = value.as(Date.self) {
-                                    AxisValueLabel {
-                                        Text(DateRangeHelper.shortMonthYearString(from: date))
-                                            .font(.caption2)
+                                    AxisValueLabel(anchor: .top) {
+                                        VStack(spacing: 2) {
+                                            // Month (e.g. "Feb")
+                                            Text(date, format: .dateTime.month(.abbreviated))
+                                                .font(.caption)
+                                                .fontWeight(.medium)
+                                            
+                                            // Year (e.g. "2024")
+                                            Text(date, format: .dateTime.year())
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        .padding(.top, 4)
                                     }
                                 }
                                 AxisGridLine()
