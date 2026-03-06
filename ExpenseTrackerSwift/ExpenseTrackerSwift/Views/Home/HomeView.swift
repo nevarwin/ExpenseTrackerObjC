@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
@@ -40,25 +41,39 @@ struct HomeView: View {
 struct HomeContent: View {
     @ObservedObject var viewModel: BudgetViewModel
     
+    @State private var showingAddBudget = false
+    @State private var showingError = false
+    @State private var isImportingBudget = false
+    @State private var importSuccessMessage: String?
+    @State private var showingImportAlert = false
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
                 // Header
-                WelcomeHeader(viewModel: viewModel)
+                WelcomeHeader(
+                    viewModel: viewModel,
+                    onAddBudget: { showingAddBudget = true },
+                    onImportBudget: { isImportingBudget = true }
+                )
                     .padding(.horizontal)
                     .padding(.top, 10)
                 
                 // Summary Cards
-                if let currentBudget = viewModel.selectedBudget {
-                    NavigationLink(destination: BudgetDetailView(budget: currentBudget)) {
-                        BudgetSummaryCard(budget: currentBudget)
-                            .padding(.horizontal)
-                            .id(currentBudget.id)
+                if viewModel.budgets.isEmpty {
+                    EmptyBudgetCard(viewModel: viewModel) {
+                        showingAddBudget = true
                     }
-                    .buttonStyle(.plain)
+                    .padding(.horizontal)
                 } else {
-                    EmptyBudgetCard(viewModel: viewModel)
-                        .padding(.horizontal)
+                    ForEach(viewModel.budgets) { budget in
+                        NavigationLink(destination: BudgetDetailView(budget: budget)) {
+                            BudgetSummaryCard(budget: budget)
+                                .padding(.horizontal)
+                                .id(budget.id)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
             .padding(.bottom, 20)
@@ -66,11 +81,74 @@ struct HomeContent: View {
         .refreshable {
             viewModel.loadBudgets()
         }
+        .sheet(
+            isPresented: $showingAddBudget,
+            onDismiss: {
+                viewModel.loadBudgets()
+            }
+        ) {
+            BudgetFormView(viewModel: viewModel)
+        }
+        .fileImporter(
+            isPresented: $isImportingBudget,
+            allowedContentTypes: [.commaSeparatedText, .plainText],
+            allowsMultipleSelection: false
+        ) { result in
+            handleImport(result)
+        }
+        .alert("Import Result", isPresented: $showingImportAlert) {
+            Button("OK") { }
+        } message: {
+            Text(importSuccessMessage ?? "Unknown result")
+        }
+        .alert("Error", isPresented: $showingError) {
+            Button("OK") {
+                viewModel.errorMessage = nil
+            }
+        } message: {
+            Text(viewModel.errorMessage ?? "An error occurred")
+        }
+        .onChange(of: viewModel.errorMessage) { _, newValue in
+            showingError = newValue != nil
+        }
+    }
+    
+    private func handleImport(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            
+            guard url.startAccessingSecurityScopedResource() else {
+                viewModel.errorMessage = "Permission denied to access the file."
+                return
+            }
+            defer { url.stopAccessingSecurityScopedResource() }
+            
+            do {
+                let parser = CSVParser.shared
+                let importManager = ImportManager(modelContext: viewModel.modelContext)
+                
+                let csvBudget = try parser.parseBudget(from: url)
+                let newBudget = try importManager.importBudget(from: csvBudget)
+                
+                importSuccessMessage = "Successfully imported budget '\(newBudget.name)'."
+                showingImportAlert = true
+                viewModel.loadBudgets()
+                
+            } catch {
+                viewModel.errorMessage = "Import failed: \(error.localizedDescription)"
+            }
+            
+        case .failure(let error):
+            viewModel.errorMessage = "Import failed: \(error.localizedDescription)"
+        }
     }
 }
 
 struct WelcomeHeader: View {
     @ObservedObject var viewModel: BudgetViewModel
+    let onAddBudget: () -> Void
+    let onImportBudget: () -> Void
     
     private var dateString: String {
         let formatter = DateFormatter()
@@ -93,11 +171,25 @@ struct WelcomeHeader: View {
             }
             Spacer()
             
-            // Settings
-            NavigationLink(destination: SettingsView()) {
-                Image(systemName: "gearshape.fill")
-                    .font(.title2)
-                    .foregroundStyle(Color.appSecondary)
+            HStack(spacing: 16) {
+                Menu {
+                    Button(action: onAddBudget) {
+                        Label("Add Budget", systemImage: "plus")
+                    }
+                    Button(action: onImportBudget) {
+                        Label("Import Budget", systemImage: "square.and.arrow.down")
+                    }
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(Color.appAccent)
+                }
+                
+                NavigationLink(destination: SettingsView()) {
+                    Image(systemName: "gearshape.fill")
+                        .font(.title2)
+                        .foregroundStyle(Color.appSecondary)
+                }
             }
             .padding(.trailing, 8)
             
@@ -211,6 +303,7 @@ struct BudgetSummaryCard: View {
 
 struct EmptyBudgetCard: View {
     var viewModel: BudgetViewModel?
+    var onAddBudget: (() -> Void)?
     
     var body: some View {
         VStack(spacing: 16) {
@@ -230,7 +323,7 @@ struct EmptyBudgetCard: View {
                     .padding(.horizontal)
             }
             
-            NavigationLink(destination: BudgetListView(viewModel: viewModel)) {
+            Button(action: { onAddBudget?() }) {
                 Text("Create New Budget")
                     .font(.headline)
                     .foregroundStyle(.white)

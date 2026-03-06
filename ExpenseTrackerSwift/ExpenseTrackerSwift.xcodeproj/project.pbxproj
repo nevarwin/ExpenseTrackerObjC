@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		1A3FF35FE6614609A27E7518 /* Budget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22211B551B5737A69D6760A5 /* Budget.swift */; };
 		23A5749A13F6C8D145356A1F /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0213E257FD2ED0642FBA8CC6 /* Category.swift */; };
-		29E36BE5659D771118EC31B0 /* BudgetListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0DA74EC14867973B8C1F368 /* BudgetListView.swift */; };
 		4EDC4497C9A6F35E657E054A /* CategoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58082728789922605C422983 /* CategoryViewModel.swift */; };
 		6AAB83A6527D2813E4D103A1 /* TransactionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11AC8DD9DB4B72157C4BD1F /* TransactionViewModel.swift */; };
 		6C68931CAA398808726D2A9A /* BudgetViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79DC7366FAAAE06E81605AF0 /* BudgetViewModel.swift */; };
@@ -343,7 +342,6 @@
 				4EDC4497C9A6F35E657E054A /* CategoryViewModel.swift in Sources */,
 				6AAB83A6527D2813E4D103A1 /* TransactionViewModel.swift in Sources */,
 				AB292DF7C44068BBA5499C7C /* HomeView.swift in Sources */,
-				29E36BE5659D771118EC31B0 /* BudgetListView.swift in Sources */,
 				EAA5276B750AEA173BDD04BA /* BudgetFormView.swift in Sources */,
 				98FDCB9974B7BA8996F3334E /* BudgetDetailView.swift in Sources */,
 				921E840D13B31B221D311044 /* TransactionListView.swift in Sources */,

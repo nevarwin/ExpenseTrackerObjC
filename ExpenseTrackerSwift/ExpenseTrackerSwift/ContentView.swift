@@ -20,12 +20,7 @@ struct ContentView: View {
                             .tabItem {
                                 Label("Home", systemImage: "house.fill")
                             }
-                        
-                        BudgetListView(viewModel: viewModel)
-                            .tabItem {
-                                Label("Budgets", systemImage: "creditcard.fill")
-                            }
-                        
+        
                         TransactionListView()
                             .tabItem {
                                 Label("Transactions", systemImage: "list.bullet")

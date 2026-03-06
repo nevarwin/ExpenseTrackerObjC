@@ -18,13 +18,6 @@ struct SettingsView: View {
                             Image(systemName: "sun.max") // Generic icon for the menu item
                         }
                     }
-                    NavigationLink(destination: BudgetListView()) {
-                        Label{
-                            Text("Manage Budgets")
-                        } icon: {
-                            Image(systemName: "creditcard")
-                        }
-                    }
                 }
                 
                 Section("About") {
