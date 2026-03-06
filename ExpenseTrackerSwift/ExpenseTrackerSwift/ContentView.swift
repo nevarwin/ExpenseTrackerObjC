@@ -109,69 +109,6 @@ struct ContentView: View {
     }
 }
 
-// Reusable FAB Action Button
-struct FABMainButton: View {
-    @Binding var isFABExpanded: Bool
-    @State private var isPressed = false        // Tracks press scale effect
-    @State private var showRipple = false       // Long press ripple feedback
-    
-    let onTap: () -> Void
-    let onLongPress: () -> Void
-    let onDoubleTap: () -> Void
-    
-    var body: some View {
-        ZStack {
-            // Ripple ring (long press visual feedback)
-            Circle()
-                .stroke(Color.accentColor.opacity(0.4), lineWidth: 3)
-                .frame(width: showRipple ? 90 : 60, height: showRipple ? 90 : 60)
-                .opacity(showRipple ? 0 : 1)
-                .animation(.easeOut(duration: 0.5), value: showRipple)
-            
-            // Main button
-            Image(systemName: isFABExpanded ? "xmark" : "plus")
-                .font(.title2.bold())
-                .foregroundStyle(.white)
-                .frame(width: 60, height: 60)
-                .background(Color.accentColor)
-                .clipShape(Circle())
-                .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
-                .rotationEffect(.degrees(isFABExpanded ? 45 : 0))
-                .scaleEffect(isPressed ? 0.88 : 1.0)
-                .animation(.spring(response: 0.3), value: isPressed)
-        }
-        // Double tap gesture
-        .onTapGesture(count: 2) {
-            triggerHaptic(.medium)
-            onDoubleTap()
-        }
-        // Single tap gesture
-        .onTapGesture(count: 1) {
-            triggerHaptic(.light)
-            onTap()
-        }
-        // Long press gesture
-        .onLongPressGesture(minimumDuration: 0.5) {
-            // On long press confirmed
-            triggerHaptic(.heavy)
-            showRipple = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                showRipple = false
-            }
-            onLongPress()
-        } onPressingChanged: { isPressing in
-            // Scale feedback while pressing
-            withAnimation(.spring(response: 0.3)) {
-                isPressed = isPressing
-            }
-        }
-    }
-    
-    // Haptic feedback helper
-    private func triggerHaptic(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
-        UIImpactFeedbackGenerator(style: style).impactOccurred()
-    }
-}
 
 // FAB Action Button
 struct FABActionButton: View {

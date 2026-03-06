@@ -50,9 +50,12 @@ struct HomeContent: View {
                 
                 // Summary Cards
                 if let currentBudget = viewModel.selectedBudget {
-                    BudgetSummaryCard(budget: currentBudget)
-                        .padding(.horizontal)
-                        .id(currentBudget.id)
+                    NavigationLink(destination: BudgetDetailView(budget: currentBudget)) {
+                        BudgetSummaryCard(budget: currentBudget)
+                            .padding(.horizontal)
+                            .id(currentBudget.id)
+                    }
+                    .buttonStyle(.plain)
                 } else {
                     EmptyBudgetCard(viewModel: viewModel)
                         .padding(.horizontal)

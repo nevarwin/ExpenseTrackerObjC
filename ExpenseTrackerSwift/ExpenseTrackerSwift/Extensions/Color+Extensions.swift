@@ -26,12 +26,4 @@ extension Color {
         )
     }
 
-    struct Theme {
-        static let primary = Color("appPrimary", bundle: .main)
-        static let secondary = Color("appSecondary", bundle: .main)
-        static let accent = Color("appAccent", bundle: .main)
-        static let background = Color("appBackground", bundle: .main)
-        static let surface = Color("appSurface", bundle: .main)
-        static let lightGray = Color("appLightGray", bundle: .main)
-    }
 }

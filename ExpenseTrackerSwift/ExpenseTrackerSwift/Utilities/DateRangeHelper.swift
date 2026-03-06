@@ -25,11 +25,6 @@ struct DateRangeHelper {
         return (startOfMonth, endOfMonth)
     }
     
-    /// Get the start and end dates for the current month
-    static func currentMonthBounds() -> (start: Date, end: Date) {
-        return monthBounds(for: Date())
-    }
-    
     // MARK: - Date Checks
     
     /// Check if a date is in the current month
@@ -95,15 +90,6 @@ struct DateRangeHelper {
     static func shortMonthYearString(from date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM yyyy"
-        return formatter.string(from: date)
-    }
-    
-    /// Format a date as "Month" only (e.g., "February")
-    /// - Parameter date: The date to format
-    /// - Returns: Formatted string
-    static func monthString(from date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM"
         return formatter.string(from: date)
     }
     

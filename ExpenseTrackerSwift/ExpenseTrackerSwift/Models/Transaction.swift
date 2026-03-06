@@ -41,18 +41,10 @@ final class Transaction {
         category?.isIncome ?? false
     }
     
-    var isExpense: Bool {
-        !isIncome
-    }
-    
     var monthYear: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
         return formatter.string(from: date)
-    }
-    
-    var budgetPeriodString: String {
-        DateRangeHelper.monthYearString(from: budgetPeriod)
     }
     
     // MARK: - Business Logic
@@ -62,8 +54,4 @@ final class Transaction {
         updatedAt = Date()
     }
     
-    func restore() {
-        isActive = true
-        updatedAt = Date()
-    }
 }

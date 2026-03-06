@@ -90,17 +90,6 @@ final class Category {
         allocatedAmount - usedAmountInMonth(date)
     }
     
-    /// Usage percentage for the current month
-    var currentMonthUsagePercentage: Double {
-        guard allocatedAmount > 0 else { return 0 }
-        return Double(truncating: (currentMonthUsedAmount / allocatedAmount) as NSDecimalNumber)
-    }
-    
-    /// Check if over budget in current month
-    var isOverBudgetThisMonth: Bool {
-        currentMonthUsedAmount > allocatedAmount
-    }
-    
     // MARK: - Business Logic
     
     func isValid(for date: Date) -> Bool {

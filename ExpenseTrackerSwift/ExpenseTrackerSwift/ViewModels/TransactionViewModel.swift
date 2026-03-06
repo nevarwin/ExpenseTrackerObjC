@@ -6,7 +6,6 @@ final class TransactionViewModel {
     var transactions: [Transaction] = []
     var availableCategories: [Category] = []
     var selectedCategory: Category?
-    var amountOverflow = false
     var errorMessage: String?
     var isLoading = false
     
@@ -24,18 +23,6 @@ final class TransactionViewModel {
     
     var currentMonth: Int {
         Calendar.current.component(.month, from: selectedDate)
-    }
-    
-    var dateRangeString: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        
-        if isRangeMode, let range = selectedDateRange {
-            return "\(formatter.string(from: range.lowerBound)) - \(formatter.string(from: range.upperBound))"
-        } else {
-            return formatter.string(from: selectedDate)
-        }
     }
     
     private let modelContext: ModelContext
@@ -292,21 +279,6 @@ final class TransactionViewModel {
         
         // Reload transactions from database instead of manually manipulating array
         loadTransactions(for: budget)
-    }
-    
-    func softDeleteTransaction(_ transaction: Transaction) throws {
-        transaction.softDelete()
-        
-        // Update category used amount
-        if let category = transaction.category {
-            category.updateUsedAmount()
-        }
-        
-        // Update budget
-        transaction.budget?.updateRemainingAmount()
-        
-        try modelContext.save()
-        loadTransactions(for: transaction.budget)
     }
     
     // MARK: - Calendar Data

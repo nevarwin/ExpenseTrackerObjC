@@ -66,18 +66,4 @@ final class CategoryViewModel {
         categories.insert(category, at: 0)
     }
     
-
-    
-    func updateCategory(_ category: Category, name: String, allocatedAmount: Decimal) throws {
-        category.name = name
-        category.allocatedAmount = allocatedAmount
-        category.updatedAt = Date()
-        try modelContext.save()
-    }
-    
-    func deleteCategory(_ category: Category) throws {
-        modelContext.delete(category)
-        try modelContext.save()
-        categories.removeAll { $0.id == category.id }
-    }
 }

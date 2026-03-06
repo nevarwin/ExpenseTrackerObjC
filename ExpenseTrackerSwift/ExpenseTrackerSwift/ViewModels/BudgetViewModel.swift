@@ -42,10 +42,7 @@ final class BudgetViewModel: ObservableObject {
         isLoading = false
     }
     
-    func selectBudget(_ budget: Budget) {
-        selectedBudget = budget
-        UserDefaults.standard.set(budget.id.uuidString, forKey: selectedBudgetKey)
-    }
+
     
     @discardableResult
     func createBudget(name: String, totalAmount: Decimal) throws -> Budget {
@@ -80,11 +77,5 @@ final class BudgetViewModel: ObservableObject {
         // Reload budgets from database instead of manually manipulating array
         // This prevents index mismatch with SwiftUI's list
         loadBudgets()
-    }
-    
-    func toggleBudgetStatus(_ budget: Budget) throws {
-        budget.isActive.toggle()
-        budget.updatedAt = Date()
-        try modelContext.save()
     }
 }
