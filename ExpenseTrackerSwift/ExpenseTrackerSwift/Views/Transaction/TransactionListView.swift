@@ -16,8 +16,10 @@ struct TransactionListView: View {
                 if let viewModel = viewModel {
                     VStack(spacing: 0) {
                         // Custom Calendar View
-                        CalendarView(viewModel: viewModel) {
-                            showingAddTransaction = true
+                        CalendarView(viewModel: viewModel) { hasTransactions in
+                            if !hasTransactions {
+                                showingAddTransaction = true
+                            }
                         }
                         .padding(.bottom, 8)
                         
@@ -55,8 +57,21 @@ struct TransactionListView: View {
                                         .listRowBackground(Color.clear)
                                         .listRowSeparator(.hidden)
                                         .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                            Button(role: .destructive) {
+                                                try? viewModel.deleteTransaction(transaction)
+                                            } label: {
+                                                Label("Delete", systemImage: "trash")
+                                            }
+                                            
+                                            Button {
+                                                selectedTransaction = transaction
+                                            } label: {
+                                                Label("Edit", systemImage: "pencil")
+                                            }
+                                            .tint(.blue)
+                                        }
                                     }
-                                    .onDelete(perform: deleteTransactions)
                                 } header: {
                                     EmptyView()
                                 } footer: {

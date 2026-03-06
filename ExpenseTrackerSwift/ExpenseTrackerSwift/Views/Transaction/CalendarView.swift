@@ -2,7 +2,7 @@ import SwiftUI
 
 struct CalendarView: View {
     @Bindable var viewModel: TransactionViewModel
-    var onDateTapped: (() -> Void)? = nil
+    var onDateTapped: ((Bool) -> Void)? = nil
     
     @State private var showingDatePicker = false
     @State private var selectedMonth = 1
@@ -120,7 +120,10 @@ struct CalendarView: View {
                         DayCell(date: date, viewModel: viewModel)
                             .onTapGesture {
                                 viewModel.selectDate(date)
-                                onDateTapped?()
+                                
+                                // Call closure and pass whether there is a transaction on this date
+                                let hasTx = viewModel.transactionDates.contains(Calendar.current.startOfDay(for: date))
+                                onDateTapped?(hasTx)
                             }
                     } else {
                         Text("")

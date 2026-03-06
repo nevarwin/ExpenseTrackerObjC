@@ -42,6 +42,7 @@ struct HomeContent: View {
     @ObservedObject var viewModel: BudgetViewModel
     
     @State private var showingAddBudget = false
+    @State private var budgetToEdit: Budget?
     @State private var showingError = false
     @State private var isImportingBudget = false
     @State private var importSuccessMessage: String?
@@ -73,6 +74,20 @@ struct HomeContent: View {
                                 .id(budget.id)
                         }
                         .buttonStyle(.plain)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                try? viewModel.deleteBudget(budget)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                            
+                            Button {
+                                budgetToEdit = budget
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+                            .tint(.blue)
+                        }
                     }
                 }
             }
@@ -88,6 +103,11 @@ struct HomeContent: View {
             }
         ) {
             BudgetFormView(viewModel: viewModel)
+        }
+        .sheet(item: $budgetToEdit, onDismiss: {
+            viewModel.loadBudgets()
+        }) { budget in
+            BudgetFormView(viewModel: viewModel, existingBudget: budget)
         }
         .fileImporter(
             isPresented: $isImportingBudget,
