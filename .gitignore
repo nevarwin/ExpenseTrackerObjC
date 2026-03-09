@@ -15,10 +15,14 @@ node_modules/
 mcp_config.json
 .agent
 
-# Xcode user-specific files  
-xcuserdata/  
-*.xcworkspace/xcuserdata/  
-*.xcodeproj/xcuserdata/  
-*.xcdebugger  
-*.xccheckout  
+## Xcode user-specific files
+xcuserdata/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcdebugger
+*.xccheckout
+
+## Build artifacts
 DerivedData/
+build/
