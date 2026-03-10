@@ -53,29 +53,9 @@
 		F11AC8DD9DB4B72157C4BD1F /* TransactionViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TransactionViewModel.swift; path = ExpenseTrackerSwift/ViewModels/TransactionViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		97FA9B9C2F5F12C9008E94CD /* Exceptions for "ExpenseTrackerSwift" folder in "ExpenseTrackerSwift" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Models/Budget.swift,
-				Models/BudgetAllocation.swift,
-				Models/Category.swift,
-				Models/Transaction.swift,
-				ViewModels/BudgetViewModel.swift,
-				ViewModels/CategoryViewModel.swift,
-				Views/Home/HomeView.swift,
-				Views/Transaction/TransactionListView.swift,
-			);
-			target = 973C37E92F1E74D800CB57BA /* ExpenseTrackerSwift */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		973C37EC2F1E74D800CB57BA /* ExpenseTrackerSwift */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				97FA9B9C2F5F12C9008E94CD /* Exceptions for "ExpenseTrackerSwift" folder in "ExpenseTrackerSwift" target */,
-			);
 			path = ExpenseTrackerSwift;
 			sourceTree = "<group>";
 		};
