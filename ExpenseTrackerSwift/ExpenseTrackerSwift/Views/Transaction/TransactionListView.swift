@@ -19,7 +19,7 @@ struct TransactionListView: View {
                         // Custom Calendar View
                         CalendarView(viewModel: viewModel) { hasTransactions in
                             hasUserSelectedDate = true
-                            if !hasTransactions {
+                            if !hasTransactions && !activeBudgets.isEmpty {
                                 showingAddTransaction = true
                             }
                         }
