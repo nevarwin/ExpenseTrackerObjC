@@ -16,6 +16,10 @@ final class TransactionViewModel {
     var calendarScope: CalendarScope = .month
     var transactionDates: Set<Date> = []
     
+    // Search State
+    var searchText: String = ""
+    var searchHighlightDates: Set<Date> = []
+    
     // Derived Calendar Properties
     var currentYear: Int {
         Calendar.current.component(.year, from: selectedDate)
@@ -373,6 +377,30 @@ final class TransactionViewModel {
             }
             loadTransactionDates()
         }
+    }
+    
+    func performGlobalSearch() {
+        isLoading = true
+        errorMessage = nil
+        
+        let text = searchText
+        let descriptor = FetchDescriptor<Transaction>(
+            predicate: #Predicate<Transaction> { transaction in
+                transaction.isActive == true &&
+                transaction.desc.localizedStandardContains(text)
+            },
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        
+        do {
+            transactions = try modelContext.fetch(descriptor)
+            let dates = transactions.map { Calendar.current.startOfDay(for: $0.date) }
+            searchHighlightDates = Set(dates)
+        } catch {
+            errorMessage = "Failed to search transactions: \(error.localizedDescription)"
+        }
+        
+        isLoading = false
     }
 }
 

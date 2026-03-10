@@ -192,6 +192,10 @@ struct DayCell: View {
         viewModel.transactionDates.contains(Calendar.current.startOfDay(for: date))
     }
     
+    private var isSearchResult: Bool {
+        viewModel.searchHighlightDates.contains(Calendar.current.startOfDay(for: date))
+    }
+    
     enum SelectionState {
         case none, single, start, middle, end
     }
@@ -205,8 +209,13 @@ struct DayCell: View {
                 .background(backgroundView)
                 .foregroundStyle(selectionState != .none ? .white : .primary)
                 .overlay(
-                    // Today indicator (only if not selected)
-                    selectionState == .none && isToday ? Circle().stroke(Color.blue, lineWidth: 1) : nil
+                    Group {
+                        if isSearchResult {
+                            Circle().stroke(Color.green, lineWidth: 2)
+                        } else if selectionState == .none && isToday {
+                            Circle().stroke(Color.blue, lineWidth: 1)
+                        }
+                    }
                 )
             
             // Transaction Indicator

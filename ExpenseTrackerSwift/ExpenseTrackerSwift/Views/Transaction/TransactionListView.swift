@@ -6,6 +6,7 @@ struct TransactionListView: View {
     @State private var viewModel: TransactionViewModel?
     @State private var showingAddTransaction = false
     @State private var selectedTransaction: Transaction?
+    @State private var hasUserSelectedDate = false
     
     @Query(filter: #Predicate<Budget> { $0.isActive == true })
     private var activeBudgets: [Budget]
@@ -17,6 +18,7 @@ struct TransactionListView: View {
                     VStack(spacing: 0) {
                         // Custom Calendar View
                         CalendarView(viewModel: viewModel) { hasTransactions in
+                            hasUserSelectedDate = true
                             if !hasTransactions {
                                 showingAddTransaction = true
                             }
@@ -26,11 +28,18 @@ struct TransactionListView: View {
                         if viewModel.isLoading {
                             ProgressView("Loading transactions...")
                                 .frame(maxHeight: .infinity)
+                        } else if !hasUserSelectedDate && viewModel.searchText.isEmpty {
+                            ContentUnavailableView(
+                                "Select a Date",
+                                systemImage: "calendar",
+                                description: Text("Tap a date on the calendar above to view your transactions.")
+                            )
+                            .frame(maxHeight: .infinity)
                         } else if viewModel.transactions.isEmpty {
                             ContentUnavailableView(
-                                "No Transactions",
-                                systemImage: "list.bullet",
-                                description: Text("No transactions found for this period")
+                                viewModel.searchText.isEmpty ? "No Transactions" : "No Results",
+                                systemImage: viewModel.searchText.isEmpty ? "list.bullet" : "magnifyingglass",
+                                description: Text(viewModel.searchText.isEmpty ? "No transactions found for this period" : "No transactions match '\(viewModel.searchText)'")
                             )
                             .frame(maxHeight: .infinity)
                         } else {
@@ -107,6 +116,18 @@ struct TransactionListView: View {
             }
             .navigationTitle("Transactions")
             .navigationBarTitleDisplayMode(.inline)
+            .searchable(text: Binding(
+                get: { viewModel?.searchText ?? "" },
+                set: { newValue in
+                    viewModel?.searchText = newValue
+                    if newValue.isEmpty {
+                        viewModel?.searchHighlightDates.removeAll()
+                        viewModel?.loadTransactions()
+                    } else {
+                        viewModel?.performGlobalSearch()
+                    }
+                }
+            ), prompt: "Search transactions...")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showingAddTransaction = true }) {

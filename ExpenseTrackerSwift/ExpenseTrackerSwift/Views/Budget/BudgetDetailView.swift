@@ -34,6 +34,9 @@ struct BudgetDetailView: View {
     @State private var newCategoryAmount: String = ""
     @State private var newCategoryIsIncome: Bool = false
     
+    // Search Text State
+    @State private var searchText: String = ""
+    
     var body: some View {
         List {
             // Month Selector
@@ -108,12 +111,21 @@ struct BudgetDetailView: View {
             }
             
             if let viewModel = categoryViewModel {
-                let expenses = viewModel.categories.filter { !$0.isIncome }
-                let incomes = viewModel.categories.filter { $0.isIncome }
+                let searchResults = searchText.isEmpty 
+                    ? viewModel.categories 
+                    : viewModel.categories.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+                
+                let expenses = searchResults.filter { !$0.isIncome }
+                let incomes = searchResults.filter { $0.isIncome }
                 
                 if viewModel.categories.isEmpty {
                     Section("Categories") {
                         Text("No categories")
+                            .foregroundStyle(.secondary)
+                    }
+                } else if !searchText.isEmpty && searchResults.isEmpty {
+                    Section("Categories") {
+                        Text("No matching categories")
                             .foregroundStyle(.secondary)
                     }
                 } else {
@@ -183,6 +195,7 @@ struct BudgetDetailView: View {
                 }
             }
         }
+        .searchable(text: $searchText, prompt: "Search categories")
         .navigationTitle(budget.name)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
