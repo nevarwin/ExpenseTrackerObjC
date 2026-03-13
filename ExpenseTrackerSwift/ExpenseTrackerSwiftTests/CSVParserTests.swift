@@ -80,12 +80,12 @@ final class CSVParserTests: XCTestCase {
         
         let groceries = budget.items.first { $0.categoryName == "Groceries" }
         XCTAssertNotNil(groceries)
-        XCTAssertEqual(groceries?.amount, 1000)
+        XCTAssertEqual(groceries?.plannedAmount, 1000)
         XCTAssertFalse(groceries!.isIncome)
         
         let paycheck = budget.items.first { $0.categoryName == "Paycheck" }
         XCTAssertNotNil(paycheck)
-        XCTAssertEqual(paycheck?.amount, 26000)
+        XCTAssertEqual(paycheck?.plannedAmount, 26000)
         XCTAssertTrue(paycheck!.isIncome)
         
         let savings = budget.items.first { $0.categoryName == "Savings" }
@@ -110,6 +110,6 @@ final class CSVParserTests: XCTestCase {
         
         let initial = budget.items.first { $0.categoryName == "Initial" }
         XCTAssertNotNil(initial)
-        XCTAssertEqual(initial?.amount, 13328)
+        XCTAssertEqual(initial?.plannedAmount, 13328)
     }
 }
