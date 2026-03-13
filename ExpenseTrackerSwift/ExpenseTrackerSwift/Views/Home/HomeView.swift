@@ -1,9 +1,7 @@
 import SwiftUI
-import SwiftData
 import UniformTypeIdentifiers
 
 struct HomeView: View {
-    @Environment(\.modelContext) private var modelContext
     @State private var internalViewModel: BudgetViewModel?
     private let injectedViewModel: BudgetViewModel?
     
@@ -29,7 +27,7 @@ struct HomeView: View {
             .navigationBarHidden(true)
             .onAppear {
                 if injectedViewModel == nil && internalViewModel == nil {
-                    let vm = BudgetViewModel(modelContext: modelContext)
+                    let vm = BudgetViewModel()
                     self.internalViewModel = vm
                     vm.loadBudgets()
                 }
@@ -146,7 +144,7 @@ struct HomeContent: View {
             
             do {
                 let parser = CSVParser.shared
-                let importManager = ImportManager(modelContext: viewModel.modelContext)
+                let importManager = ImportManager()
                 
                 let csvBudget = try parser.parseBudget(from: url)
                 let newBudget = try importManager.importBudget(from: csvBudget)
@@ -362,7 +360,6 @@ struct EmptyBudgetCard: View {
 
 
 #Preview {
-    HomeView()
-        .modelContainer(for: [Budget.self, Category.self, Transaction.self])
+    HomeView(viewModel: BudgetViewModel())
         .environmentObject(CurrencyManager())
 }

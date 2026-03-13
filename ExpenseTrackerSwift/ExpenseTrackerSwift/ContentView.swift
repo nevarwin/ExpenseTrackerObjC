@@ -1,16 +1,12 @@
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
     @StateObject private var currencyManager = CurrencyManager()
     @State private var budgetViewModel: BudgetViewModel?
     @State private var showingAddTransaction = false
     @State private var transactionViewModel: TransactionViewModel?
-    
-    @Query(filter: #Predicate<Budget> { $0.isActive == true })
-    private var activeBudgets: [Budget]
-    
+    @State private var activeBudgets: [Budget] = []
+
     var body: some View {
         Group {
             if let viewModel = budgetViewModel {
@@ -28,10 +24,11 @@ struct ContentView: View {
             } else {
                 ProgressView()
                     .onAppear {
-                        modelContext.autosaveEnabled = false
-                        let vm = BudgetViewModel(modelContext: modelContext)
+                        let vm = BudgetViewModel()
                         vm.loadBudgets()
                         self.budgetViewModel = vm
+                        // Load active budgets for quick-add sheet
+                        activeBudgets = (try? BudgetRepository().fetchAll().filter { $0.isActive }) ?? []
                     }
             }
         }
@@ -51,7 +48,7 @@ struct ContentView: View {
         if let vm = transactionViewModel {
             return vm
         }
-        let vm = TransactionViewModel(modelContext: modelContext)
+        let vm = TransactionViewModel()
         transactionViewModel = vm
         return vm
     }
@@ -59,5 +56,4 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: [Budget.self, Category.self, Transaction.self])
 }

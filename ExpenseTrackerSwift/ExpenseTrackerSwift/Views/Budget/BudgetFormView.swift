@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftData
 
 struct BudgetFormView: View {
     @Environment(\.dismiss) private var dismiss
@@ -206,7 +205,7 @@ struct BudgetFormView: View {
 
         do {
             let budget: Budget
-            var keptCategories: Set<PersistentIdentifier> = []
+            var keptCategoryIds: Set<String> = []
 
             if let existing = existingBudget {
                 try viewModel.updateBudget(existing, name: name, totalAmount: amount)
@@ -225,31 +224,30 @@ struct BudgetFormView: View {
                     category.isIncome = draft.isIncome
                     category.isActive = draft.isActive
                     category.updatedAt = Date()
-                    keptCategories.insert(original.persistentModelID)
+                    try viewModel.updateCategory(category)
+                    keptCategoryIds.insert(original.id)
                 } else {
                     category = Category(
                         name: draft.name.trimmingCharacters(in: .whitespaces),
                         allocatedAmount: draft.allocatedDecimal,
                         isIncome: draft.isIncome,
+                        budgetId: budget.id,
                         budget: budget
                     )
                     category.isActive = draft.isActive
-                    viewModel.modelContext.insert(category)
+                    try viewModel.insertCategory(category)
                     budget.categories.append(category)
                 }
-
-
             }
 
             if let existing = existingBudget {
                 for category in existing.categories {
-                    if !keptCategories.contains(category.persistentModelID) {
-                        viewModel.modelContext.delete(category)
+                    if !keptCategoryIds.contains(category.id) {
+                        try viewModel.deleteCategory(id: category.id)
                     }
                 }
             }
 
-            try viewModel.modelContext.save()
             dismiss()
         } catch {
             errorMessage = error.localizedDescription
@@ -311,10 +309,7 @@ private struct EditableCategoryRow: View {
 }
 
 #Preview {
-    let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: Budget.self, configurations: config)
-    let viewModel = BudgetViewModel(modelContext: container.mainContext)
-
+    let viewModel = BudgetViewModel()
     BudgetFormView(viewModel: viewModel)
 }
 

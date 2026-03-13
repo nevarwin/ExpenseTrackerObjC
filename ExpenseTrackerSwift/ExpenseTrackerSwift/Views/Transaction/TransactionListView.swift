@@ -1,15 +1,13 @@
 import SwiftUI
-import SwiftData
 
 struct TransactionListView: View {
-    @Environment(\.modelContext) private var modelContext
     @State private var viewModel: TransactionViewModel?
     @State private var showingAddTransaction = false
     @State private var selectedTransaction: Transaction?
     @State private var hasUserSelectedDate = false
-    
-    @Query(filter: #Predicate<Budget> { $0.isActive == true })
-    private var activeBudgets: [Budget]
+    @State private var activeBudgets: [Budget] = []
+
+    init() {}
     
     var body: some View {
         NavigationStack {
@@ -159,9 +157,10 @@ struct TransactionListView: View {
         }
         .onAppear {
             if viewModel == nil {
-                viewModel = TransactionViewModel(modelContext: modelContext)
+                viewModel = TransactionViewModel()
             }
             viewModel?.loadTransactions()
+            activeBudgets = (try? BudgetRepository().fetchAll().filter { $0.isActive }) ?? []
         }
     }
     
@@ -391,5 +390,4 @@ struct TransactionFormView: View {
 
 #Preview {
     TransactionListView()
-        .modelContainer(for: [Budget.self, Category.self, Transaction.self])
 }

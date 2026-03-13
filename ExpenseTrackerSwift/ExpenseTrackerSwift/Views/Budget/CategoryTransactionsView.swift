@@ -1,15 +1,11 @@
 import SwiftUI
-import SwiftData
 
 struct CategoryTransactionsView: View {
     let category: Category
     let month: Date
-    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var currencyManager: CurrencyManager
 
-    @Query(filter: #Predicate<Budget> { $0.isActive == true })
-    private var activeBudgets: [Budget]
-
+    @State private var activeBudgets: [Budget] = []
     @State private var selectedTransaction: Transaction?
     @State private var transactionViewModel: TransactionViewModel?
 
@@ -70,15 +66,17 @@ struct CategoryTransactionsView: View {
                 TransactionFormView(
                     activeBudgets: activeBudgets.isEmpty ? [budget] : activeBudgets,
                     initialBudget: budget,
-                    viewModel: transactionViewModel ?? TransactionViewModel(modelContext: modelContext),
+                    viewModel: transactionViewModel ?? TransactionViewModel(),
                     existingTransaction: transaction
                 )
             }
         }
         .onAppear {
             if transactionViewModel == nil {
-                transactionViewModel = TransactionViewModel(modelContext: modelContext)
+                transactionViewModel = TransactionViewModel()
             }
+            // Load active budgets for the form
+            activeBudgets = (try? BudgetRepository().fetchAll().filter { $0.isActive }) ?? []
         }
     }
 }

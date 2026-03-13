@@ -1,9 +1,7 @@
 import SwiftUI
-import SwiftData
 import UniformTypeIdentifiers
 
 struct BudgetDetailView: View {
-    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var currencyManager: CurrencyManager
     let budget: Budget
     
@@ -226,7 +224,7 @@ struct BudgetDetailView: View {
             }
             .sheet(isPresented: $showingEditSheet) {
                 BudgetFormView(
-                    viewModel: BudgetViewModel(modelContext: modelContext),
+                    viewModel: BudgetViewModel(),
                     existingBudget: budget
                 )
             }
@@ -257,12 +255,12 @@ struct BudgetDetailView: View {
             }
             .onAppear {
                 if categoryViewModel == nil {
-                    categoryViewModel = CategoryViewModel(modelContext: modelContext)
+                    categoryViewModel = CategoryViewModel()
                     categoryViewModel?.loadCategories(for: budget)
                 }
                 
                 if transactionViewModel == nil {
-                    transactionViewModel = TransactionViewModel(modelContext: modelContext)
+                    transactionViewModel = TransactionViewModel()
                     transactionViewModel?.loadTransactions(for: budget)
                 }
             }
@@ -309,7 +307,7 @@ struct BudgetDetailView: View {
     private func executeTransactionImport(from url: URL) {
         do {
             let parser = CSVParser.shared
-            let importManager = ImportManager(modelContext: modelContext)
+            let importManager = ImportManager()
             
             let transactions = try parser.parseTransactions(from: url)
             let count = try importManager.importTransactions(
@@ -360,14 +358,9 @@ struct BudgetDetailView: View {
 }
 
 #Preview {
-    let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: Budget.self, configurations: config)
     let budget = Budget(name: "Monthly Budget", totalAmount: 5000)
-    container.mainContext.insert(budget)
-    
     return NavigationStack {
         BudgetDetailView(budget: budget)
-            .modelContainer(container)
             .environmentObject(CurrencyManager())
     }
 }

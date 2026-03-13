@@ -1,5 +1,5 @@
 import SwiftUI
-import SwiftData
+import GRDB
 
 @Observable
 final class TransactionViewModel {
@@ -8,145 +8,89 @@ final class TransactionViewModel {
     var selectedCategory: Category?
     var errorMessage: String?
     var isLoading = false
-    
+
     // Calendar State
-    var selectedDate: Date = Date() // Main focus date (or start of single selection)
-    var selectedDateRange: ClosedRange<Date>? = nil // For range selection
+    var selectedDate: Date = Date()
+    var selectedDateRange: ClosedRange<Date>? = nil
     var isRangeMode: Bool = false
     var calendarScope: CalendarScope = .month
     var transactionDates: Set<Date> = []
-    
+
     // Search State
     var searchText: String = ""
     var searchHighlightDates: Set<Date> = []
-    
+
     // Derived Calendar Properties
-    var currentYear: Int {
-        Calendar.current.component(.year, from: selectedDate)
+    var currentYear: Int { Calendar.current.component(.year, from: selectedDate) }
+    var currentMonth: Int { Calendar.current.component(.month, from: selectedDate) }
+
+    private let transactionRepo: TransactionRepository
+    private let categoryRepo: CategoryRepository
+
+    init(
+        transactionRepo: TransactionRepository = TransactionRepository(),
+        categoryRepo: CategoryRepository = CategoryRepository()
+    ) {
+        self.transactionRepo = transactionRepo
+        self.categoryRepo = categoryRepo
     }
-    
-    var currentMonth: Int {
-        Calendar.current.component(.month, from: selectedDate)
-    }
-    
-    private let modelContext: ModelContext
-    
-    init(modelContext: ModelContext) {
-        self.modelContext = modelContext
-    }
-    
+
     // MARK: - Filter Logic
-    
+
     func loadTransactions(for budget: Budget? = nil) {
         isLoading = true
         errorMessage = nil
-        
-        let transactionPredicate: Predicate<Transaction>
-        let budgetID = budget?.id
-        
-        // Calculate effective start and end dates
+
         let start: Date
         let end: Date
-        
+
         if isRangeMode, let range = selectedDateRange {
             start = Calendar.current.startOfDay(for: range.lowerBound)
-            if let nextDay = Calendar.current.date(byAdding: .day, value: 1, to: range.upperBound) {
-                 end = Calendar.current.startOfDay(for: nextDay)
-            } else {
-                end = Date.distantFuture // Fallback
-            }
+            end = Calendar.current.date(byAdding: .day, value: 1, to: range.upperBound)
+                .map { Calendar.current.startOfDay(for: $0) } ?? Date.distantFuture
         } else {
-            // Single date mode: From start of selectedDate to start of next day
             start = Calendar.current.startOfDay(for: selectedDate)
-            if let nextDay = Calendar.current.date(byAdding: .day, value: 1, to: selectedDate) {
-                end = Calendar.current.startOfDay(for: nextDay)
-            } else {
-                end = Date.distantFuture
-            }
+            end = Calendar.current.date(byAdding: .day, value: 1, to: selectedDate)
+                .map { Calendar.current.startOfDay(for: $0) } ?? Date.distantFuture
         }
-        
-        if let budgetID {
-             transactionPredicate = #Predicate<Transaction> { transaction in
-                transaction.isActive == true &&
-                transaction.budget?.id == budgetID &&
-                transaction.date >= start &&
-                transaction.date < end
-            }
-        } else {
-             transactionPredicate = #Predicate<Transaction> { transaction in
-                transaction.isActive == true &&
-                transaction.date >= start &&
-                transaction.date < end
-            }
-        }
-        
-        let descriptor = FetchDescriptor<Transaction>(
-            predicate: transactionPredicate,
-            sortBy: [SortDescriptor(\.date, order: .reverse)]
-        )
-        
+
         do {
-            transactions = try modelContext.fetch(descriptor)
+            let fetched = try transactionRepo.fetch(budgetId: budget?.id, start: start, end: end)
+            // Resolve categories if budget provided
+            let cats = budget.map { $0.categories } ?? []
+            for txn in fetched {
+                txn.budget = budget
+                txn.category = cats.first { $0.id == txn.categoryId }
+            }
+            transactions = fetched
         } catch {
             errorMessage = "Failed to load transactions: \(error.localizedDescription)"
         }
-        
+
         isLoading = false
     }
-    
+
     // MARK: - Calendar Actions
-    
+
     func updateMonth(year: Int, month: Int) {
         var components = Calendar.current.dateComponents([.year, .month, .day], from: selectedDate)
         components.year = year
         components.month = month
-        // Try to keep the day, but clamp it if needed (e.g. Jan 31 -> Feb 28)
-        // Calendar.date(from:) usually handles overflow by moving to next month, which we might want to avoid.
-        // Better to set day = 1 if we are just switching months, OR handle it carefully.
-        // For simple navigation, resetting to day 1 is safer, but user might find it annoying if they were on the 15th.
-        // Let's try to keep the day, but use validDate check?
-        // Actually, let's just create the date and let Calendar handle it, but maybe verify we are in the target month.
-        
         if let newDate = Calendar.current.date(from: components) {
             selectedDate = newDate
         } else {
-            // Fallback: Day 1
             components.day = 1
-            if let newDate = Calendar.current.date(from: components) {
-                selectedDate = newDate
-            }
+            if let newDate = Calendar.current.date(from: components) { selectedDate = newDate }
         }
-        
-        // If single mode, this updates the view.
-        // If range mode, we might just be navigating the calendar view without changing selection yet?
-        // For now, let's assume navigating updates the focus.
-        if !isRangeMode {
-            loadTransactions() // Reload for the new date
-        }
+        if !isRangeMode { loadTransactions() }
     }
-    
+
     func selectDate(_ date: Date) {
         if isRangeMode {
             if let range = selectedDateRange {
-                // If we already have a range, are we starting a new one?
-                // Or extending? Let's say: if we have a full range, reset. If we have partial?
-                // Let's simplify: Range Selection typically involves Tap 1 (Start), Tap 2 (End).
-                // But `selectedDateRange` is closed.
-                // Let's implement a simple logic:
-                // If we assume the user is building a range:
-                // 1. If currently nil, set both to date.
-                // 2. If we have a range where start == end (effectively one day selected), update end to new date.
-                // 3. If we have a different range, reset to new start.
-                
                 if range.lowerBound == range.upperBound {
-                    // Extending
-                    if date < range.lowerBound {
-                         selectedDateRange = date...range.upperBound
-                    } else {
-                         selectedDateRange = range.lowerBound...date
-                    }
+                    selectedDateRange = date < range.lowerBound ? date...range.upperBound : range.lowerBound...date
                 } else {
-                    // Resetting
                     selectedDateRange = date...date
                 }
             } else {
@@ -158,53 +102,24 @@ final class TransactionViewModel {
         }
     }
 
-    func loadAvailableCategories(
-        transactionDate: Date,
-        budget: Budget,
-        excluding: Transaction? = nil
-    ) {
-        let descriptor = FetchDescriptor<Category>(
-            predicate: #Predicate<Category> { category in
-                category.isActive == true
-            }
-        )
-        
+    func loadAvailableCategories(transactionDate: Date, budget: Budget, excluding: Transaction? = nil) {
         do {
-            let allCategories = try modelContext.fetch(descriptor)
-            
-            // Filter by budget and validation rules
-            availableCategories = allCategories.filter { category in
-                // Must belong to the same budget
-                guard category.budget?.id == budget.id else { return false }
-                
-
-                
-                // Check if category is valid for the date
-                return category.isValid(for: transactionDate)
-            }
+            let allCategories = try categoryRepo.fetchAll(budgetId: budget.id, isActive: true)
+            availableCategories = allCategories.filter { $0.isValid(for: transactionDate) }
         } catch {
             errorMessage = "Failed to load categories: \(error.localizedDescription)"
             availableCategories = []
         }
     }
-    
-    func checkOverflow(
-        amount: Decimal,
-        budget: Budget,
-        category: Category,
-        existing: Transaction? = nil
-    ) -> Bool {
+
+    func checkOverflow(amount: Decimal, budget: Budget, category: Category, existing: Transaction? = nil) -> Bool {
         var currentUsed = category.usedAmount
-        
-        // If editing, subtract the previous amount from the usage
-        if let existing = existing, let oldCategory = existing.category, oldCategory.id == category.id {
+        if let existing, existing.categoryId == category.id {
             currentUsed -= existing.amount
         }
-        
-        let totalUsed = currentUsed + amount
-        return totalUsed > category.allocatedAmount
+        return (currentUsed + amount) > category.allocatedAmount
     }
-    
+
     func saveTransaction(
         amount: Decimal,
         description: String,
@@ -214,192 +129,145 @@ final class TransactionViewModel {
         budgetPeriod: Date,
         existing: Transaction? = nil
     ) throws {
-        // Update old category if editing and category changed
-        if let existing = existing, 
-           let oldCategory = existing.category, 
-           oldCategory.id != category.id {
-            oldCategory.usedAmount -= existing.amount
-            oldCategory.updatedAt = Date()
+        // Adjust old category if category changed
+        if let existing, let oldCatId = existing.categoryId, oldCatId != category.id {
+            if let oldCat = budget.categories.first(where: { $0.id == oldCatId }) {
+                oldCat.usedAmount -= existing.amount
+                oldCat.updatedAt = Date()
+                try categoryRepo.update(oldCat)
+            }
         }
-        
-        // Prepare new category usage
-        // Note: If we are editing in the SAME category, we need to adjust for the diff
+
+        // Adjust new category usage
         var newUsage = category.usedAmount
-        if let existing = existing, 
-           let oldCategory = existing.category, 
-           oldCategory.id == category.id {
+        if let existing, existing.categoryId == category.id {
             newUsage -= existing.amount
         }
         newUsage += amount
-        
-        // Update category
         category.usedAmount = newUsage
         category.updatedAt = Date()
-        
+        try categoryRepo.update(category)
+
         // Create or update transaction
-        if let existing = existing {
+        if let existing {
             existing.amount = amount
             existing.desc = description
             existing.date = date
             existing.budgetPeriod = budgetPeriod
-            existing.budget = budget
-            existing.category = category
+            existing.budgetId = budget.id
+            existing.categoryId = category.id
             existing.updatedAt = Date()
+            try transactionRepo.update(existing)
         } else {
             let transaction = Transaction(
                 amount: amount,
                 description: description,
                 date: date,
+                budgetId: budget.id,
+                categoryId: category.id,
                 budget: budget,
                 category: category,
                 budgetPeriod: budgetPeriod
             )
-            modelContext.insert(transaction)
+            try transactionRepo.insert(transaction)
             transactions.insert(transaction, at: 0)
         }
-        
-        // Update budget remaining amount
+
+        // Update budget remaining
         budget.updateRemainingAmount()
-        
-        try modelContext.save()
+        try DatabaseService.shared.queue.write { db in try budget.update(db) }
+
         loadTransactions(for: budget)
     }
-    
+
     func deleteTransaction(_ transaction: Transaction) throws {
-        // Store budget reference before deletion
         let budget = transaction.budget
-        
-        // Update category used amount
-        if let category = transaction.category {
+
+        // Update category
+        if let catId = transaction.categoryId,
+           let category = budget?.categories.first(where: { $0.id == catId }) {
             category.usedAmount -= transaction.amount
             category.updatedAt = Date()
+            try categoryRepo.update(category)
         }
-        
+
         // Update budget
         budget?.updateRemainingAmount()
-        
-        modelContext.delete(transaction)
-        try modelContext.save()
-        
-        // Reload transactions from database instead of manually manipulating array
+        if let budget {
+            try DatabaseService.shared.queue.write { db in try budget.update(db) }
+        }
+
+        try transactionRepo.delete(id: transaction.id)
         loadTransactions(for: budget)
     }
-    
+
     // MARK: - Calendar Data
-    
+
     func loadTransactionDates(for budget: Budget? = nil) {
-        // Optimize: verify if we need to fetch all or just for the current month/view
-        // For indicators, fetching for the current month is usually enough.
-        // Let's fetch for the current viewed month.
-        
         let calendar = Calendar.current
         guard let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: selectedDate)),
-              let monthEnd = calendar.date(byAdding: .month, value: 1, to: monthStart) else {
-            return
-        }
-        
-        let descriptor = FetchDescriptor<Transaction>(
-            predicate: #Predicate<Transaction> { transaction in
-                transaction.isActive == true &&
-                transaction.date >= monthStart &&
-                transaction.date < monthEnd
-            }
-        )
-        
+              let monthEnd = calendar.date(byAdding: .month, value: 1, to: monthStart) else { return }
+
         do {
-            let fetchedTransactions = try modelContext.fetch(descriptor)
-            let dates = fetchedTransactions.map { calendar.startOfDay(for: $0.date) }
-            transactionDates = Set(dates)
+            transactionDates = try transactionRepo.fetchDates(budgetId: budget?.id, monthStart: monthStart, monthEnd: monthEnd)
         } catch {
             print("Failed to load transaction dates: \(error)")
         }
     }
-    
+
     func generateCalendarDays() -> [Date?] {
         let calendar = Calendar.current
-        
         switch calendarScope {
         case .month:
             let components = DateComponents(year: currentYear, month: currentMonth)
             guard let startOfMonth = calendar.date(from: components),
-                  let range = calendar.range(of: .day, in: .month, for: startOfMonth) else {
-                return []
-            }
-            
-            let weekday = calendar.component(.weekday, from: startOfMonth) // 1 = Sun
-            let offset = weekday - 1
-            
-            var days: [Date?] = Array(repeating: nil, count: offset)
-            
+                  let range = calendar.range(of: .day, in: .month, for: startOfMonth) else { return [] }
+            let weekday = calendar.component(.weekday, from: startOfMonth)
+            var days: [Date?] = Array(repeating: nil, count: weekday - 1)
             for day in 1...range.count {
                 if let date = calendar.date(byAdding: .day, value: day - 1, to: startOfMonth) {
                     days.append(date)
                 }
             }
             return days
-            
+
         case .week:
-            // Find start of the week for selectedDate
-            guard let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: selectedDate)) else {
-                return []
-            }
-            
-            var days: [Date?] = []
-            for day in 0..<7 {
-                if let date = calendar.date(byAdding: .day, value: day, to: startOfWeek) {
-                    days.append(date)
-                }
-            }
-            return days
+            guard let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: selectedDate)) else { return [] }
+            return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: startOfWeek) }
         }
     }
+
     func nextPage() {
-        let calendar = Calendar.current
         let component: Calendar.Component = calendarScope == .month ? .month : .weekOfYear
-        
-        if let newDate = calendar.date(byAdding: component, value: 1, to: selectedDate) {
+        if let newDate = Calendar.current.date(byAdding: component, value: 1, to: selectedDate) {
             selectedDate = newDate
-            if !isRangeMode {
-                loadTransactions()
-            }
-            loadTransactionDates() // Reload indicators for new month/week
-        }
-    }
-    
-    func previousPage() {
-        let calendar = Calendar.current
-        let component: Calendar.Component = calendarScope == .month ? .month : .weekOfYear
-        
-        if let newDate = calendar.date(byAdding: component, value: -1, to: selectedDate) {
-            selectedDate = newDate
-             if !isRangeMode {
-                loadTransactions()
-            }
+            if !isRangeMode { loadTransactions() }
             loadTransactionDates()
         }
     }
-    
+
+    func previousPage() {
+        let component: Calendar.Component = calendarScope == .month ? .month : .weekOfYear
+        if let newDate = Calendar.current.date(byAdding: component, value: -1, to: selectedDate) {
+            selectedDate = newDate
+            if !isRangeMode { loadTransactions() }
+            loadTransactionDates()
+        }
+    }
+
     func performGlobalSearch() {
         isLoading = true
         errorMessage = nil
-        
         let text = searchText
-        let descriptor = FetchDescriptor<Transaction>(
-            predicate: #Predicate<Transaction> { transaction in
-                transaction.isActive == true &&
-                transaction.desc.localizedStandardContains(text)
-            },
-            sortBy: [SortDescriptor(\.date, order: .reverse)]
-        )
-        
+
         do {
-            transactions = try modelContext.fetch(descriptor)
+            transactions = try transactionRepo.search(text: text)
             let dates = transactions.map { Calendar.current.startOfDay(for: $0.date) }
             searchHighlightDates = Set(dates)
         } catch {
             errorMessage = "Failed to search transactions: \(error.localizedDescription)"
         }
-        
+
         isLoading = false
     }
 }
