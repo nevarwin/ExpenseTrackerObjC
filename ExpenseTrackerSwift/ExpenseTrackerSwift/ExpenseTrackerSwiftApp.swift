@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct ExpenseTrackerApp: App {
+struct ExpenseMeApp: App {
     @StateObject private var appearanceManager = AppearanceManager()
     
     var body: some Scene {
