@@ -98,7 +98,7 @@ struct CalendarView: View {
                 // Range Toggle
                 Toggle("Range", isOn: $viewModel.isRangeMode)
                     .labelsHidden()
-                    .toggleStyle(SwitchToggleStyle(tint: .blue))
+                    .toggleStyle(SwitchToggleStyle(tint: .appAccent))
                     .overlay(
                         Text(viewModel.isRangeMode ? "Range" : "Single")
                             .font(.caption2)
@@ -213,7 +213,7 @@ struct DayCell: View {
                         if isSearchResult {
                             Circle().stroke(Color.green, lineWidth: 2)
                         } else if selectionState == .none && isToday {
-                            Circle().stroke(Color.blue, lineWidth: 1)
+                            Circle().stroke(Color.appAccent, lineWidth: 1)
                         }
                     }
                 )
@@ -235,24 +235,24 @@ struct DayCell: View {
     private var backgroundView: some View {
         switch selectionState {
         case .single:
-            Circle().fill(Color.blue)
+            Circle().fill(Color.appAccent)
         case .start:
             HStack(spacing: 0) {
                 Color.clear
-                Color.blue
+                Color.appAccent
             }
             .overlay(
-                Circle().fill(Color.blue)
+                Circle().fill(Color.appAccent)
             )
         case .middle:
-            Color.blue
+            Color.appAccent
         case .end:
              HStack(spacing: 0) {
-                Color.blue
+                Color.appAccent
                 Color.clear
             }
             .overlay(
-                Circle().fill(Color.blue)
+                Circle().fill(Color.appAccent)
             )
         case .none:
             Color.clear
