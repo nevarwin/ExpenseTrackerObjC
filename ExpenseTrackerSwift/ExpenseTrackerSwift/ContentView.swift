@@ -25,14 +25,13 @@ struct ContentView: View {
         Group {
             if let viewModel = budgetViewModel {
                 TabView {
-                    HomeView(viewModel: viewModel)
-                        .tabItem {
-                            Label("Home", systemImage: "house.fill")
-                        }
-                    
                     TransactionListView()
                         .tabItem {
                             Label("Transactions", systemImage: "list.bullet")
+                        }
+                    HomeView(viewModel: viewModel)
+                        .tabItem {
+                            Label("Budget", systemImage: "creditcard.fill")
                         }
                 }
             } else {

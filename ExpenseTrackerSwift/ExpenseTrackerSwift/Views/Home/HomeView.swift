@@ -179,11 +179,6 @@ struct WelcomeHeader: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(dateString.uppercased())
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Color.appSecondary)
-                
                 Text(viewModel.selectedBudget?.name ?? "Dashboard")
                     .font(.system(.largeTitle, design: .rounded))
                     .fontWeight(.bold)

@@ -315,21 +315,28 @@ final class TransactionViewModel {
         }
     }
     
-    func generateCalendarDays() -> [Date?] {
+    func generateCalendarDays(offset: Int = 0) -> [Date?] {
         let calendar = Calendar.current
+        
+        let component: Calendar.Component = calendarScope == .month ? .month : .weekOfYear
+        guard let baseDate = calendar.date(byAdding: component, value: offset, to: selectedDate) else {
+            return []
+        }
         
         switch calendarScope {
         case .month:
-            let components = DateComponents(year: currentYear, month: currentMonth)
+            let year = calendar.component(.year, from: baseDate)
+            let month = calendar.component(.month, from: baseDate)
+            let components = DateComponents(year: year, month: month)
             guard let startOfMonth = calendar.date(from: components),
                   let range = calendar.range(of: .day, in: .month, for: startOfMonth) else {
                 return []
             }
             
             let weekday = calendar.component(.weekday, from: startOfMonth) // 1 = Sun
-            let offset = weekday - 1
+            let offsetDays = weekday - 1
             
-            var days: [Date?] = Array(repeating: nil, count: offset)
+            var days: [Date?] = Array(repeating: nil, count: offsetDays)
             
             for day in 1...range.count {
                 if let date = calendar.date(byAdding: .day, value: day - 1, to: startOfMonth) {
@@ -339,8 +346,8 @@ final class TransactionViewModel {
             return days
             
         case .week:
-            // Find start of the week for selectedDate
-            guard let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: selectedDate)) else {
+            // Find start of the week for baseDate
+            guard let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: baseDate)) else {
                 return []
             }
             
