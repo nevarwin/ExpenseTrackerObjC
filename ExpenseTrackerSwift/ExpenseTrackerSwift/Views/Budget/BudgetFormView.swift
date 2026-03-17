@@ -189,9 +189,7 @@ struct BudgetFormView: View {
         let activeDrafts = categoryDrafts.filter { $0.isActive }
         let incomeTotal = activeDrafts.filter(\.isIncome).reduce(Decimal.zero) { $0 + $1.allocatedDecimal }
 
-        guard !name.trimmingCharacters(in: .whitespaces).isEmpty,
-              incomeTotal > 0,
-              activeDrafts.contains(where: { $0.isIncome }) else { return false }
+        guard !name.trimmingCharacters(in: .whitespaces).isEmpty else { return false }
 
         let categoryNames = activeDrafts.map { $0.name.trimmingCharacters(in: .whitespaces).lowercased() }
         guard categoryNames.count == Set(categoryNames).count else { return false }

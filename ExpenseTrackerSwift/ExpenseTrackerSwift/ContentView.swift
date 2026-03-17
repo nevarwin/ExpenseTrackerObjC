@@ -11,7 +11,17 @@ struct ContentView: View {
     @Query(filter: #Predicate<Budget> { $0.isActive == true })
     private var activeBudgets: [Budget]
     
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    
     var body: some View {
+        if hasCompletedOnboarding {
+            mainContent
+        } else {
+            OnboardingView()
+        }
+    }
+    
+    private var mainContent: some View {
         Group {
             if let viewModel = budgetViewModel {
                 TabView {
