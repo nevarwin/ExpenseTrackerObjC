@@ -37,7 +37,7 @@
 		75DF808E69BBAB48A0D4F538 /* Transaction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Transaction.swift; path = ExpenseTrackerSwift/Models/Transaction.swift; sourceTree = "<group>"; };
 		79DC7366FAAAE06E81605AF0 /* BudgetViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BudgetViewModel.swift; path = ExpenseTrackerSwift/ViewModels/BudgetViewModel.swift; sourceTree = "<group>"; };
 		9415807B7BC8B1DCDFE72D57 /* BudgetAllocation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BudgetAllocation.swift; path = ExpenseTrackerSwift/Models/BudgetAllocation.swift; sourceTree = "<group>"; };
-		973C37EA2F1E74D800CB57BA /* ExpenseTrackerSwift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExpenseTrackerSwift.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		973C37EA2F1E74D800CB57BA /* ExpenseMe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExpenseMe.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		973C37F92F1E74DA00CB57BA /* ExpenseTrackerSwiftTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExpenseTrackerSwiftTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		973C38032F1E74DA00CB57BA /* ExpenseTrackerSwiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExpenseTrackerSwiftUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A0DA74EC14867973B8C1F368 /* BudgetListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BudgetListView.swift; path = ExpenseTrackerSwift/Views/Budget/BudgetListView.swift; sourceTree = "<group>"; };
@@ -159,7 +159,7 @@
 		973C37EB2F1E74D800CB57BA /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				973C37EA2F1E74D800CB57BA /* ExpenseTrackerSwift.app */,
+				973C37EA2F1E74D800CB57BA /* ExpenseMe.app */,
 				973C37F92F1E74DA00CB57BA /* ExpenseTrackerSwiftTests.xctest */,
 				973C38032F1E74DA00CB57BA /* ExpenseTrackerSwiftUITests.xctest */,
 			);
@@ -221,7 +221,7 @@
 			);
 			name = ExpenseTrackerSwift;
 			productName = ExpenseTrackerSwift;
-			productReference = 973C37EA2F1E74D800CB57BA /* ExpenseTrackerSwift.app */;
+			productReference = 973C37EA2F1E74D800CB57BA /* ExpenseMe.app */;
 			productType = "com.apple.product-type.application";
 		};
 		973C37F82F1E74DA00CB57BA /* ExpenseTrackerSwiftTests */ = {
@@ -505,11 +505,13 @@
 				DEVELOPMENT_TEAM = VQXG9UW8TD;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = ExpenseMe;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -518,7 +520,6 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = raven.ExpenseTrackerSwift;
 				PRODUCT_NAME = ExpenseMe;
-				INFOPLIST_KEY_CFBundleDisplayName = ExpenseMe;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -539,11 +540,13 @@
 				DEVELOPMENT_TEAM = VQXG9UW8TD;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = ExpenseMe;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -552,7 +555,6 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = raven.ExpenseTrackerSwift;
 				PRODUCT_NAME = ExpenseMe;
-				INFOPLIST_KEY_CFBundleDisplayName = ExpenseMe;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;

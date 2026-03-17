@@ -11,100 +11,26 @@ struct TransactionListView: View {
     @Query(filter: #Predicate<Budget> { $0.isActive == true })
     private var activeBudgets: [Budget]
     
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+    
     var body: some View {
         NavigationStack {
             Group {
                 if let viewModel = viewModel {
-                    VStack(spacing: 0) {
-                        // Custom Calendar View
-                        CalendarView(viewModel: viewModel) { hasTransactions in
-                            hasUserSelectedDate = true
-                            if !hasTransactions && !activeBudgets.isEmpty {
-                                showingAddTransaction = true
+                    let layout = verticalSizeClass == .compact ? AnyLayout(HStackLayout(alignment: .top, spacing: 16)) : AnyLayout(VStackLayout(spacing: 0))
+                    
+                    layout {
+                        if verticalSizeClass == .compact {
+                            ScrollView(.vertical, showsIndicators: false) {
+                                calendarContent(viewModel: viewModel)
                             }
-                        }
-                        .padding(.bottom, 8)
-                        
-                        if viewModel.isLoading {
-                            ProgressView("Loading transactions...")
-                                .frame(maxHeight: .infinity)
-                        } else if !hasUserSelectedDate && viewModel.searchText.isEmpty {
-                            ContentUnavailableView(
-                                "Select a Date",
-                                systemImage: "calendar",
-                                description: Text("Tap a date on the calendar above to view your transactions.")
-                            )
-                            .frame(maxHeight: .infinity)
-                        } else if viewModel.transactions.isEmpty {
-                            ContentUnavailableView(
-                                viewModel.searchText.isEmpty ? "No Transactions" : "No Results",
-                                systemImage: viewModel.searchText.isEmpty ? "list.bullet" : "magnifyingglass",
-                                description: Text(viewModel.searchText.isEmpty ? "No transactions found for this period" : "No transactions match '\(viewModel.searchText)'")
-                            )
-                            .frame(maxHeight: .infinity)
+                            .frame(maxWidth: 350)
+                            
+                            transactionListContent(viewModel: viewModel)
                         } else {
-                            List {
-                                Section {
-                                    ForEach(Array(viewModel.transactions.enumerated()), id: \.element.id) { index, transaction in
-                                        Button {
-                                            selectedTransaction = transaction
-                                        } label: {
-                                            TransactionRowView(transaction: transaction)
-                                                .background {
-                                                    if index == 0 {
-                                                        GeometryReader { proxy in
-                                                            Color.clear
-                                                                .preference(
-                                                                    key: ScrollOffsetPreferenceKey.self,
-                                                                    value: proxy.frame(in: .named("scroll")).minY
-                                                                )
-                                                        }
-                                                    }
-                                                }
-                                        }
-                                        .buttonStyle(.plain)
-                                        .listRowBackground(Color.clear)
-                                        .listRowSeparator(.hidden)
-                                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                            Button(role: .destructive) {
-                                                try? viewModel.deleteTransaction(transaction)
-                                            } label: {
-                                                Label("Delete", systemImage: "trash")
-                                            }
-                                            
-                                            Button {
-                                                selectedTransaction = transaction
-                                            } label: {
-                                                Label("Edit", systemImage: "pencil")
-                                            }
-                                            .tint(.blue)
-                                        }
-                                    }
-                                } header: {
-                                    EmptyView()
-                                } footer: {
-                                    EmptyView()
-                                }
-                            }
-                            .listStyle(.insetGrouped)
-                            .listSectionSpacing(0)
-                            .coordinateSpace(name: "scroll")
-                            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
-                                // Collapsing logic
-                                // If scrolling down (value goes negative), collapse to week
-                                // If scrolling up near top (value goes near 0), expand to month
-                                if value < -20 && viewModel.calendarScope == .month {
-                                    withAnimation {
-                                        viewModel.calendarScope = .week
-                                    }
-                                } else if value > 0 && viewModel.calendarScope == .week {
-                                    withAnimation {
-                                        viewModel.calendarScope = .month
-                                    }
-                                }
-                            }
-                            // Header showing the range if needed, but we have the top bar now
+                            calendarContent(viewModel: viewModel)
+                            
+                            transactionListContent(viewModel: viewModel)
                         }
                     }
                     .onChange(of: viewModel.selectedDate) { _, _ in viewModel.loadTransactions() }
@@ -173,6 +99,104 @@ struct TransactionListView: View {
             try? viewModel.deleteTransaction(transaction)
         }
     }
+    
+    @ViewBuilder
+    private func calendarContent(viewModel: TransactionViewModel) -> some View {
+        CalendarView(viewModel: viewModel) { hasTransactions in
+            hasUserSelectedDate = true
+            if !hasTransactions && !activeBudgets.isEmpty {
+                showingAddTransaction = true
+            }
+        }
+        .padding(.bottom, 8)
+    }
+    
+    @ViewBuilder
+    private func transactionListContent(viewModel: TransactionViewModel) -> some View {
+        if viewModel.isLoading {
+            ProgressView("Loading transactions...")
+                .frame(maxHeight: .infinity)
+                .frame(maxWidth: .infinity)
+        } else if !hasUserSelectedDate && viewModel.searchText.isEmpty {
+            ContentUnavailableView(
+                "Select a Date",
+                systemImage: "calendar",
+                description: Text(verticalSizeClass == .compact ? "Tap a date on the calendar to the left to view your transactions." : "Tap a date on the calendar above to view your transactions.")
+            )
+            .frame(maxHeight: .infinity)
+            .frame(maxWidth: .infinity)
+        } else if viewModel.transactions.isEmpty {
+            ContentUnavailableView(
+                viewModel.searchText.isEmpty ? "No Transactions" : "No Results",
+                systemImage: viewModel.searchText.isEmpty ? "list.bullet" : "magnifyingglass",
+                description: Text(viewModel.searchText.isEmpty ? "No transactions found for this period" : "No transactions match '\(viewModel.searchText)'")
+            )
+            .frame(maxHeight: .infinity)
+            .frame(maxWidth: .infinity)
+        } else {
+            List {
+                Section {
+                    ForEach(Array(viewModel.transactions.enumerated()), id: \.element.id) { index, transaction in
+                        Button {
+                            selectedTransaction = transaction
+                        } label: {
+                            TransactionRowView(transaction: transaction)
+                                .background {
+                                    if index == 0 {
+                                        GeometryReader { proxy in
+                                            Color.clear
+                                                .preference(
+                                                    key: ScrollOffsetPreferenceKey.self,
+                                                    value: proxy.frame(in: .named("scroll")).minY
+                                                )
+                                        }
+                                    }
+                                }
+                        }
+                        .buttonStyle(.plain)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                try? viewModel.deleteTransaction(transaction)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                            
+                            Button {
+                                selectedTransaction = transaction
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+                            .tint(.blue)
+                        }
+                    }
+                } header: {
+                    EmptyView()
+                } footer: {
+                    EmptyView()
+                }
+            }
+            .listStyle(.insetGrouped)
+            .listSectionSpacing(0)
+            .coordinateSpace(name: "scroll")
+            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                // Collapsing logic
+                // If scrolling down (value goes negative), collapse to week
+                // If scrolling up near top (value goes near 0), expand to month
+                if value < -20 && viewModel.calendarScope == .month {
+                    withAnimation {
+                        viewModel.calendarScope = .week
+                    }
+                } else if value > 0 && viewModel.calendarScope == .week {
+                    withAnimation {
+                        viewModel.calendarScope = .month
+                    }
+                }
+            }
+        }
+    }
 }
 
 private struct ScrollOffsetPreferenceKey: PreferenceKey {
@@ -237,6 +261,12 @@ struct TransactionFormView: View {
                         TextField("0.00", text: $amount)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
+                            .onChange(of: amount) { oldValue, newValue in
+                                let parts = newValue.split(separator: ".")
+                                if let intPart = parts.first, intPart.count > 9 {
+                                    amount = oldValue
+                                }
+                            }
                     }
                     
                     LabeledContent("Description") {
@@ -329,6 +359,7 @@ struct TransactionFormView: View {
     private var isValid: Bool {
         guard let decimalAmount = Decimal(string: amount),
               decimalAmount > 0,
+              decimalAmount <= 999_999_999,
               !description.isEmpty,
               selectedCategory != nil else {
             return false

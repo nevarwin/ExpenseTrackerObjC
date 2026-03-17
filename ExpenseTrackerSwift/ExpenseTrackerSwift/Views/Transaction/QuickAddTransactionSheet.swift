@@ -23,6 +23,8 @@ struct QuickAddTransactionSheet: View {
     @State private var showingError = false
     @State private var errorMessage = ""
     
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+    
     init(viewModel: TransactionViewModel, activeBudgets: [Budget], initialBudget: Budget) {
         self.viewModel = viewModel
         self.activeBudgets = activeBudgets
@@ -42,90 +44,44 @@ struct QuickAddTransactionSheet: View {
                     viewModel: viewModel
                 )
             } else {
-                VStack(spacing: 20) {
-                    // Amount Input
-                    TextField("0.00", text: $amount)
-                        .font(.system(size: 54, weight: .bold))
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.center)
-                        .padding(.top, 30)
-                    
-                    // Income/Expense Segmented Control
-                    Picker("Transaction Type", selection: $isIncome) {
-                        Text("Expense").tag(false)
-                        Text("Income").tag(true)
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal)
-                    
-                    // Horizontal Category Picker
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 16) {
-                            ForEach(filteredCategories) { category in
-                                CategorySelectionIcon(
-                                    category: category,
-                                    isSelected: selectedCategory?.id == category.id
-                                )
-                                .onTapGesture {
-                                    selectedCategory = category
-                                }
-                            }
+                let layout = verticalSizeClass == .compact ? AnyLayout(HStackLayout(alignment: .top, spacing: 24)) : AnyLayout(VStackLayout(spacing: 20))
+                
+                if verticalSizeClass == .compact {
+                    ScrollView(.vertical, showsIndicators: false) {
+                        layout {
+                            amountAndTypeContent
+                            categoryAndActionsContent
                         }
-                        .padding(.horizontal)
+                        .padding(.vertical)
                     }
-                    .frame(height: 100)
-                    
-                    Spacer()
-                    
-                    // Action Buttons
-                    VStack(spacing: 12) {
-                        Button {
-                            showFullForm = true
-                        } label: {
-                            Text("Expand for more details")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                        
-                        Button {
-                            saveTransaction()
-                        } label: {
-                            Text("Save Transaction")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.accentColor)
-                                .cornerRadius(12)
-                        }
-                        .disabled(!isValid)
+                } else {
+                    layout {
+                        amountAndTypeContent
+                        categoryAndActionsContent
                     }
-                    .padding(.horizontal)
-                    .padding(.bottom)
-                }
-                .navigationTitle("Quick Add")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { dismiss() }
-                    }
-                }
-                .alert("Amount Exceeds Allocation", isPresented: $showingOverflowAlert) {
-                    Button("Cancel", role: .cancel) { }
-                    Button("Proceed Anyway") {
-                        performSave()
-                    }
-                } message: {
-                    Text("The entered amount exceeds the allocated budget for this category. The excess will be applied to the total. Do you want to continue?")
-                }
-                .alert("Error", isPresented: $showingError) {
-                    Button("OK") { }
-                } message: {
-                    Text(errorMessage)
                 }
             }
         }
         .presentationDetents(showFullForm ? [.large] : [.medium, .large])
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
+        }
+        .alert("Amount Exceeds Allocation", isPresented: $showingOverflowAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Proceed Anyway") {
+                performSave()
+            }
+        } message: {
+            Text("The entered amount exceeds the allocated budget for this category. The excess will be applied to the total. Do you want to continue?")
+        }
+        .alert("Error", isPresented: $showingError) {
+            Button("OK") { }
+        } message: {
+            Text(errorMessage)
+        }
         .onAppear {
             selectedBudgetPeriod = DateRangeHelper.monthBounds(for: date).start
             viewModel.loadAvailableCategories(
@@ -140,6 +96,88 @@ struct QuickAddTransactionSheet: View {
         }
     }
     
+    @ViewBuilder
+    private var amountAndTypeContent: some View {
+        VStack(spacing: 20) {
+            // Amount Input
+            TextField("0.00", text: $amount)
+                .font(.system(size: 54, weight: .bold))
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.center)
+                .padding(.top, verticalSizeClass == .compact ? 0 : 30)
+                .onChange(of: amount) { oldValue, newValue in
+                    let parts = newValue.split(separator: ".")
+                    if let intPart = parts.first, intPart.count > 9 {
+                        amount = oldValue
+                    }
+                }
+            
+            // Income/Expense Segmented Control
+            Picker("Transaction Type", selection: $isIncome) {
+                Text("Expense").tag(false)
+                Text("Income").tag(true)
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal)
+            
+            if verticalSizeClass != .compact {
+                Spacer()
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var categoryAndActionsContent: some View {
+        VStack(spacing: 20) {
+            // Horizontal Category Picker
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 16) {
+                    ForEach(filteredCategories) { category in
+                        CategorySelectionIcon(
+                            category: category,
+                            isSelected: selectedCategory?.id == category.id
+                        )
+                        .onTapGesture {
+                            selectedCategory = category
+                        }
+                    }
+                }
+                .padding(.horizontal)
+            }
+            .frame(height: 100)
+            
+            if verticalSizeClass != .compact {
+                Spacer()
+            }
+            
+            // Action Buttons
+            VStack(spacing: 12) {
+                Button {
+                    showFullForm = true
+                } label: {
+                    Text("Expand for more details")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Button {
+                    saveTransaction()
+                } label: {
+                    Text("Save Transaction")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.accentColor)
+                        .cornerRadius(12)
+                }
+                .disabled(!isValid)
+            }
+            .padding(.horizontal)
+            .padding(.bottom)
+        }
+    }
+    
     private var filteredCategories: [Category] {
         viewModel.availableCategories.filter { $0.isIncome == isIncome }
     }
@@ -147,6 +185,7 @@ struct QuickAddTransactionSheet: View {
     private var isValid: Bool {
         guard let decimalAmount = Decimal(string: amount),
               decimalAmount > 0,
+              decimalAmount <= 999_999_999,
               selectedCategory != nil else {
             return false
         }
