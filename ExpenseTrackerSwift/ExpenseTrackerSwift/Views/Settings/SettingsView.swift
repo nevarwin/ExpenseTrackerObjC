@@ -25,6 +25,9 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .onAppear {
+                PostHogManager.shared.trackScreen("Settings")
+            }
         }
     }
 }

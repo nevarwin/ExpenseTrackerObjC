@@ -5,6 +5,10 @@ import SwiftData
 struct ExpenseMeApp: App {
     @StateObject private var appearanceManager = AppearanceManager()
     
+    init() {
+        PostHogManager.shared.setup()
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()

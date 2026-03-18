@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		23A5749A13F6C8D145356A1F /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0213E257FD2ED0642FBA8CC6 /* Category.swift */; };
+		976D07222F6AE17B008D9A7C /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 976D07212F6AE17B008D9A7C /* PostHog */; };
 		F009DDC87DAE0F6CC8D5A31D /* BudgetAllocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9415807B7BC8B1DCDFE72D57 /* BudgetAllocation.swift */; };
 /* End PBXBuildFile section */
 
@@ -34,6 +35,7 @@
 		3E97BF98361D0D837252E411 /* HomeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HomeView.swift; path = ExpenseTrackerSwift/Views/Home/HomeView.swift; sourceTree = "<group>"; };
 		58082728789922605C422983 /* CategoryViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CategoryViewModel.swift; path = ExpenseTrackerSwift/ViewModels/CategoryViewModel.swift; sourceTree = "<group>"; };
 		61047B87C759C702876D0418 /* BudgetDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BudgetDetailView.swift; path = ExpenseTrackerSwift/Views/Budget/BudgetDetailView.swift; sourceTree = "<group>"; };
+		6AD30949190D5C00763B7477 /* Secrets.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		75DF808E69BBAB48A0D4F538 /* Transaction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Transaction.swift; path = ExpenseTrackerSwift/Models/Transaction.swift; sourceTree = "<group>"; };
 		79DC7366FAAAE06E81605AF0 /* BudgetViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BudgetViewModel.swift; path = ExpenseTrackerSwift/ViewModels/BudgetViewModel.swift; sourceTree = "<group>"; };
 		9415807B7BC8B1DCDFE72D57 /* BudgetAllocation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BudgetAllocation.swift; path = ExpenseTrackerSwift/Models/BudgetAllocation.swift; sourceTree = "<group>"; };
@@ -51,10 +53,18 @@
 		972937F82F60532700650484 /* Exceptions for "ExpenseTrackerSwift" folder in "ExpenseTrackerSwift" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Info.plist,
 				Models/BudgetAllocation.swift,
 				Models/Category.swift,
 			);
 			target = 973C37E92F1E74D800CB57BA /* ExpenseTrackerSwift */;
+		};
+		976D07282F6AE771008D9A7C /* Exceptions for "ExpenseTrackerSwiftUITests" folder in "ExpenseTrackerSwiftUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 973C38022F1E74DA00CB57BA /* ExpenseTrackerSwiftUITests */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -74,6 +84,9 @@
 		};
 		973C38062F1E74DA00CB57BA /* ExpenseTrackerSwiftUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				976D07282F6AE771008D9A7C /* Exceptions for "ExpenseTrackerSwiftUITests" folder in "ExpenseTrackerSwiftUITests" target */,
+			);
 			path = ExpenseTrackerSwiftUITests;
 			sourceTree = "<group>";
 		};
@@ -84,6 +97,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				976D07222F6AE17B008D9A7C /* PostHog in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -153,6 +167,7 @@
 				973C38062F1E74DA00CB57BA /* ExpenseTrackerSwiftUITests */,
 				973C37EB2F1E74D800CB57BA /* Products */,
 				DFFF1085FD6FA1CD9A8567FD /* ExpenseTrackerSwift */,
+				6AD30949190D5C00763B7477 /* Secrets.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -298,6 +313,9 @@
 			);
 			mainGroup = 973C37E12F1E74D800CB57BA;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				976D07202F6AE17B008D9A7C /* XCRemoteSwiftPackageReference "posthog-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 973C37EB2F1E74D800CB57BA /* Products */;
 			projectDirPath = "";
@@ -497,6 +515,8 @@
 		};
 		973C380E2F1E74DA00CB57BA /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 973C37EC2F1E74D800CB57BA /* ExpenseTrackerSwift */;
+			baseConfigurationReferenceRelativePath = Secrets.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -505,8 +525,10 @@
 				DEVELOPMENT_TEAM = VQXG9UW8TD;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ExpenseTrackerSwift/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ExpenseMe;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_PostHogAPIKey = "$(POSTHOG_API_KEY)";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -532,6 +554,8 @@
 		};
 		973C380F2F1E74DA00CB57BA /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 973C37EC2F1E74D800CB57BA /* ExpenseTrackerSwift */;
+			baseConfigurationReferenceRelativePath = Secrets.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -540,8 +564,10 @@
 				DEVELOPMENT_TEAM = VQXG9UW8TD;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ExpenseTrackerSwift/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ExpenseMe;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_PostHogAPIKey = "$(POSTHOG_API_KEY)";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -613,9 +639,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				COMPILATION_CACHE_ENABLE_CACHING = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = VQXG9UW8TD;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ExpenseTrackerSwiftUITests/Info.plist;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = raven.ExpenseTrackerSwiftUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -633,9 +661,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				COMPILATION_CACHE_ENABLE_CACHING = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = VQXG9UW8TD;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ExpenseTrackerSwiftUITests/Info.plist;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = raven.ExpenseTrackerSwiftUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -689,6 +719,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		976D07202F6AE17B008D9A7C /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.47.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		976D07212F6AE17B008D9A7C /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 976D07202F6AE17B008D9A7C /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 973C37E22F1E74D800CB57BA /* Project object */;
 }

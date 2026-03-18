@@ -28,6 +28,7 @@ struct HomeView: View {
             }
             .navigationBarHidden(true)
             .onAppear {
+                PostHogManager.shared.trackScreen("Home")
                 if injectedViewModel == nil && internalViewModel == nil {
                     let vm = BudgetViewModel(modelContext: modelContext)
                     self.internalViewModel = vm

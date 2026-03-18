@@ -146,6 +146,9 @@ struct BudgetFormView: View {
             } message: {
                 Text(errorMessage)
             }
+            .onAppear {
+                PostHogManager.shared.trackScreen("Budget Form")
+            }
         }
     }
 
@@ -187,7 +190,6 @@ struct BudgetFormView: View {
 
     private var isValid: Bool {
         let activeDrafts = categoryDrafts.filter { $0.isActive }
-        let incomeTotal = activeDrafts.filter(\.isIncome).reduce(Decimal.zero) { $0 + $1.allocatedDecimal }
 
         guard !name.trimmingCharacters(in: .whitespaces).isEmpty else { return false }
 
@@ -209,8 +211,10 @@ struct BudgetFormView: View {
             if let existing = existingBudget {
                 try viewModel.updateBudget(existing, name: name, totalAmount: amount)
                 budget = existing
+                PostHogManager.shared.trackEvent("Budget Updated")
             } else {
                 budget = try viewModel.createBudget(name: name, totalAmount: amount)
+                PostHogManager.shared.trackEvent("Budget Created")
             }
 
             for draft in categoryDrafts where draft.isValid {
@@ -259,6 +263,7 @@ struct BudgetFormView: View {
         guard let budget = existingBudget else { return }
         do {
             try viewModel.deleteBudget(budget)
+            PostHogManager.shared.trackEvent("Budget Deleted")
             dismiss()
         } catch {
             errorMessage = error.localizedDescription

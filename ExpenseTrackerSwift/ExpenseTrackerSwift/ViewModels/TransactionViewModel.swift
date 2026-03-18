@@ -245,6 +245,7 @@ final class TransactionViewModel {
             existing.budget = budget
             existing.category = category
             existing.updatedAt = Date()
+            PostHogManager.shared.trackEvent("Transaction Updated")
         } else {
             let transaction = Transaction(
                 amount: amount,
@@ -256,6 +257,7 @@ final class TransactionViewModel {
             )
             modelContext.insert(transaction)
             transactions.insert(transaction, at: 0)
+            PostHogManager.shared.trackEvent("Transaction Added")
         }
         
         // Update budget remaining amount
@@ -280,6 +282,8 @@ final class TransactionViewModel {
         
         modelContext.delete(transaction)
         try modelContext.save()
+        
+        PostHogManager.shared.trackEvent("Transaction Deleted")
         
         // Reload transactions from database instead of manually manipulating array
         loadTransactions(for: budget)
