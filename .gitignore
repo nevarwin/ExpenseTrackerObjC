@@ -26,3 +26,6 @@ xcuserdata/
 ## Build artifacts
 DerivedData/
 build/
+
+## Secrets
+*.xcconfig
