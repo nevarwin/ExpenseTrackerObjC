@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
 
-struct HomeView: View {
+struct BudgetListView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var internalViewModel: BudgetViewModel?
     private let injectedViewModel: BudgetViewModel?
@@ -26,7 +26,7 @@ struct HomeView: View {
                     ProgressView()
                 }
             }
-            .navigationBarHidden(true)
+            .navigationTitle("Budgets")
             .onAppear {
                 PostHogManager.shared.trackScreen("Home")
                 if injectedViewModel == nil && internalViewModel == nil {
@@ -52,15 +52,6 @@ struct HomeContent: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                // Header
-                WelcomeHeader(
-                    viewModel: viewModel,
-                    onAddBudget: { showingAddBudget = true },
-                    onImportBudget: { isImportingBudget = true }
-                )
-                    .padding(.horizontal)
-                    .padding(.top, 10)
-                
                 // Summary Cards
                 if viewModel.budgets.isEmpty {
                     EmptyBudgetCard(viewModel: viewModel) {
@@ -132,6 +123,38 @@ struct HomeContent: View {
         .onChange(of: viewModel.errorMessage) { _, newValue in
             showingError = newValue != nil
         }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
+                    toolbarMenu
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var toolbarMenu: some View {
+        Button {
+            showingAddBudget = true
+        } label: {
+            Label("Add Budget", systemImage: "plus")
+        }
+        
+        Button {
+            isImportingBudget = true
+        } label: {
+            Label("Import Budget", systemImage: "square.and.arrow.down")
+        }
+        
+        Divider()
+        
+        NavigationLink {
+            SettingsView()
+        } label: {
+            Label("Settings", systemImage: "gearshape.fill")
+        }
     }
     
     private func handleImport(_ result: Result<[URL], Error>) {
@@ -166,52 +189,6 @@ struct HomeContent: View {
     }
 }
 
-struct WelcomeHeader: View {
-    @ObservedObject var viewModel: BudgetViewModel
-    let onAddBudget: () -> Void
-    let onImportBudget: () -> Void
-    
-    private var dateString: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE, MMMM d"
-        return formatter.string(from: Date())
-    }
-    
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(viewModel.selectedBudget?.name ?? "Dashboard")
-                    .font(.system(.largeTitle, design: .rounded))
-                    .fontWeight(.bold)
-                    .foregroundStyle(Color.appPrimary)
-            }
-            Spacer()
-            
-            HStack(spacing: 16) {
-                Menu {
-                    Button(action: onAddBudget) {
-                        Label("Add Budget", systemImage: "plus")
-                    }
-                    Button(action: onImportBudget) {
-                        Label("Import Budget", systemImage: "square.and.arrow.down")
-                    }
-                } label: {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(Color.appAccent)
-                }
-                
-                NavigationLink(destination: SettingsView()) {
-                    Image(systemName: "gearshape.fill")
-                        .font(.title2)
-                        .foregroundStyle(Color.appSecondary)
-                }
-            }
-            .padding(.trailing, 8)
-            
-        }
-    }
-}
 struct BudgetSummaryCard: View {
     let budget: Budget
     @EnvironmentObject var currencyManager: CurrencyManager
@@ -358,7 +335,7 @@ struct EmptyBudgetCard: View {
 
 
 #Preview {
-    HomeView()
+    BudgetListView()
         .modelContainer(for: [Budget.self, Category.self, Transaction.self])
         .environmentObject(CurrencyManager())
 }

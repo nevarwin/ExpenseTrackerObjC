@@ -200,13 +200,11 @@ struct BudgetDetailView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                     Menu {
-                        NavigationLink {
-                            BudgetHistoryView(budget: budget)
+                        Button {
+                            showingEditSheet = true
                         } label: {
-                            Label("View History", systemImage: "chart.line.uptrend.xyaxis")
+                            Label("Edit Budget", systemImage: "pencil")
                         }
-                        
-                        Divider()
                         
                         Button {
                             isImportingTransactions = true
@@ -214,11 +212,14 @@ struct BudgetDetailView: View {
                             Label("Import Transactions", systemImage: "square.and.arrow.down")
                         }
                         
-                        Button {
-                            showingEditSheet = true
+                        Divider()
+
+                        NavigationLink {
+                            BudgetHistoryView(budget: budget)
                         } label: {
-                            Label("Edit Budget", systemImage: "pencil")
+                            Label("View History", systemImage: "chart.line.uptrend.xyaxis")
                         }
+                        
                     } label: {
                         Image(systemName: "ellipsis.circle")
                     }

@@ -41,7 +41,6 @@ struct TransactionListView: View {
                 }
             }
             .navigationTitle("Transactions")
-//            .navigationBarTitleDisplayMode(.inline)
             .searchable(text: Binding(
                 get: { viewModel?.searchText ?? "" },
                 set: { newValue in
