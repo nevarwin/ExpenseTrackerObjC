@@ -1,8 +1,6 @@
 import SwiftUI
 import SwiftData
 
-import SwiftData
-
 struct QuickAddTransactionSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var viewModel: TransactionViewModel
@@ -11,9 +9,14 @@ struct QuickAddTransactionSheet: View {
     let initialBudget: Budget
     
     @State private var amount: String = ""
+    @State private var description: String = "" // Added description field
     @State private var isIncome: Bool = false
     @State private var selectedCategory: Category?
     @State private var showFullForm: Bool = false
+    
+    @FocusState private var isAmountFocused: Bool // For auto-focus
+    
+    @State private var lastAutoFilledDescription: String = "" // Track last auto-fill
     
     // Defaulting to today and the corresponding budget period
     @State private var date: Date
@@ -32,41 +35,48 @@ struct QuickAddTransactionSheet: View {
         
         let initialDate = viewModel.selectedDate
         _date = State(initialValue: initialDate)
-        _selectedBudgetPeriod = State(initialValue: DateRangeHelper.monthBounds(for: initialDate).start)
+        let monthBounds = DateRangeHelper.monthBounds(for: initialDate)
+        _selectedBudgetPeriod = State(initialValue: monthBounds.start)
     }
     
     var body: some View {
         NavigationStack {
-            if showFullForm {
-                TransactionFormView(
-                    activeBudgets: activeBudgets,
-                    initialBudget: initialBudget,
-                    viewModel: viewModel
-                )
-            } else {
-                let layout = verticalSizeClass == .compact ? AnyLayout(HStackLayout(alignment: .top, spacing: 24)) : AnyLayout(VStackLayout(spacing: 20))
-                
-                if verticalSizeClass == .compact {
-                    ScrollView(.vertical, showsIndicators: false) {
-                        layout {
-                            amountAndTypeContent
-                            categoryAndActionsContent
-                        }
-                        .padding(.vertical)
-                    }
+            Group {
+                if showFullForm {
+                    TransactionFormView(
+                        activeBudgets: activeBudgets,
+                        initialBudget: initialBudget,
+                        viewModel: viewModel
+                    )
                 } else {
-                    layout {
-                        amountAndTypeContent
-                        categoryAndActionsContent
+                    VStack(spacing: 16) {
+                        amountDescriptionRow
+                        
+                        VStack(spacing: 12) {
+                            categorySelectionSection
+                            typeAndSaveRow
+                        }
+                        
+                        Button {
+                            showFullForm = true
+                        } label: {
+                            Text("Expand for more details")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.bottom, 8)
                     }
                 }
             }
         }
-        .presentationDetents(showFullForm ? [.large] : [.medium, .large])
+        .presentationDetents(showFullForm ? [.large] : [.height(300)])
+        .presentationDragIndicator(.visible)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
+            if !showFullForm {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
             }
         }
         .alert("Amount Exceeds Allocation", isPresented: $showingOverflowAlert) {
@@ -89,92 +99,11 @@ struct QuickAddTransactionSheet: View {
                 budget: initialBudget,
                 excluding: nil
             )
+            // Auto-focus amount
+            isAmountFocused = true
         }
         .onChange(of: isIncome) { _, _ in
-            // Clear selection when switching types
             selectedCategory = nil
-        }
-    }
-    
-    @ViewBuilder
-    private var amountAndTypeContent: some View {
-        VStack(spacing: 20) {
-            // Amount Input
-            TextField("0.00", text: $amount)
-                .font(.system(size: 54, weight: .bold))
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.center)
-                .padding(.top, verticalSizeClass == .compact ? 0 : 30)
-                .onChange(of: amount) { oldValue, newValue in
-                    let parts = newValue.split(separator: ".")
-                    if let intPart = parts.first, intPart.count > 9 {
-                        amount = oldValue
-                    }
-                }
-            
-            // Income/Expense Segmented Control
-            Picker("Transaction Type", selection: $isIncome) {
-                Text("Expense").tag(false)
-                Text("Income").tag(true)
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
-            
-            if verticalSizeClass != .compact {
-                Spacer()
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private var categoryAndActionsContent: some View {
-        VStack(spacing: 20) {
-            // Horizontal Category Picker
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    ForEach(filteredCategories) { category in
-                        CategorySelectionIcon(
-                            category: category,
-                            isSelected: selectedCategory?.id == category.id
-                        )
-                        .onTapGesture {
-                            selectedCategory = category
-                        }
-                    }
-                }
-                .padding(.horizontal)
-            }
-            .frame(height: 100)
-            
-            if verticalSizeClass != .compact {
-                Spacer()
-            }
-            
-            // Action Buttons
-            VStack(spacing: 12) {
-                Button {
-                    showFullForm = true
-                } label: {
-                    Text("Expand for more details")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                
-                Button {
-                    saveTransaction()
-                } label: {
-                    Text("Save Transaction")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.accentColor)
-                        .cornerRadius(12)
-                }
-                .disabled(!isValid)
-            }
-            .padding(.horizontal)
-            .padding(.bottom)
         }
     }
     
@@ -182,10 +111,89 @@ struct QuickAddTransactionSheet: View {
         viewModel.availableCategories.filter { $0.isIncome == isIncome }
     }
     
+    // MARK: - Subviews
+    
+    private var amountDescriptionRow: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Amount")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                TextField("0.00", text: $amount)
+                    .font(.system(size: 36, weight: .bold))
+                    .keyboardType(.decimalPad)
+                    .focused($isAmountFocused)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Description")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                TextField("Notes", text: $description)
+                    .font(.body)
+                    .padding(8)
+                    .background(Color.secondary.opacity(0.1))
+                    .cornerRadius(8)
+            }
+        }
+        .padding(.horizontal)
+        .padding(.top, 8)
+    }
+    
+    private var categorySelectionSection: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(alignment: .top, spacing: 12) {
+                ForEach(filteredCategories) { category in
+                    CompactCategoryButton(
+                        category: category,
+                        isSelected: selectedCategory?.id == category.id
+                    )
+                    .onTapGesture {
+                        // Update description if it's empty or matches the last auto-filled name
+                        if description.isEmpty || description == lastAutoFilledDescription {
+                            description = category.name
+                            lastAutoFilledDescription = category.name
+                        }
+                        selectedCategory = category
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+        .frame(height: 96)
+    }
+    
+    private var typeAndSaveRow: some View {
+        HStack {
+            Picker("Type", selection: $isIncome) {
+                Text("Expense").tag(false)
+                Text("Income").tag(true)
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 160)
+            
+            Spacer()
+            
+            if !amount.isEmpty && selectedCategory != nil {
+                Button {
+                    saveTransaction()
+                } label: {
+                    Label("Save", systemImage: "checkmark")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .background(Color.accentColor)
+                        .clipShape(Capsule())
+                }
+            }
+        }
+        .padding(.horizontal)
+    }
+    
     private var isValid: Bool {
         guard let decimalAmount = Decimal(string: amount),
               decimalAmount > 0,
-              decimalAmount <= 999_999_999,
               selectedCategory != nil else {
             return false
         }
@@ -220,7 +228,7 @@ struct QuickAddTransactionSheet: View {
         do {
             try viewModel.saveTransaction(
                 amount: decimalAmount,
-                description: category.name, // Use category name as default description for quick add
+                description: description.isEmpty ? category.name : description,
                 date: date,
                 budget: initialBudget,
                 category: category,
@@ -235,28 +243,25 @@ struct QuickAddTransactionSheet: View {
     }
 }
 
-struct CategorySelectionIcon: View {
+struct CompactCategoryButton: View {
     let category: Category
     let isSelected: Bool
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(alignment: .center, spacing: 4) {
             Image(systemName: IconHelper.icon(for: category.name))
-                .font(.title2)
+                .font(.subheadline)
                 .foregroundColor(isSelected ? .white : Color.appSecondary)
-                .frame(width: 60, height: 60)
+                .frame(width: 44, height: 44)
                 .background(isSelected ? Color.appAccent : Color.appLightGray)
                 .clipShape(Circle())
-                .overlay(
-                    Circle()
-                        .stroke(isSelected ? Color.appAccent : Color.clear, lineWidth: 2)
-                )
             
             Text(category.name)
-                .font(.caption)
+                .font(.caption2)
                 .foregroundStyle(isSelected ? .primary : .secondary)
-                .lineLimit(1)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
         }
-        .frame(width: 70)
+        .frame(width: 60)
     }
 }
