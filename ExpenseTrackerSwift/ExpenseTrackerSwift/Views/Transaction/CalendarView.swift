@@ -26,8 +26,12 @@ struct CalendarView: View {
                             viewModel.loadTransactionDates()
                         }
                     }) {
-                        Text("Today")
-                            .font(.subheadline)
+                        HStack(spacing: 4) {
+                            Text("Today")
+                                .font(.subheadline)
+                                .foregroundStyle(Calendar.current.isDateInToday(viewModel.selectedDate) ? .primary : .secondary)
+                                .bold(Calendar.current.isDateInToday(viewModel.selectedDate))
+                        }
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
