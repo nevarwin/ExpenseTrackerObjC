@@ -48,6 +48,7 @@ struct HomeContent: View {
     @State private var isImportingBudget = false
     @State private var importSuccessMessage: String?
     @State private var showingImportAlert = false
+    @State private var budgetToDelete: Budget?
     
     var body: some View {
         ScrollView {
@@ -60,7 +61,7 @@ struct HomeContent: View {
                     .padding(.horizontal)
                 } else {
                     ForEach(viewModel.budgets) { budget in
-                        NavigationLink(destination: BudgetDetailView(budget: budget)) {
+                        NavigationLink(destination: BudgetDetailView(budget: budget, viewModel: viewModel)) {
                             BudgetSummaryCard(budget: budget)
                                 .padding(.horizontal)
                                 .id(budget.id)
@@ -68,7 +69,7 @@ struct HomeContent: View {
                         .buttonStyle(.plain)
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
-                                try? viewModel.deleteBudget(budget)
+                                budgetToDelete = budget
                             } label: {
                                 Label("Delete", systemImage: "trash")
                             }
@@ -122,6 +123,25 @@ struct HomeContent: View {
         }
         .onChange(of: viewModel.errorMessage) { _, newValue in
             showingError = newValue != nil
+        }
+        .confirmationDialog(
+            "Delete Budget",
+            isPresented: Binding(
+                get: { budgetToDelete != nil },
+                set: { if !$0 { budgetToDelete = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                if let budget = budgetToDelete {
+                    try? viewModel.deleteBudget(budget)
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                budgetToDelete = nil
+            }
+        } message: {
+            Text("Are you sure you want to delete this budget? All associated categories and transactions will be permanently deleted.")
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {

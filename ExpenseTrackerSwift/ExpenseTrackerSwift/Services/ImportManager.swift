@@ -4,11 +4,13 @@ import SwiftData
 enum ImportError: Error, LocalizedError {
     case budgetNotFound
     case dataPersistenceFailed(String)
+    case invalidFilenameForBudgetPeriod
     
     var errorDescription: String? {
         switch self {
         case .budgetNotFound: return "Target budget not found."
         case .dataPersistenceFailed(let reason): return "Failed to save data: \(reason)"
+        case .invalidFilenameForBudgetPeriod: return "Could not determine the budget period from the filename. Ensure it contains a valid month and year (e.g., 'Dec25.csv')."
         }
     }
 }
@@ -151,14 +153,12 @@ class ImportManager {
     func importBatchTransactions(files: [(filename: String, transactions: [CSVTransaction])], into budget: Budget) throws -> Int {
         var totalImported = 0
         for file in files {
-            // Note: we let parseBudgetPeriod handle the filename. If it fails,
-            // importTransactions will fallback to the transaction's own date.
-            totalImported += try importTransactions(from: file.transactions, into: budget, filename: file.filename, budgetPeriod: nil)
+            totalImported += try importTransactions(from: file.transactions, into: budget, filename: file.filename)
         }
         return totalImported
     }
     
-    func importTransactions(from csvTransactions: [CSVTransaction], into budget: Budget, filename: String? = nil, budgetPeriod overridePeriod: Date? = nil) throws -> Int {
+    func importTransactions(from csvTransactions: [CSVTransaction], into budget: Budget, filename: String) throws -> Int {
         var count = 0
         
         let existingCategories = budget.categories
@@ -191,16 +191,11 @@ class ImportManager {
 
             guard !alreadyExists else { continue }
             
-            // Determine budget period: user-selected > filename-parsed > transaction date
-            let budgetPeriod: Date
-            if let overridePeriod = overridePeriod {
-                budgetPeriod = DateRangeHelper.monthBounds(for: overridePeriod).start
-            } else if let filename = filename,
-               let parsedPeriod = parseBudgetPeriod(from: filename) {
-                budgetPeriod = parsedPeriod
-            } else {
-                budgetPeriod = DateRangeHelper.monthBounds(for: csvTx.date).start
+            // Determine budget period: filename-parsed ONLY
+            guard let parsedPeriod = parseBudgetPeriod(from: filename) else {
+                throw ImportError.invalidFilenameForBudgetPeriod
             }
+            let budgetPeriod: Date = parsedPeriod
             
             let transaction = Transaction(
                 amount: csvTx.amount,

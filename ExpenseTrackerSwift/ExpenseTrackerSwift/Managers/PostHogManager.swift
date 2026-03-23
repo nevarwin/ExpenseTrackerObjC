@@ -19,11 +19,11 @@ final class PostHogManager {
             host: "https://us.i.posthog.com"
         )
         
-        #if DEBUG
-        configuration.debug = true
-        // Flush every event immediately instead of batching it every 30s
-        configuration.flushAt = 1
-        #endif
+//        #if DEBUG
+//        configuration.debug = true
+//        // Flush every event immediately instead of batching it every 30s
+//        configuration.flushAt = 1
+//        #endif
         
         // Disable automatic screen tracking if you want to manually track only specific screens
         // configuration.captureScreenViews = false 

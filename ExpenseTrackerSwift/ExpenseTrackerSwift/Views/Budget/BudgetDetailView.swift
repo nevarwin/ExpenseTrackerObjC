@@ -4,8 +4,10 @@ import UniformTypeIdentifiers
 
 struct BudgetDetailView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var currencyManager: CurrencyManager
     let budget: Budget
+    var viewModel: BudgetViewModel?
     
     @State private var categoryViewModel: CategoryViewModel?
     @State private var transactionViewModel: TransactionViewModel?
@@ -30,6 +32,8 @@ struct BudgetDetailView: View {
     @State private var newCategoryName: String = ""
     @State private var newCategoryAmount: String = ""
     @State private var newCategoryIsIncome: Bool = false
+    
+    @State private var showingDeleteConfirmation = false
     
     // Search Text State
     @State private var searchText: String = ""
@@ -197,6 +201,14 @@ struct BudgetDetailView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                     Menu {
+                        Button(role: .destructive) {
+                            showingDeleteConfirmation = true
+                        } label: {
+                            Label("Delete Budget", systemImage: "trash")
+                        }
+                        
+                        Divider()
+                        
                         Button {
                             showingEditSheet = true
                         } label: {
@@ -234,7 +246,7 @@ struct BudgetDetailView: View {
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                Text("Select one or more CSV files. The budget period for each file will be auto-detected from its filename (e.g., 'Dec25.csv') or transaction dates.")
+                Text("Select one or more CSV files. The budget period for each file will be auto-detected from its filename (e.g., 'Dec25.csv')")
             }
             .fileImporter(
                 isPresented: $isImportingTransactions,
@@ -252,6 +264,14 @@ struct BudgetDetailView: View {
                 Button("OK") { }
             } message: {
                 Text(importErrorMessage ?? "Unknown error")
+            }
+            .confirmationDialog("Delete Budget", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
+                Button("Delete", role: .destructive) {
+                    deleteBudget()
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Are you sure you want to delete this budget? All associated categories and transactions will be permanently deleted.")
             }
             .onAppear {
                 if categoryViewModel == nil {
@@ -310,7 +330,11 @@ struct BudgetDetailView: View {
                 let importManager = ImportManager(modelContext: modelContext)
                 let totalCount = try importManager.importBatchTransactions(files: processedFiles, into: budget)
                 
-                importMessage = "Successfully imported \(totalCount) transactions from \(processedFiles.count) file(s)."
+                if totalCount > 0 {
+                    importMessage = "Successfully imported \(totalCount) transactions from \(processedFiles.count) file(s)."
+                } else {
+                    importMessage = "No new transactions were imported. They might be duplicates."
+                }
                 showingImportAlert = true
                 
                 // Refresh data
@@ -356,6 +380,17 @@ struct BudgetDetailView: View {
             print("Failed to create category: \(error.localizedDescription)")
         }
     }
+    
+    // Step 4: Delete Budget
+    private func deleteBudget() {
+        if let vm = viewModel {
+            try? vm.deleteBudget(budget)
+        } else {
+            modelContext.delete(budget)
+            try? modelContext.save()
+        }
+        dismiss()
+    }
 }
 
 #Preview {
@@ -365,7 +400,7 @@ struct BudgetDetailView: View {
     container.mainContext.insert(budget)
     
     return NavigationStack {
-        BudgetDetailView(budget: budget)
+        BudgetDetailView(budget: budget, viewModel: nil)
             .modelContainer(container)
             .environmentObject(CurrencyManager())
     }
