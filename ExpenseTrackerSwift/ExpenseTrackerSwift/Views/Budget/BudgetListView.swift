@@ -104,7 +104,7 @@ struct HomeContent: View {
         .fileImporter(
             isPresented: $isImportingBudget,
             allowedContentTypes: [.commaSeparatedText, .plainText],
-            allowsMultipleSelection: false
+            allowsMultipleSelection: true
         ) { result in
             handleImport(result)
         }
@@ -160,27 +160,38 @@ struct HomeContent: View {
     private func handleImport(_ result: Result<[URL], Error>) {
         switch result {
         case .success(let urls):
-            guard let url = urls.first else { return }
-            
-            guard url.startAccessingSecurityScopedResource() else {
-                viewModel.errorMessage = "Permission denied to access the file."
-                return
-            }
-            defer { url.stopAccessingSecurityScopedResource() }
+            guard !urls.isEmpty else { return }
             
             do {
                 let parser = CSVParser.shared
                 let importManager = ImportManager(modelContext: viewModel.modelContext)
+                var importedNames: [String] = []
+                var failedCount = 0
                 
-                let csvBudget = try parser.parseBudget(from: url)
-                let newBudget = try importManager.importBudget(from: csvBudget)
+                for url in urls {
+                    if url.startAccessingSecurityScopedResource() {
+                        do {
+                            let csvBudget = try parser.parseBudget(from: url)
+                            let newBudget = try importManager.importBudget(from: csvBudget)
+                            importedNames.append(newBudget.name)
+                        } catch {
+                            print("DEBUG: Import failed for \(url.lastPathComponent): \(error.localizedDescription)")
+                            failedCount += 1
+                        }
+                        url.stopAccessingSecurityScopedResource()
+                    } else {
+                        failedCount += 1
+                    }
+                }
                 
-                importSuccessMessage = "Successfully imported budget '\(newBudget.name)'."
-                showingImportAlert = true
-                viewModel.loadBudgets()
-                
-            } catch {
-                viewModel.errorMessage = "Import failed: \(error.localizedDescription)"
+                if importedNames.isEmpty {
+                    viewModel.errorMessage = "Failed to import budgets. Ensure files are accessible."
+                } else {
+                    let baseMessage = "Successfully imported \(importedNames.count) budget(s)."
+                    importSuccessMessage = failedCount > 0 ? "\(baseMessage) (\(failedCount) failed.)" : baseMessage
+                    showingImportAlert = true
+                    viewModel.loadBudgets()
+                }
             }
             
         case .failure(let error):
