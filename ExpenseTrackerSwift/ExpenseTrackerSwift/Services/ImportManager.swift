@@ -104,11 +104,12 @@ class ImportManager {
                           "july", "august", "september", "october", "november", "december"]
         let monthAbbreviations = ["jan", "feb", "mar", "apr", "may", "jun",
                                   "jul", "aug", "sep", "oct", "nov", "dec"]
+        let extraAbbreviations = ["sept": 9] // Explicit mapping for non-standard abbreviations
         
         // Build regex pattern to match month followed by optional delimiters and year
-        // e.g., (january|...|jan|...)[\s_-]*(\d{2}|\d{4})
-        let monthGroup = "(" + (monthNames + monthAbbreviations).joined(separator: "|") + ")"
-        let pattern = monthGroup + "[\\s_-]*(\\d{2}|\\d{4})"
+        // e.g., (january|...|jan|...|sept)[\s_.-]*(\d{2}|\d{4})
+        let monthGroup = "(" + (monthNames + monthAbbreviations + Array(extraAbbreviations.keys)).joined(separator: "|") + ")"
+        let pattern = monthGroup + "[\\s_.-]*(\\d{4}|\\d{2})"
         
         guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else { return nil }
         let nsRange = NSRange(lowerFilename.startIndex..<lowerFilename.endIndex, in: lowerFilename)
@@ -128,6 +129,8 @@ class ImportManager {
                 monthIndex = index + 1
             } else if let index = monthAbbreviations.firstIndex(of: monthStr) {
                 monthIndex = index + 1
+            } else if let customIndex = extraAbbreviations[monthStr] {
+                monthIndex = customIndex
             } else {
                 return nil
             }
