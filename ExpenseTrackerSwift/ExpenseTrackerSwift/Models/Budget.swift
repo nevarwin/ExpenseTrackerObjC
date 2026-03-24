@@ -65,9 +65,9 @@ final class Budget {
             .reduce(Decimal.zero) { $0 + $1.amount }
     }
     
-    /// Remaining amount for the current month (total budget + current month income - current month expenses)
+    /// Remaining amount for the current month (current month income - current month expenses)
     var currentMonthRemaining: Decimal {
-        totalAmount + currentMonthIncome - currentMonthExpenses
+        currentMonthIncome - currentMonthExpenses
     }
     
     // MARK: - Any Month Calculations
@@ -94,7 +94,7 @@ final class Budget {
     /// - Parameter date: The date within the month to calculate
     /// - Returns: Remaining amount for that month
     func remainingInMonth(_ date: Date) -> Decimal {
-        totalAmount + incomeInMonth(date) - expensesInMonth(date)
+        incomeInMonth(date) - expensesInMonth(date)
     }
     
     // MARK: - All-Time Computed Properties (Existing)
@@ -113,7 +113,7 @@ final class Budget {
     }
     
     func updateRemainingAmount() {
-        remainingAmount = totalAmount + totalIncome - totalExpenses
+        remainingAmount = totalIncome - totalExpenses
         updatedAt = Date()
     }
 }
