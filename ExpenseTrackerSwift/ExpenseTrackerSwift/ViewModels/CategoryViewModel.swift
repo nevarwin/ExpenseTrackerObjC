@@ -59,6 +59,7 @@ final class CategoryViewModel {
             name: name,
             allocatedAmount: allocatedAmount,
             isIncome: isIncome,
+            budgetPeriod: budget?.startDate,
             budget: budget
         )
         modelContext.insert(category)

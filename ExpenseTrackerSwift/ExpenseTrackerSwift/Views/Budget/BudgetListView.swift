@@ -263,41 +263,52 @@ struct BudgetSummaryCard: View {
             VStack(spacing: 12) {
                 HStack {
                     VStack(alignment: .leading) {
-                        Text("Spent")
+                        Text("Income")
                             .font(.caption)
                             .foregroundStyle(Color.secondary)
-                        Text(budget.currentMonthExpenses, format: .currency(code: currencyManager.currencyCode))
-                            .font(.system(.title2, design: .rounded))
-                            .fontWeight(.bold)
-                            .foregroundStyle(Color.appPrimary)
+                        HStack(alignment: .lastTextBaseline, spacing: 4) {
+                            Text(budget.currentMonthIncome, format: .currency(code: currencyManager.currencyCode))
+                                .font(.system(.headline, design: .rounded))
+                                .fontWeight(.bold)
+                            Text("/ " + budget.plannedIncome().formatted(.currency(code: currencyManager.currencyCode)))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                     
                     Spacer()
                     
                     VStack(alignment: .trailing) {
-                        Text("Remaining")
+                        Text("Expenses")
                             .font(.caption)
                             .foregroundStyle(Color.secondary)
-                        Text(budget.currentMonthRemaining, format: .currency(code: currencyManager.currencyCode))
-                            .font(.system(.title2, design: .rounded))
-                            .fontWeight(.bold)
-                            .foregroundStyle(budget.currentMonthRemaining >= 0 ? Color.green : Color.red)
+                        HStack(alignment: .lastTextBaseline, spacing: 4) {
+                            Text(budget.currentMonthExpenses, format: .currency(code: currencyManager.currencyCode))
+                                .font(.system(.headline, design: .rounded))
+                                .fontWeight(.bold)
+                                .foregroundStyle(budget.currentMonthExpenses > budget.plannedExpenses() ? .red : .appPrimary)
+                            Text("/ " + budget.plannedExpenses().formatted(.currency(code: currencyManager.currencyCode)))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
                 
-                // Progress Bar
+                // Progress Bar (Expense vs Planned)
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
                         Capsule()
                             .fill(Color.appLightGray)
                             .frame(height: 12)
                         
+                        let isOverBudget = budget.currentMonthExpenses > budget.plannedExpenses() && budget.plannedExpenses() > 0
+                        
                         Capsule()
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        budget.currentMonthRemaining >= 0 ? Color.appAccent : Color.red,
-                                        budget.currentMonthRemaining >= 0 ? Color.cyan : Color.orange
+                                        isOverBudget ? Color.red : Color.appAccent,
+                                        isOverBudget ? Color.orange : Color.cyan
                                     ],
                                     startPoint: .leading,
                                     endPoint: .trailing
@@ -311,16 +322,23 @@ struct BudgetSummaryCard: View {
         }
         .appCardStyle()
         .onAppear {
-            let progress = min(max(0, Double(truncating: (budget.currentMonthExpenses / budget.totalAmount) as NSDecimalNumber)), 1.0)
-            withAnimation(.spring(duration: 1.0)) {
-                animatedProgress = progress
-            }
+            updateProgress()
         }
-        .onChange(of: budget.currentMonthExpenses) { oldVal, newVal in
-            let progress = min(max(0, Double(truncating: (newVal / budget.totalAmount) as NSDecimalNumber)), 1.0)
-            withAnimation(.spring(duration: 1.0)) {
-                animatedProgress = progress
-            }
+        .onChange(of: budget.currentMonthExpenses) { _, _ in
+            updateProgress()
+        }
+        .onChange(of: budget.categories) { _, _ in
+            updateProgress()
+        }
+    }
+    
+    private func updateProgress() {
+        let planned = budget.plannedExpenses()
+        let spent = budget.currentMonthExpenses
+        let progress = planned > 0 ? min(max(0, Double(truncating: (spent / planned) as NSDecimalNumber)), 1.0) : 0
+        
+        withAnimation(.spring(duration: 1.0)) {
+            animatedProgress = progress
         }
     }
 }

@@ -85,7 +85,7 @@ struct CategoryTransactionsView: View {
 
 #Preview {
     @Previewable @State var category: Category = {
-        let c = Category(name: "Food & Dining", allocatedAmount: 500, isIncome: false)
+        let c = Category(name: "Food & Dining", allocatedAmount: 500, isIncome: false, budgetPeriod: Date())
         return c
     }()
 

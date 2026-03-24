@@ -4,6 +4,7 @@ import Foundation
 @Model
 final class Category {
     var name: String
+    var budgetPeriod: Date
     var allocatedAmount: Decimal
     var usedAmount: Decimal
     var isIncome: Bool
@@ -22,10 +23,12 @@ final class Category {
         name: String,
         allocatedAmount: Decimal,
         isIncome: Bool,
+        budgetPeriod: Date? = nil,
         budget: Budget? = nil
     ) {
         self.name = name
         self.allocatedAmount = allocatedAmount
+        self.budgetPeriod = budgetPeriod ?? budget?.startDate ?? Date()
         self.usedAmount = 0
         self.isIncome = isIncome
         self.isActive = true

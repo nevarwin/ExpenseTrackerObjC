@@ -36,6 +36,12 @@ class ImportManager {
         
         if let existing = try? modelContext.fetch(descriptor).first {
             budget = existing
+            // If existing budget doesn't have startDate set correctly, we might want to update it
+            if budget.startDate == Date(timeIntervalSince1970: 0) || Calendar.current.isDateInToday(budget.startDate) {
+                if let parsedDate = parseBudgetPeriod(from: budgetName) {
+                    budget.startDate = parsedDate
+                }
+            }
         } else {
             // Calculate total amount from items? Or just start with 0 and let allocations define it?
             // The CSV doesn't explicitly give a total usually, but 13th25 had a "Sum".
@@ -47,8 +53,9 @@ class ImportManager {
                 .reduce(Decimal.zero) { $0 + $1.plannedAmount }
                 
             let totalInitial = totalIncome > 0 ? totalIncome : 0
+            let startDate = parseBudgetPeriod(from: budgetName) ?? Date()
             
-            budget = Budget(name: budgetName, totalAmount: totalInitial)
+            budget = Budget(name: budgetName, startDate: startDate, totalAmount: totalInitial)
             modelContext.insert(budget)
         }
         
@@ -164,35 +171,37 @@ class ImportManager {
     func importTransactions(from csvTransactions: [CSVTransaction], into budget: Budget, filename: String) throws -> Int {
         var count = 0
         
-        let existingCategories = budget.categories
-        
         print("DEBUG: Processing \(csvTransactions.count) transactions")
         for csvTx in csvTransactions {
             let categoryName = csvTx.category
             
             // 1. Find or Create Category
             let category: Category
-            if let existing = existingCategories.first(where: { $0.name.caseInsensitiveCompare(categoryName) == .orderedSame }) {
+            if let existing = budget.categories.first(where: { $0.name.caseInsensitiveCompare(categoryName) == .orderedSame }) {
                 category = existing
             } else {
                 print("DEBUG: Creating new category: \(categoryName)")
-                category = Category(name: categoryName, allocatedAmount: 0, isIncome: csvTx.isIncome, budget: budget)
+                
+                // Determine budget period: filename-parsed ONLY
+                guard let parsedPeriod = parseBudgetPeriod(from: filename) else {
+                    throw ImportError.invalidFilenameForBudgetPeriod
+                }
+                
+                // Inherit latest configuration if available
+                let latestConfig = findLatestCategoryConfiguration(name: categoryName, before: parsedPeriod)
+                let allocatedAmount = latestConfig?.allocatedAmount ?? 0
+                let budgetPeriod = latestConfig?.period ?? parsedPeriod
+                
+                category = Category(
+                    name: categoryName,
+                    allocatedAmount: allocatedAmount,
+                    isIncome: csvTx.isIncome,
+                    budgetPeriod: budgetPeriod,
+                    budget: budget
+                )
                 modelContext.insert(category)
                 budget.categories.append(category)
             }
-            
-            // 2. Deduplication check
-            let alreadyExists = budget.transactions.contains { tx in
-                Calendar.current.isDate(tx.date, inSameDayAs: csvTx.date) &&
-                tx.amount == csvTx.amount &&
-                tx.desc == csvTx.description
-            }
-            
-            if alreadyExists {
-                print("DEBUG: Skipping duplicate transaction: \(csvTx.description) - \(csvTx.amount)")
-            }
-
-            guard !alreadyExists else { continue }
             
             // Determine budget period: filename-parsed ONLY
             guard let parsedPeriod = parseBudgetPeriod(from: filename) else {
@@ -228,5 +237,22 @@ class ImportManager {
         }
         
         return count
+    }
+    
+    /// Finds the most recent category configuration by name
+    private func findLatestCategoryConfiguration(name: String, before: Date) -> (allocatedAmount: Decimal, period: Date)? {
+        let descriptor = FetchDescriptor<Category>(
+            predicate: #Predicate<Category> { $0.name == name && $0.budgetPeriod < before },
+            sortBy: [SortDescriptor(\.budgetPeriod, order: .reverse)]
+        )
+        
+        do {
+            if let latest = try modelContext.fetch(descriptor).first {
+                return (latest.allocatedAmount, latest.budgetPeriod)
+            }
+        } catch {
+            print("DEBUG: Error fetching latest category: \(error)")
+        }
+        return nil
     }
 }

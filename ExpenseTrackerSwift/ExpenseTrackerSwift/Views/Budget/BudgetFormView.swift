@@ -60,7 +60,9 @@ struct BudgetFormView: View {
                 Section {
                     ForEach($categoryDrafts) { $draft in
                         if draft.isActive {
-                            EditableCategoryRow(draft: $draft)
+                            let isDuplicate = categoryDrafts.filter { $0.isActive && $0.name.trimmingCharacters(in: .whitespaces).lowercased() == draft.name.trimmingCharacters(in: .whitespaces).lowercased() }.count > 1
+                            
+                            EditableCategoryRow(draft: $draft, isDuplicate: isDuplicate)
                                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                     // Archive for existing, delete for new
                                     if draft.originalCategory != nil {
@@ -287,6 +289,7 @@ struct BudgetFormView: View {
                     category.allocatedAmount = draft.allocatedDecimal
                     category.isIncome = draft.isIncome
                     category.isActive = draft.isActive
+                    category.budgetPeriod = budget.startDate
                     category.updatedAt = Date()
                     keptCategories.insert(original.persistentModelID)
                 } else {
@@ -294,6 +297,7 @@ struct BudgetFormView: View {
                         name: draft.name.trimmingCharacters(in: .whitespaces),
                         allocatedAmount: draft.allocatedDecimal,
                         isIncome: draft.isIncome,
+                        budgetPeriod: budget.startDate,
                         budget: budget
                     )
                     category.isActive = draft.isActive
@@ -345,6 +349,7 @@ struct BudgetFormView: View {
 /// Inline editable row shown in the category list
 private struct EditableCategoryRow: View {
     @Binding var draft: BudgetCategoryDraft
+    var isDuplicate: Bool
     @EnvironmentObject var currencyManager: CurrencyManager
 
     var body: some View {
@@ -354,8 +359,19 @@ private struct EditableCategoryRow: View {
                     .textFieldStyle(.roundedBorder)
                     .overlay(
                         RoundedRectangle(cornerRadius: 4)
-                            .stroke(draft.name.trimmingCharacters(in: .whitespaces).isEmpty ? Color.red.opacity(0.5) : Color.clear, lineWidth: 1)
+                            .stroke(
+                                draft.name.trimmingCharacters(in: .whitespaces).isEmpty || isDuplicate 
+                                ? Color.red.opacity(0.5) 
+                                : Color.clear, 
+                                lineWidth: 1
+                            )
                     )
+                
+                if isDuplicate {
+                    Text("Duplicate")
+                        .font(.caption2)
+                        .foregroundStyle(.red)
+                }
                 
                 TextField("Amount", text: $draft.allocatedAmount)
                     .keyboardType(.decimalPad)

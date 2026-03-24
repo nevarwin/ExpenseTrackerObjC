@@ -221,7 +221,7 @@ struct MonthSummaryRow: View {
 
 #Preview {
     @Previewable @State var budget: Budget = {
-        let b = Budget(name: "February Budget", totalAmount: 5000)
+        let b = Budget(name: "February Budget", startDate: Date(), totalAmount: 5000)
         return b
     }()
     

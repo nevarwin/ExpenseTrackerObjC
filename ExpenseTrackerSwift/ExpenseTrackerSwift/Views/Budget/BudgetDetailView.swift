@@ -100,13 +100,30 @@ struct BudgetDetailView: View {
                 }
             }
             
-            Section("Budget Overview") {
-                LabeledContent("Total Budget", value: budget.totalAmount, format: .currency(code: currencyManager.currencyCode))
-                LabeledContent("Total Income", value: budget.incomeInMonth(selectedMonth), format: .currency(code: currencyManager.currencyCode))
-                LabeledContent("Total Expenses", value: budget.expensesInMonth(selectedMonth), format: .currency(code: currencyManager.currencyCode))
-                LabeledContent("Remaining") {
-                    Text(budget.remainingInMonth(selectedMonth), format: .currency(code: currencyManager.currencyCode))
-                        .foregroundStyle(budget.remainingInMonth(selectedMonth) >= 0 ? .green : .red)
+            Section("Income Overview") {
+                let pIncome = budget.plannedIncome(for: selectedMonth)
+                let aIncome = budget.incomeInMonth(selectedMonth)
+                let dIncome = budget.incomeDiffInMonth(selectedMonth)
+                
+                LabeledContent("Planned Income", value: pIncome, format: .currency(code: currencyManager.currencyCode))
+                LabeledContent("Actual Income", value: aIncome, format: .currency(code: currencyManager.currencyCode))
+                LabeledContent("Difference") {
+                    Text(dIncome, format: .currency(code: currencyManager.currencyCode))
+                        .foregroundStyle(dIncome >= 0 ? .green : .red)
+                        .fontWeight(.semibold)
+                }
+            }
+            
+            Section("Expense Overview") {
+                let pExpense = budget.plannedExpenses(for: selectedMonth)
+                let aExpense = budget.expensesInMonth(selectedMonth)
+                let dExpense = budget.expenseDiffInMonth(selectedMonth)
+                
+                LabeledContent("Planned Expense", value: pExpense, format: .currency(code: currencyManager.currencyCode))
+                LabeledContent("Actual Expense", value: aExpense, format: .currency(code: currencyManager.currencyCode))
+                LabeledContent("Difference") {
+                    Text(dExpense, format: .currency(code: currencyManager.currencyCode))
+                        .foregroundStyle(dExpense >= 0 ? .green : .red)
                         .fontWeight(.semibold)
                 }
             }
@@ -396,7 +413,7 @@ struct BudgetDetailView: View {
 #Preview {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: Budget.self, configurations: config)
-    let budget = Budget(name: "Monthly Budget", totalAmount: 5000)
+    let budget = Budget(name: "Monthly Budget", startDate: Date(), totalAmount: 5000)
     container.mainContext.insert(budget)
     
     return NavigationStack {

@@ -5,6 +5,7 @@ import Foundation
 final class Budget {
     var id: UUID = UUID()
     var name: String
+    var startDate: Date
     var totalAmount: Decimal
     var remainingAmount: Decimal
     var isActive: Bool
@@ -23,11 +24,13 @@ final class Budget {
     
     init(
         name: String,
+        startDate: Date? = nil,
         totalAmount: Decimal,
         remainingAmount: Decimal? = nil,
         isActive: Bool = true
     ) {
         self.name = name
+        self.startDate = startDate ?? Date()
         self.totalAmount = totalAmount
         self.remainingAmount = remainingAmount ?? totalAmount
         self.isActive = isActive
@@ -110,6 +113,34 @@ final class Budget {
         transactions
             .filter { ($0.category?.isIncome ?? false) && $0.isActive }
             .reduce(Decimal.zero) { $0 + $1.amount }
+    }
+
+    // MARK: - Planned and Difference Calculations
+
+    /// Total planned expenses (sum of allocations)
+    func plannedExpenses(for date: Date = Date()) -> Decimal {
+        categories
+            .filter { !$0.isIncome && $0.isActive }
+            .reduce(Decimal.zero) { $0 + $1.allocatedAmount }
+    }
+
+    /// Total planned income (sum of allocations)
+    func plannedIncome(for date: Date = Date()) -> Decimal {
+        categories
+            .filter { $0.isIncome && $0.isActive }
+            .reduce(Decimal.zero) { $0 + $1.allocatedAmount }
+    }
+
+    /// Difference for expenses (Planned - Actual)
+    /// Positive means under budget (good), negative means over budget (bad)
+    func expenseDiffInMonth(_ date: Date) -> Decimal {
+        plannedExpenses(for: date) - expensesInMonth(date)
+    }
+
+    /// Difference for income (Actual - Planned)
+    /// Positive means more income than planned (good), negative means less (bad)
+    func incomeDiffInMonth(_ date: Date) -> Decimal {
+        incomeInMonth(date) - plannedIncome(for: date)
     }
     
     func updateRemainingAmount() {

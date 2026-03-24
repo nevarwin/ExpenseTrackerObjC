@@ -46,6 +46,10 @@ final class BudgetViewModel: ObservableObject {
     
     @discardableResult
     func createBudget(name: String, totalAmount: Decimal) throws -> Budget {
+        // Try to parse start date from name (e.g., "Jan 25")
+        // We can reuse logic or just use now. For consistency with ImportManager:
+        // We'll need a way to parse it here too or just use Date().
+        // Let's just use Now for manual creation unless we want to be fancy.
         let budget = Budget(name: name, totalAmount: totalAmount)
         modelContext.insert(budget)
         budgets.insert(budget, at: 0)
