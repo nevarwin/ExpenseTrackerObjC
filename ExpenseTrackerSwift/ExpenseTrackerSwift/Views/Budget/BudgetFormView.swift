@@ -42,8 +42,18 @@ struct BudgetFormView: View {
         NavigationStack {
             Form {
                 // MARK: Budget Name
-                Section("Budget Details") {
+                Section {
                     TextField("Budget Name", text: $name)
+                        .overlay(alignment: .trailing) {
+                            if name.trimmingCharacters(in: .whitespaces).isEmpty {
+                                Text("Required")
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                                    .padding(.trailing, 8)
+                            }
+                        }
+                } header: {
+                    Text("Budget Details")
                 }
 
                 // MARK: Active Categories
@@ -129,6 +139,14 @@ struct BudgetFormView: View {
                         }
                     }
                 }
+                
+                if let message = validationMessage {
+                    Section {
+                        Text(message)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
+                }
             }
             .navigationTitle(existingBudget == nil ? "New Budget" : "Edit Budget")
             .navigationBarTitleDisplayMode(.inline)
@@ -139,6 +157,11 @@ struct BudgetFormView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { saveBudget() }
                         .disabled(!isValid)
+                }
+            }
+            .overlay(alignment: .bottom) {
+                if !isValid && !name.isEmpty {
+                   // Optional: Simple toast or message if needed, but inline is better
                 }
             }
             .alert("Error", isPresented: $showingError) {
@@ -188,15 +211,53 @@ struct BudgetFormView: View {
 
     // MARK: - Validation
 
-    private var isValid: Bool {
-        let activeDrafts = categoryDrafts.filter { $0.isActive }
+    private enum ValidationReason {
+        case emptyBudgetName
+        case emptyCategoryName
+        case duplicateCategoryNames
+        case invalidAmount
+    }
 
-        guard !name.trimmingCharacters(in: .whitespaces).isEmpty else { return false }
+    private var validationError: ValidationReason? {
+        if name.trimmingCharacters(in: .whitespaces).isEmpty {
+            return .emptyBudgetName
+        }
+
+        let activeDrafts = categoryDrafts.filter { $0.isActive }
+        
+        if activeDrafts.isEmpty {
+            // A budget with no categories is technically valid, 
+            // but usually we want at least one. However, the user didn't ask for this.
+        }
+
+        if activeDrafts.contains(where: { $0.name.trimmingCharacters(in: .whitespaces).isEmpty }) {
+            return .emptyCategoryName
+        }
 
         let categoryNames = activeDrafts.map { $0.name.trimmingCharacters(in: .whitespaces).lowercased() }
-        guard categoryNames.count == Set(categoryNames).count else { return false }
+        if categoryNames.count != Set(categoryNames).count {
+            return .duplicateCategoryNames
+        }
 
-        return activeDrafts.allSatisfy { $0.isValid }
+        if !activeDrafts.allSatisfy({ $0.isValid }) {
+            return .invalidAmount
+        }
+
+        return nil
+    }
+
+    private var isValid: Bool {
+        validationError == nil
+    }
+
+    private var validationMessage: String? {
+        switch validationError {
+        case .emptyBudgetName: return "Budget name is required"
+        case .emptyCategoryName: return "All categories must have a name"
+        case .duplicateCategoryNames: return "Category names must be unique"
+        case .invalidAmount: return "One or more amounts are invalid"
+        case .none: return nil
+        }
     }
 
     // MARK: - Actions
@@ -291,6 +352,10 @@ private struct EditableCategoryRow: View {
             HStack {
                 TextField("Category Name", text: $draft.name)
                     .textFieldStyle(.roundedBorder)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(draft.name.trimmingCharacters(in: .whitespaces).isEmpty ? Color.red.opacity(0.5) : Color.clear, lineWidth: 1)
+                    )
                 
                 TextField("Amount", text: $draft.allocatedAmount)
                     .keyboardType(.decimalPad)
@@ -354,7 +419,8 @@ struct BudgetCategoryDraft: Identifiable {
     
     /// Validation: Check if the draft has valid data
     var isValid: Bool {
+        // Simple validation: strictly check name as per user request
         return !name.trimmingCharacters(in: .whitespaces).isEmpty &&
-               allocatedDecimal > 0
+               allocatedDecimal >= 0 // Changed from > 0 to allows 0
     }
 }
