@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		23A5749A13F6C8D145356A1F /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0213E257FD2ED0642FBA8CC6 /* Category.swift */; };
 		976D07222F6AE17B008D9A7C /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 976D07212F6AE17B008D9A7C /* PostHog */; };
-		F009DDC87DAE0F6CC8D5A31D /* BudgetAllocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9415807B7BC8B1DCDFE72D57 /* BudgetAllocation.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,13 +37,11 @@
 		6AD30949190D5C00763B7477 /* Secrets.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		75DF808E69BBAB48A0D4F538 /* Transaction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Transaction.swift; path = ExpenseTrackerSwift/Models/Transaction.swift; sourceTree = "<group>"; };
 		79DC7366FAAAE06E81605AF0 /* BudgetViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BudgetViewModel.swift; path = ExpenseTrackerSwift/ViewModels/BudgetViewModel.swift; sourceTree = "<group>"; };
-		9415807B7BC8B1DCDFE72D57 /* BudgetAllocation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BudgetAllocation.swift; path = ExpenseTrackerSwift/Models/BudgetAllocation.swift; sourceTree = "<group>"; };
 		973C37EA2F1E74D800CB57BA /* ExpenseMe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExpenseMe.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		973C37F92F1E74DA00CB57BA /* ExpenseTrackerSwiftTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExpenseTrackerSwiftTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		973C38032F1E74DA00CB57BA /* ExpenseTrackerSwiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExpenseTrackerSwiftUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A0DA74EC14867973B8C1F368 /* BudgetListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BudgetListView.swift; path = ExpenseTrackerSwift/Views/Budget/BudgetListView.swift; sourceTree = "<group>"; };
 		A9F96494DFE72180287E0651 /* BudgetFormView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BudgetFormView.swift; path = ExpenseTrackerSwift/Views/Budget/BudgetFormView.swift; sourceTree = "<group>"; };
-		C2A1B8F3E45D6789ABCD1234 /* CategoryDraft.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CategoryDraft.swift; path = ExpenseTrackerSwift/Models/CategoryDraft.swift; sourceTree = "<group>"; };
 		D8835E64B3CA4489ABEE6BA3 /* TransactionListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TransactionListView.swift; path = ExpenseTrackerSwift/Views/Transaction/TransactionListView.swift; sourceTree = "<group>"; };
 		F11AC8DD9DB4B72157C4BD1F /* TransactionViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TransactionViewModel.swift; path = ExpenseTrackerSwift/ViewModels/TransactionViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -54,7 +51,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				Models/BudgetAllocation.swift,
 				Models/Category.swift,
 				Secrets.xcconfig,
 			);
@@ -145,9 +141,7 @@
 			children = (
 				22211B551B5737A69D6760A5 /* Budget.swift */,
 				0213E257FD2ED0642FBA8CC6 /* Category.swift */,
-				C2A1B8F3E45D6789ABCD1234 /* CategoryDraft.swift */,
 				75DF808E69BBAB48A0D4F538 /* Transaction.swift */,
-				9415807B7BC8B1DCDFE72D57 /* BudgetAllocation.swift */,
 			);
 			name = Models;
 			sourceTree = "<group>";
@@ -290,7 +284,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2620;
-				LastUpgradeCheck = 2620;
+				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					973C37E92F1E74D800CB57BA = {
 						CreatedOnToolsVersion = 26.2;
@@ -359,7 +353,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				23A5749A13F6C8D145356A1F /* Category.swift in Sources */,
-				F009DDC87DAE0F6CC8D5A31D /* BudgetAllocation.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -426,6 +419,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COMPILATION_CACHE_ENABLE_CACHING = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = VQXG9UW8TD;
@@ -452,6 +446,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -490,6 +485,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COMPILATION_CACHE_ENABLE_CACHING = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = VQXG9UW8TD;
@@ -509,6 +505,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};

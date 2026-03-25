@@ -17,19 +17,17 @@ struct TransactionListView: View {
         NavigationStack {
             Group {
                 if let viewModel = viewModel {
-                    let layout = verticalSizeClass == .compact ? AnyLayout(HStackLayout(alignment: .top, spacing: 16)) : AnyLayout(VStackLayout(spacing: 0))
-                    
-                    layout {
+                    Group {
                         if verticalSizeClass == .compact {
-                            ScrollView(.vertical, showsIndicators: false) {
-                                calendarContent(viewModel: viewModel)
+                            HStack(alignment: .top, spacing: 16) {
+                                ScrollView(.vertical, showsIndicators: false) {
+                                    calendarContent(viewModel: viewModel)
+                                }
+                                .frame(maxWidth: 350)
+                                
+                                transactionListContent(viewModel: viewModel)
                             }
-                            .frame(maxWidth: 350)
-                            
-                            transactionListContent(viewModel: viewModel)
                         } else {
-                            calendarContent(viewModel: viewModel)
-                            
                             transactionListContent(viewModel: viewModel)
                         }
                     }
@@ -116,65 +114,82 @@ struct TransactionListView: View {
             ProgressView("Loading transactions...")
                 .frame(maxHeight: .infinity)
                 .frame(maxWidth: .infinity)
-        } else if !hasUserSelectedDate && viewModel.searchText.isEmpty {
-            ContentUnavailableView(
-                "Select a Date",
-                systemImage: "calendar",
-                description: Text(verticalSizeClass == .compact ? "Tap a date on the calendar to the left to view your transactions." : "Tap a date on the calendar above to view your transactions.")
-            )
-            .frame(maxHeight: .infinity)
-            .frame(maxWidth: .infinity)
-        } else if viewModel.transactions.isEmpty {
-            ContentUnavailableView(
-                viewModel.searchText.isEmpty ? "No Transactions" : "No Results",
-                systemImage: viewModel.searchText.isEmpty ? "list.bullet" : "magnifyingglass",
-                description: Text(viewModel.searchText.isEmpty ? "No transactions found for this period" : "No transactions match '\(viewModel.searchText)'")
-            )
-            .frame(maxHeight: .infinity)
-            .frame(maxWidth: .infinity)
         } else {
             List {
-                Section {
-                    ForEach(Array(viewModel.transactions.enumerated()), id: \.element.id) { index, transaction in
-                        Button {
-                            selectedTransaction = transaction
-                        } label: {
-                            TransactionRowView(transaction: transaction)
-                                .background {
-                                    if index == 0 {
-                                        GeometryReader { proxy in
-                                            Color.clear
-                                                .preference(
-                                                    key: ScrollOffsetPreferenceKey.self,
-                                                    value: proxy.frame(in: .named("scroll")).minY
-                                                )
-                                        }
-                                    }
-                                }
-                        }
-                        .buttonStyle(.plain)
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button(role: .destructive) {
-                                try? viewModel.deleteTransaction(transaction)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                            
+                if verticalSizeClass != .compact {
+                    Section {
+                        calendarContent(viewModel: viewModel)
+                    }
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                }
+                
+                if !hasUserSelectedDate && viewModel.searchText.isEmpty {
+                    Section {
+                        ContentUnavailableView(
+                            "Select a Date",
+                            systemImage: "calendar",
+                            description: Text(verticalSizeClass == .compact ? "Tap a date on the calendar to the left to view your transactions." : "Tap a date on the calendar above to view your transactions.")
+                        )
+                        .padding(.vertical, 40)
+                    }
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                } else if viewModel.transactions.isEmpty {
+                    Section {
+                        ContentUnavailableView(
+                            viewModel.searchText.isEmpty ? "No Transactions" : "No Results",
+                            systemImage: viewModel.searchText.isEmpty ? "list.bullet" : "magnifyingglass",
+                            description: Text(viewModel.searchText.isEmpty ? "No transactions found for this period" : "No transactions match '\(viewModel.searchText)'")
+                        )
+                        .padding(.vertical, 40)
+                    }
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                } else {
+                    Section {
+                        ForEach(Array(viewModel.transactions.enumerated()), id: \.element.id) { index, transaction in
                             Button {
                                 selectedTransaction = transaction
                             } label: {
-                                Label("Edit", systemImage: "pencil")
+                                TransactionRowView(transaction: transaction)
+                                    .background {
+                                        if index == 0 {
+                                            GeometryReader { proxy in
+                                                Color.clear
+                                                    .preference(
+                                                        key: ScrollOffsetPreferenceKey.self,
+                                                        value: proxy.frame(in: .named("scroll")).minY
+                                                    )
+                                            }
+                                        }
+                                    }
                             }
-                            .tint(.blue)
+                            .buttonStyle(.plain)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    try? viewModel.deleteTransaction(transaction)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                                
+                                Button {
+                                    selectedTransaction = transaction
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+                                .tint(.blue)
+                            }
                         }
+                    } header: {
+                        EmptyView()
+                    } footer: {
+                        EmptyView()
                     }
-                } header: {
-                    EmptyView()
-                } footer: {
-                    EmptyView()
                 }
             }
             .listStyle(.insetGrouped)
