@@ -67,6 +67,7 @@ struct CalendarView: View {
                             .clipShape(Circle())
                             .foregroundStyle(.primary)
                     }
+                    .buttonStyle(.plain)
                     
                     // Month/Year Title (Unified Picker)
                     Button(action: { showingDatePicker = true }) {
@@ -124,6 +125,7 @@ struct CalendarView: View {
                             selectedYear = viewModel.currentYear
                         }
                     }
+                    .buttonStyle(.plain)
                     
                     // Next Button
                     Button(action: { 
@@ -137,6 +139,7 @@ struct CalendarView: View {
                             .clipShape(Circle())
                             .foregroundStyle(.primary)
                     }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal)
             }
