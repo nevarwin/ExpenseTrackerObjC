@@ -51,6 +51,9 @@ struct BudgetHistoryView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .onChange(of: selectedRange) { _, newValue in
+                    PostHogManager.shared.trackEvent("View History Range Changed", properties: ["range": newValue.rawValue])
+                }
             }
             .listRowInsets(EdgeInsets())
             .listRowBackground(Color.clear)

@@ -13,6 +13,9 @@ struct CurrencySettingsView: View {
                     }
                 }
                 .pickerStyle(.inline)
+                .onChange(of: currencyManager.currencyCode) { _, newValue in
+                    PostHogManager.shared.trackEvent("Currency Changed", properties: ["currency_code": newValue])
+                }
             }
             
             Section {

@@ -228,12 +228,14 @@ struct BudgetDetailView: View {
                         
                         Button {
                             showingEditSheet = true
+                            PostHogManager.shared.trackEvent("Budget Edit Clicked (Detail)")
                         } label: {
                             Label("Edit Budget", systemImage: "pencil")
                         }
                         
                         Button {
                             showingImportInstruction = true
+                            PostHogManager.shared.trackEvent("Transaction Import Clicked")
                         } label: {
                             Label("Import Transactions", systemImage: "square.and.arrow.down")
                         }
@@ -284,8 +286,9 @@ struct BudgetDetailView: View {
             }
             .confirmationDialog("Delete Budget", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
                 Button("Delete", role: .destructive) {
-                    deleteBudget()
-                }
+                deleteBudget()
+                PostHogManager.shared.trackEvent("Budget Delete Confirmed (Detail)", properties: ["budget_name": budget.name])
+            }
                 Button("Cancel", role: .cancel) { }
             } message: {
                 Text("Are you sure you want to delete this budget? All associated categories and transactions will be permanently deleted.")
@@ -353,6 +356,10 @@ struct BudgetDetailView: View {
                     importMessage = "No new transactions were imported. They might be duplicates."
                 }
                 showingImportAlert = true
+                PostHogManager.shared.trackEvent("Transaction Import Success", properties: [
+                    "imported_count": totalCount,
+                    "file_count": processedFiles.count
+                ])
                 
                 // Refresh data
                 transactionViewModel?.loadTransactions(for: budget)
@@ -361,6 +368,7 @@ struct BudgetDetailView: View {
             } catch {
                 importErrorMessage = "Import failed: \(error.localizedDescription)"
                 showingImportError = true
+                PostHogManager.shared.trackEvent("Transaction Import Failed", properties: ["error": error.localizedDescription])
             }
             
             // Clean up temp files

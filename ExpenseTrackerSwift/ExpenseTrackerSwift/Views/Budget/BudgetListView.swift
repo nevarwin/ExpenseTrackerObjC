@@ -76,6 +76,7 @@ struct HomeContent: View {
                             
                             Button {
                                 budgetToEdit = budget
+                                PostHogManager.shared.trackEvent("Budget Edit Swiped")
                             } label: {
                                 Label("Edit", systemImage: "pencil")
                             }
@@ -135,6 +136,7 @@ struct HomeContent: View {
             Button("Delete", role: .destructive) {
                 if let budget = budgetToDelete {
                     try? viewModel.deleteBudget(budget)
+                    PostHogManager.shared.trackEvent("Budget Delete Confirmed", properties: ["budget_name": budget.name])
                 }
             }
             Button("Cancel", role: .cancel) {
@@ -158,12 +160,14 @@ struct HomeContent: View {
     private var toolbarMenu: some View {
         Button {
             showingAddBudget = true
+            PostHogManager.shared.trackEvent("Budget Add Button Clicked")
         } label: {
             Label("Add Budget", systemImage: "plus")
         }
         
         Button {
             isImportingBudget = true
+            PostHogManager.shared.trackEvent("Budget Import Button Clicked")
         } label: {
             Label("Import Budget", systemImage: "square.and.arrow.down")
         }
@@ -206,11 +210,16 @@ struct HomeContent: View {
                 
                 if importedNames.isEmpty {
                     viewModel.errorMessage = "Failed to import budgets. Ensure files are accessible."
+                    PostHogManager.shared.trackEvent("Budget Import Failed", properties: ["failed_count": failedCount])
                 } else {
                     let baseMessage = "Successfully imported \(importedNames.count) budget(s)."
                     importSuccessMessage = failedCount > 0 ? "\(baseMessage) (\(failedCount) failed.)" : baseMessage
                     showingImportAlert = true
                     viewModel.loadBudgets()
+                    PostHogManager.shared.trackEvent("Budget Import Success", properties: [
+                        "imported_count": importedNames.count,
+                        "failed_count": failedCount
+                    ])
                 }
             }
             
@@ -365,7 +374,10 @@ struct EmptyBudgetCard: View {
                     .padding(.horizontal)
             }
             
-            Button(action: { onAddBudget?() }) {
+            Button(action: { 
+                onAddBudget?() 
+                PostHogManager.shared.trackEvent("Budget Create New Clicked (Empty State)")
+            }) {
                 Text("Create New Budget")
                     .font(.headline)
                     .foregroundStyle(.white)

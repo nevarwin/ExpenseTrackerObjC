@@ -8,6 +8,7 @@ struct AppearanceSettingsView: View {
             ForEach(AppearanceManager.Appearance.allCases) { appearance in
                 Button {
                     appearanceManager.userAppearance = appearance
+                    PostHogManager.shared.trackEvent("Appearance Changed", properties: ["appearance": appearance.title])
                 } label: {
                     HStack {
                         Label(appearance.title, systemImage: appearance.icon)
