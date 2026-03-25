@@ -3,7 +3,6 @@ import Foundation
 /// Utility for calculating date ranges for monthly budget periods
 struct DateRangeHelper {
     
-    // MARK: - Month Bounds
     
     /// Get the start and end dates for the month containing the given date
     /// - Parameter date: The date to calculate bounds for (defaults to current date)
@@ -25,7 +24,6 @@ struct DateRangeHelper {
         return (startOfMonth, endOfMonth)
     }
     
-    // MARK: - Date Checks
     
     /// Check if a date is in the current month
     /// - Parameter date: The date to check
@@ -45,7 +43,6 @@ struct DateRangeHelper {
         return calendar.isDate(date1, equalTo: date2, toGranularity: .month)
     }
     
-    // MARK: - Month Lists
     
     /// Get a list of month start dates between two dates
     /// - Parameters:
@@ -73,7 +70,6 @@ struct DateRangeHelper {
         return months
     }
     
-    // MARK: - Formatting
     
     /// Format a date as "Month Year" (e.g., "February 2026")
     /// - Parameter date: The date to format
@@ -84,16 +80,7 @@ struct DateRangeHelper {
         return formatter.string(from: date)
     }
     
-    /// Format a date as "Mon Year" (e.g., "Feb 2026")
-    /// - Parameter date: The date to format
-    /// - Returns: Formatted string
-    static func shortMonthYearString(from date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM yyyy"
-        return formatter.string(from: date)
-    }
     
-    // MARK: - Date Navigation
     
     /// Get the date for the previous month
     /// - Parameter from: Starting date (defaults to current date)

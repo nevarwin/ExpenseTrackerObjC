@@ -57,22 +57,12 @@ class CSVParser {
         
         guard rows.count > 2 else { return [] }
         
-        // Skip first 2 header rows
         let dataRows = rows.dropFirst(2)
         var transactions: [CSVTransaction] = []
         
-        for (index, row) in dataRows.enumerated() {
+        for row in dataRows {
             let columns = parseCSVRow(row)
             
-            // Debug: Print first row to verify columns
-            if index == 0 {
-                print("DEBUG: First row columns: \(columns)")
-            }
-            
-            // Indices adjusted for empty first column (leading comma)
-            // Expenses: 1 (Date), 2 (Amount), 3 (Desc), 4 (Category)
-            
-            // Parse Expense (Left side)
             if columns.indices.contains(4),
                let date = parseDate(columns[1]),
                let amount = parseCurrency(columns[2]),
@@ -85,13 +75,8 @@ class CSVParser {
                     category: columns[4],
                     isIncome: false
                 ))
-            } else if columns.indices.contains(1) && !columns[1].isEmpty {
-                 // Debug failure
-                 // print("DEBUG: Failed to parse expense row: \(columns)")
             }
             
-            // Income: 6 (Date), 7 (Amount), 8 (Desc), 9 (Category)
-            // Parse Income (Right side)
             if columns.indices.contains(9),
                let date = parseDate(columns[6]),
                let amount = parseCurrency(columns[7]),
@@ -115,14 +100,9 @@ class CSVParser {
             throw CSVParserError.fileReadFailed
         }
         
-        // Simple heuristic: Determine format based on content
-        // Dec25.csv (Detailed) has "Planned" and "Diff." headers, and side-by-side tables
-        // 13th25.csv (Simple) has simple Key-Value pairs
-        
         let rows = data.components(separatedBy: .newlines)
         let filename = url.deletingPathExtension().lastPathComponent
         
-        // Check for Dec25.csv format (complex summary)
         if data.contains("Planned") && data.contains("Actual") && data.contains("Diff.") {
             return parseComplexBudget(rows: rows, name: filename)
         } else {
@@ -136,7 +116,6 @@ class CSVParser {
         for row in rows {
             let columns = parseCSVRow(row)
             
-            // Expense columns: B(1), C(2) for names. D(3) for planned, E(4) for actual, F(5) for diff
             if columns.indices.contains(3) {
                 let expenseSub1 = columns.indices.contains(1) ? columns[1].trimmingCharacters(in: .whitespaces) : ""
                 let expenseSub2 = columns.indices.contains(2) ? columns[2].trimmingCharacters(in: .whitespaces) : ""
@@ -153,7 +132,6 @@ class CSVParser {
                 }
             }
             
-            // Income columns: H(7), I(8) for names. J(9) for planned, K(10) for actual, L(11) for diff
             if columns.indices.contains(9) {
                 let incomeSub1 = columns.indices.contains(7) ? columns[7].trimmingCharacters(in: .whitespaces) : ""
                 let incomeSub2 = columns.indices.contains(8) ? columns[8].trimmingCharacters(in: .whitespaces) : ""
@@ -180,16 +158,11 @@ class CSVParser {
         for row in rows {
             let columns = parseCSVRow(row)
             
-            // Expected: Col 1 (Category), Col 2 (Amount) -> indices 1 and 2
-            // Note: csv often has empty first col if it was "Col B" in Excel
-            
             if columns.indices.contains(2) {
                 let categoryName = columns[1]
                 let amountStr = columns[2]
                 
                 if !categoryName.isEmpty, let amount = parseCurrency(amountStr), amount > 0 {
-                    // Assume expense by default for simple budget lists unless specified
-                    // Or maybe check if name indicates income? For 13th25.csv it seems to be allocations.
                     items.append(CSVBudgetItem(categoryName: categoryName, plannedAmount: amount, actualAmount: 0, differenceAmount: 0, isIncome: false))
                 }
             }

@@ -13,7 +13,6 @@ final class Category {
     var createdAt: Date
     var updatedAt: Date
     
-    // Relationships
     var budget: Budget?
     
     @Relationship(deleteRule: .cascade, inverse: \Transaction.category)
@@ -38,7 +37,6 @@ final class Category {
         self.updatedAt = Date()
     }
     
-    // MARK: - Computed Properties
     
     var remainingAmount: Decimal {
         allocatedAmount - usedAmount
@@ -54,11 +52,6 @@ final class Category {
     }
     
     
-    // MARK: - Monthly Period Filtering
-    
-    /// Get transactions for a specific month
-    /// - Parameter date: The date within the month to filter (defaults to current date)
-    /// - Returns: Array of active transactions assigned to that month
     func transactionsInMonth(_ date: Date = Date()) -> [Transaction] {
         let bounds = DateRangeHelper.monthBounds(for: date)
         return transactions.filter { transaction in
@@ -67,33 +60,13 @@ final class Category {
         }
     }
     
-    /// Used amount for the current month only
-    var currentMonthUsedAmount: Decimal {
-        transactionsInMonth()
-            .reduce(Decimal.zero) { $0 + $1.amount }
-    }
     
-    /// Calculate used amount for a specific month
-    /// - Parameter date: The date within the month to calculate
-    /// - Returns: Total used amount for that month
     func usedAmountInMonth(_ date: Date) -> Decimal {
         transactionsInMonth(date)
             .reduce(Decimal.zero) { $0 + $1.amount }
     }
     
-    /// Remaining amount for the current month (allocated - used in current month)
-    var currentMonthRemainingAmount: Decimal {
-        allocatedAmount - currentMonthUsedAmount
-    }
     
-    /// Calculate remaining amount for a specific month
-    /// - Parameter date: The date within the month to calculate
-    /// - Returns: Remaining amount for that month
-    func remainingAmountInMonth(_ date: Date) -> Decimal {
-        allocatedAmount - usedAmountInMonth(date)
-    }
-    
-    // MARK: - Business Logic
     
     func isValid(for date: Date) -> Bool {
         return isActive

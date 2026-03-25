@@ -195,7 +195,7 @@ struct HomeContent: View {
                             let newBudget = try importManager.importBudget(from: csvBudget)
                             importedNames.append(newBudget.name)
                         } catch {
-                            print("DEBUG: Import failed for \(url.lastPathComponent): \(error.localizedDescription)")
+                            print("Import failed for \(url.lastPathComponent): \(error.localizedDescription)")
                             failedCount += 1
                         }
                         url.stopAccessingSecurityScopedResource()

@@ -16,10 +16,9 @@ struct ExpenseMeApp: App {
                 .preferredColorScheme(appearanceManager.userAppearance.colorScheme)
         }
         .modelContainer(for: [
-            Budget.self,
-            Category.self,
-            Transaction.self,
-            BudgetAllocation.self
+            Transaction.self, 
+            Category.self, 
+            Budget.self
         ])
     }
 }
