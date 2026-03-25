@@ -99,6 +99,20 @@ struct BudgetDetailView: View {
                     }
                 }
             }
+
+            Section("Expense Overview") {
+                let pExpense = budget.plannedExpenses(for: selectedMonth)
+                let aExpense = budget.expensesInMonth(selectedMonth)
+                let dExpense = budget.expenseDiffInMonth(selectedMonth)
+                
+                LabeledContent("Planned Expense", value: pExpense, format: .currency(code: currencyManager.currencyCode))
+                LabeledContent("Actual Expense", value: aExpense, format: .currency(code: currencyManager.currencyCode))
+                LabeledContent("Difference") {
+                    Text(dExpense, format: .currency(code: currencyManager.currencyCode))
+                        .foregroundStyle(dExpense >= 0 ? .green : .red)
+                        .fontWeight(.semibold)
+                }
+            }
             
             Section("Income Overview") {
                 let pIncome = budget.plannedIncome(for: selectedMonth)
@@ -113,17 +127,12 @@ struct BudgetDetailView: View {
                         .fontWeight(.semibold)
                 }
             }
-            
-            Section("Expense Overview") {
-                let pExpense = budget.plannedExpenses(for: selectedMonth)
-                let aExpense = budget.expensesInMonth(selectedMonth)
-                let dExpense = budget.expenseDiffInMonth(selectedMonth)
-                
-                LabeledContent("Planned Expense", value: pExpense, format: .currency(code: currencyManager.currencyCode))
-                LabeledContent("Actual Expense", value: aExpense, format: .currency(code: currencyManager.currencyCode))
-                LabeledContent("Difference") {
-                    Text(dExpense, format: .currency(code: currencyManager.currencyCode))
-                        .foregroundStyle(dExpense >= 0 ? .green : .red)
+
+            Section("Total Savings") {
+                let savings = budget.remainingInMonth(selectedMonth)
+                LabeledContent("Savings") {
+                    Text(savings, format: .currency(code: currencyManager.currencyCode))
+                        .foregroundStyle(savings >= 0 ? .green : .red)
                         .fontWeight(.semibold)
                 }
             }
