@@ -18,6 +18,11 @@ final class Budget {
     @Relationship(deleteRule: .cascade, inverse: \Transaction.budget)
     var transactions: [Transaction] = []
     
+    /// Returns a sorted list of unique months (first day of the month) that have at least one transaction.
+    func activeBudgetPeriods() -> [Date] {
+        let periods = Set(transactions.compactMap { $0.isActive ? $0.budgetPeriod : nil })
+        return periods.sorted()
+    }
     
     init(
         name: String,
