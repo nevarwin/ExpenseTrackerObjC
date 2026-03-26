@@ -208,6 +208,7 @@ struct QuickAddTransactionSheet: View {
         
         let hasOverflow = viewModel.checkOverflow(
             amount: decimalAmount,
+            date: date,
             budget: initialBudget,
             category: category,
             existing: nil

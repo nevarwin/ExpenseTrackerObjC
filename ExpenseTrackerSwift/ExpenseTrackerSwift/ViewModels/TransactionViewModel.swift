@@ -190,11 +190,15 @@ final class TransactionViewModel {
     
     func checkOverflow(
         amount: Decimal,
+        date: Date,
         budget: Budget,
         category: Category,
         existing: Transaction? = nil
     ) -> Bool {
-        var currentUsed = category.usedAmount
+        // Skip overflow check for income categories
+        guard !category.isIncome else { return false }
+        
+        var currentUsed = category.usedAmountInMonth(date)
         
         // If editing, subtract the previous amount from the usage
         if let existing = existing, let oldCategory = existing.category, oldCategory.id == category.id {

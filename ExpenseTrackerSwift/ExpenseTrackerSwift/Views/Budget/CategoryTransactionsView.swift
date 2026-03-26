@@ -7,6 +7,9 @@ struct CategoryTransactionsView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var currencyManager: CurrencyManager
 
+    @Query(filter: #Predicate<Transaction> { $0.isActive == true }, sort: \Transaction.date, order: .reverse)
+    private var allTransactions: [Transaction]
+    
     @Query(filter: #Predicate<Budget> { $0.isActive == true })
     private var activeBudgets: [Budget]
 

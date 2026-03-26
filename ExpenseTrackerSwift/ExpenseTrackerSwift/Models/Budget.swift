@@ -20,7 +20,9 @@ final class Budget {
     
     /// Returns a sorted list of unique months (first day of the month) that have at least one transaction.
     func activeBudgetPeriods() -> [Date] {
-        let periods = Set(transactions.compactMap { $0.isActive ? $0.budgetPeriod : nil })
+        let transactionPeriods = transactions.compactMap { $0.isActive ? $0.budgetPeriod : nil }
+        let categoryPeriods = categories.compactMap { $0.isActive ? $0.budgetPeriod : nil }
+        let periods = Set(transactionPeriods + categoryPeriods)
         return periods.sorted()
     }
     

@@ -42,13 +42,19 @@ struct BudgetDetailView: View {
     @State private var activePeriods: [Date] = []
     
     private func updateActivePeriods() {
-        var periods = budget.activeBudgetPeriods()
+        var periods = Set(budget.activeBudgetPeriods())
         let normalizedSelected = DateRangeHelper.monthBounds(for: selectedMonth).start
-        if !periods.contains(normalizedSelected) {
-            periods.append(normalizedSelected)
-            periods.sort()
+        
+        // Ensure current, previous, and next months are always available for smooth swiping
+        periods.insert(normalizedSelected)
+        if let prev = Calendar.current.date(byAdding: .month, value: -1, to: normalizedSelected) {
+            periods.insert(DateRangeHelper.monthBounds(for: prev).start)
         }
-        activePeriods = periods
+        if let next = Calendar.current.date(byAdding: .month, value: 1, to: normalizedSelected) {
+            periods.insert(DateRangeHelper.monthBounds(for: next).start)
+        }
+        
+        activePeriods = Array(periods).sorted()
     }
     
     var body: some View {
@@ -184,6 +190,8 @@ struct BudgetDetailView: View {
                 if selectedMonth != normalized {
                     selectedMonth = normalized
                 }
+                // Update buffer when month changes via swipe or picker
+                updateActivePeriods()
             }
     }
     
@@ -376,6 +384,9 @@ struct BudgetMonthView: View {
     @EnvironmentObject var currencyManager: CurrencyManager
     @Binding var searchText: String
     @Binding var showingDatePicker: Bool
+    
+    @Query(filter: #Predicate<Transaction> { $0.isActive == true }, sort: \Transaction.date, order: .reverse)
+    private var allTransactions: [Transaction]
     
     // Quick Add Bindings
     @Binding var newCategoryName: String

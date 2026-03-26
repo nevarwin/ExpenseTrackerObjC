@@ -27,7 +27,7 @@ final class Category {
     ) {
         self.name = name
         self.allocatedAmount = allocatedAmount
-        self.budgetPeriod = budgetPeriod ?? budget?.startDate ?? Date()
+        self.budgetPeriod = DateRangeHelper.monthBounds(for: budgetPeriod ?? budget?.startDate ?? Date()).start
         self.usedAmount = 0
         self.isIncome = isIncome
         self.isActive = true

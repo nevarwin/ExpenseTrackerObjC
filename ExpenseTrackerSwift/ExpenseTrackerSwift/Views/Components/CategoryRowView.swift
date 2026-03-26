@@ -6,6 +6,9 @@ struct CategoryRowView: View {
     let month: Date?  // Optional month to display specific period data
     @EnvironmentObject var currencyManager: CurrencyManager
     
+    @Query(filter: #Predicate<Transaction> { $0.isActive == true })
+    private var allTransactions: [Transaction]
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {

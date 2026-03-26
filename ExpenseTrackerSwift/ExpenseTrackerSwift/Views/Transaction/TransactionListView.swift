@@ -401,6 +401,7 @@ struct TransactionFormView: View {
         // 1. Check for overflow
         let hasOverflow = viewModel.checkOverflow(
             amount: decimalAmount,
+            date: date,
             budget: selectedBudget,
             category: category,
             existing: existingTransaction
