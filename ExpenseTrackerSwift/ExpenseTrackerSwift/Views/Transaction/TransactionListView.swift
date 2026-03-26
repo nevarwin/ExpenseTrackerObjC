@@ -241,7 +241,7 @@ struct TransactionFormView: View {
     @State private var errorMessage = ""
     @State private var showingBudgetPeriodPicker = false
     
-    init(activeBudgets: [Budget], initialBudget: Budget, viewModel: TransactionViewModel, existingTransaction: Transaction? = nil) {
+    init(activeBudgets: [Budget], initialBudget: Budget, viewModel: TransactionViewModel, existingTransaction: Transaction? = nil, initialCategory: Category? = nil, initialDate: Date? = nil) {
         self.availableBudgets = activeBudgets
         _selectedBudget = State(initialValue: initialBudget)
         self.viewModel = viewModel
@@ -256,8 +256,11 @@ struct TransactionFormView: View {
             _selectedCategory = State(initialValue: transaction.category)
             _selectedBudgetPeriod = State(initialValue: transaction.budgetPeriod)
         } else {
-            // For new transactions, default to current month
-            _selectedBudgetPeriod = State(initialValue: DateRangeHelper.monthBounds(for: Date()).start)
+            // For new transactions, use initial values if provided
+            let transactionDate = initialDate ?? Date()
+            _date = State(initialValue: transactionDate)
+            _selectedBudgetPeriod = State(initialValue: DateRangeHelper.monthBounds(for: transactionDate).start)
+            _selectedCategory = State(initialValue: initialCategory)
         }
     }
     

@@ -10,6 +10,7 @@ struct CategoryTransactionsView: View {
     @Query(filter: #Predicate<Budget> { $0.isActive == true })
     private var activeBudgets: [Budget]
 
+    @State private var showingAddTransaction = false
     @State private var selectedTransaction: Transaction?
     @State private var transactionViewModel: TransactionViewModel?
 
@@ -65,6 +66,16 @@ struct CategoryTransactionsView: View {
         }
         .navigationTitle(category.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    showingAddTransaction = true
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .disabled(activeBudgets.isEmpty)
+            }
+        }
         .sheet(item: $selectedTransaction) { transaction in
             if let budget = transaction.budget {
                 TransactionFormView(
@@ -72,6 +83,17 @@ struct CategoryTransactionsView: View {
                     initialBudget: budget,
                     viewModel: transactionViewModel ?? TransactionViewModel(modelContext: modelContext),
                     existingTransaction: transaction
+                )
+            }
+        }
+        .sheet(isPresented: $showingAddTransaction) {
+            if let budget = activeBudgets.first(where: { $0 == category.budget }) ?? activeBudgets.first {
+                TransactionFormView(
+                    activeBudgets: activeBudgets,
+                    initialBudget: budget,
+                    viewModel: transactionViewModel ?? TransactionViewModel(modelContext: modelContext),
+                    initialCategory: category,
+                    initialDate: month // Pre-fill with the month being viewed
                 )
             }
         }
