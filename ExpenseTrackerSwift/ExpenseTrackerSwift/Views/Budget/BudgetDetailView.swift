@@ -38,57 +38,193 @@ struct BudgetDetailView: View {
     // Search Text State
     @State private var searchText: String = ""
     
-    // Swipeable Periods
-    @State private var activePeriods: [Date] = []
-    
-    private func updateActivePeriods() {
-        var periods = Set(budget.activeBudgetPeriods())
-        let normalizedSelected = DateRangeHelper.monthBounds(for: selectedMonth).start
-        
-        // Ensure current, previous, and next months are always available for smooth swiping
-        periods.insert(normalizedSelected)
-        if let prev = Calendar.current.date(byAdding: .month, value: -1, to: normalizedSelected) {
-            periods.insert(DateRangeHelper.monthBounds(for: prev).start)
-        }
-        if let next = Calendar.current.date(byAdding: .month, value: 1, to: normalizedSelected) {
-            periods.insert(DateRangeHelper.monthBounds(for: next).start)
-        }
-        
-        activePeriods = Array(periods).sorted()
-    }
-    
+
     var body: some View {
-        TabView(selection: $selectedMonth) {
-            ForEach(activePeriods, id: \.self) { month in
-                BudgetMonthView(
-                    budget: budget,
-                    month: month,
-                    categoryViewModel: categoryViewModel,
-                    searchText: $searchText,
-                    showingDatePicker: $showingDatePicker,
-                    newCategoryName: $newCategoryName,
-                    newCategoryAmount: $newCategoryAmount,
-                    newCategoryIsIncome: $newCategoryIsIncome,
-                    onAddCategory: addInlineCategory
-                )
-                .tag(month)
+        List {
+            // Month Selector
+            Section("Period") {
+                Button(action: { showingDatePicker = true }) {
+                    LabeledContent("Viewing Period") {
+                        HStack(spacing: 4) {
+                            Text(DateRangeHelper.monthYearString(from: selectedMonth))
+                                .font(.body)
+                                .fontWeight(.medium)
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .foregroundStyle(.primary)
+                .sheet(isPresented: $showingDatePicker) {
+                    VStack(spacing: 20) {
+                        Text("Select Month & Year")
+                            .font(.headline)
+                            .padding(.top)
+                        
+                        HStack(spacing: 0) {
+                            Picker("Month", selection: $pickerMonth) {
+                                ForEach(1...12, id: \.self) { month in
+                                    Text(Calendar.current.monthSymbols[month - 1]).tag(month)
+                                }
+                            }
+                            .pickerStyle(.wheel)
+                            .frame(width: 150)
+                            
+                            Picker("Year", selection: $pickerYear) {
+                                let currentYear = Calendar.current.component(.year, from: Date())
+                                ForEach((currentYear - 10)...(currentYear + 10), id: \.self) { year in
+                                    Text(String(year).replacingOccurrences(of: ",", with: "")).tag(year)
+                                }
+                            }
+                            .pickerStyle(.wheel)
+                            .frame(width: 100)
+                        }
+                        
+                        Button("Done") {
+                            var components = DateComponents()
+                            components.year = pickerYear
+                            components.month = pickerMonth
+                            if let newDate = Calendar.current.date(from: components) {
+                                selectedMonth = newDate
+                            }
+                            showingDatePicker = false
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .padding(.bottom)
+                    }
+                    .presentationDetents([.height(300)])
+                    .onAppear {
+                        pickerMonth = Calendar.current.component(.month, from: selectedMonth)
+                        pickerYear = Calendar.current.component(.year, from: selectedMonth)
+                    }
+                }
             }
-        }
-        .tabViewStyle(.page(indexDisplayMode: .never))
-        .sheet(isPresented: $showingDatePicker) {
-            MonthYearPickerView(
-                selectedDate: $selectedMonth,
-                pickerMonth: $pickerMonth,
-                pickerYear: $pickerYear,
-                showingDatePicker: $showingDatePicker,
-                onDateChanged: updateActivePeriods
-            )
+
+            Section("Expense Overview") {
+                let pExpense = budget.plannedExpenses(for: selectedMonth)
+                let aExpense = budget.expensesInMonth(selectedMonth)
+                let dExpense = budget.expenseDiffInMonth(selectedMonth)
+                
+                LabeledContent("Planned Expense", value: pExpense, format: .currency(code: currencyManager.currencyCode))
+                LabeledContent("Actual Expense", value: aExpense, format: .currency(code: currencyManager.currencyCode))
+                LabeledContent("Difference") {
+                    Text(dExpense, format: .currency(code: currencyManager.currencyCode))
+                        .foregroundStyle(dExpense >= 0 ? .green : .red)
+                        .fontWeight(.semibold)
+                }
+            }
+            
+            Section("Income Overview") {
+                let pIncome = budget.plannedIncome(for: selectedMonth)
+                let aIncome = budget.incomeInMonth(selectedMonth)
+                let dIncome = budget.incomeDiffInMonth(selectedMonth)
+                
+                LabeledContent("Planned Income", value: pIncome, format: .currency(code: currencyManager.currencyCode))
+                LabeledContent("Actual Income", value: aIncome, format: .currency(code: currencyManager.currencyCode))
+                LabeledContent("Difference") {
+                    Text(dIncome, format: .currency(code: currencyManager.currencyCode))
+                        .foregroundStyle(dIncome >= 0 ? .green : .red)
+                        .fontWeight(.semibold)
+                }
+            }
+
+            Section("Total Savings") {
+                let savings = budget.remainingInMonth(selectedMonth)
+                LabeledContent("Savings") {
+                    Text(savings, format: .currency(code: currencyManager.currencyCode))
+                        .foregroundStyle(savings >= 0 ? .green : .red)
+                        .fontWeight(.semibold)
+                }
+            }
+            
+            if let viewModel = categoryViewModel {
+                let searchResults = searchText.isEmpty 
+                    ? viewModel.categories 
+                    : viewModel.categories.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+                
+                let expenses = searchResults.filter { !$0.isIncome }
+                let incomes = searchResults.filter { $0.isIncome }
+                
+                if viewModel.categories.isEmpty {
+                    Section("Categories") {
+                        Text("No categories")
+                            .foregroundStyle(.secondary)
+                    }
+                } else if !searchText.isEmpty && searchResults.isEmpty {
+                    Section("Categories") {
+                        Text("No matching categories")
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    if !expenses.isEmpty {
+                        Section("Expense Categories") {
+                            ForEach(expenses) { category in
+                                NavigationLink(destination: CategoryTransactionsView(category: category, month: selectedMonth)) {
+                                    CategoryRowView(category: category, month: selectedMonth)
+                                }
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                            }
+                        }
+                    }
+                    
+                    if !incomes.isEmpty {
+                        Section("Income Categories") {
+                            ForEach(incomes) { category in
+                                NavigationLink(destination: CategoryTransactionsView(category: category, month: selectedMonth)) {
+                                    CategoryRowView(category: category, month: selectedMonth)
+                                }
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                            }
+                        }
+                    }
+                }
+                
+                // MARK: - Inline Quick Create Row
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Quick Add Category").font(.caption).foregroundStyle(.secondary)
+                        
+                        HStack(spacing: 12) {
+                            TextField("Name", text: $newCategoryName)
+                                .textFieldStyle(.roundedBorder)
+                            
+                            TextField("Amount", text: $newCategoryAmount)
+                                .keyboardType(.decimalPad)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 100)
+                        }
+                        
+                        HStack {
+                            Picker("Type", selection: $newCategoryIsIncome) {
+                                Text("Expense").tag(false)
+                                Text("Income").tag(true)
+                            }
+                            .pickerStyle(.segmented)
+                            .frame(maxWidth: 160)
+                            
+                            Spacer()
+                            
+                            Button(action: addInlineCategory) {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.title2)
+                                    .foregroundStyle(Color.appAccent)
+                            }
+                            .disabled(newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty || (Decimal(string: newCategoryAmount) ?? 0) <= 0)
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+                }
+            }
         }
         .searchable(text: $searchText, prompt: "Search categories")
         .navigationTitle(budget.name)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.hidden, for: .navigationBar)
-        .toolbarBackground(.hidden, for: .bottomBar)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                     Menu {
@@ -168,9 +304,6 @@ struct BudgetDetailView: View {
                 Text("Are you sure you want to delete this budget? All associated categories and transactions will be permanently deleted.")
             }
             .onAppear {
-                selectedMonth = DateRangeHelper.monthBounds(for: selectedMonth).start
-                updateActivePeriods()
-                
                 if categoryViewModel == nil {
                     categoryViewModel = CategoryViewModel(modelContext: modelContext)
                     categoryViewModel?.loadCategories(for: budget)
@@ -181,18 +314,7 @@ struct BudgetDetailView: View {
                     transactionViewModel?.loadTransactions(for: budget)
                 }
             }
-            .onChange(of: budget.transactions) { _, _ in
-                updateActivePeriods()
-            }
-            .onChange(of: selectedMonth) { _, _ in
-                // Ensure selectedMonth from swipe is normalized
-                let normalized = DateRangeHelper.monthBounds(for: selectedMonth).start
-                if selectedMonth != normalized {
-                    selectedMonth = normalized
-                }
-                // Update buffer when month changes via swipe or picker
-                updateActivePeriods()
-            }
+
     }
     
     // Step 1: Files picked → copy to temp, parse and import
@@ -251,7 +373,6 @@ struct BudgetDetailView: View {
                 ])
                 
                 // Refresh data
-                updateActivePeriods()
                 transactionViewModel?.loadTransactions(for: budget)
                 categoryViewModel?.loadCategories(for: budget)
                 
@@ -318,222 +439,5 @@ struct BudgetDetailView: View {
         BudgetDetailView(budget: budget, viewModel: nil)
             .modelContainer(container)
             .environmentObject(CurrencyManager())
-    }
-}
-
-// MARK: - Subviews
-
-struct MonthYearPickerView: View {
-    @Binding var selectedDate: Date
-    @Binding var pickerMonth: Int
-    @Binding var pickerYear: Int
-    @Binding var showingDatePicker: Bool
-    let onDateChanged: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            Text("Select Month & Year")
-                .font(.headline)
-                .padding(.top)
-            
-            HStack(spacing: 0) {
-                Picker("Month", selection: $pickerMonth) {
-                    ForEach(1...12, id: \.self) { month in
-                        Text(Calendar.current.monthSymbols[month - 1]).tag(month)
-                    }
-                }
-                .pickerStyle(.wheel)
-                .frame(width: 150)
-                
-                Picker("Year", selection: $pickerYear) {
-                    let currentYear = Calendar.current.component(.year, from: Date())
-                    let yearRange = (currentYear - 10)...(currentYear + 10)
-                    ForEach(yearRange, id: \.self) { year in
-                        Text(String(format: "%d", year)).tag(year)
-                    }
-                }
-                .pickerStyle(.wheel)
-                .frame(width: 100)
-            }
-            
-            Button("Done") {
-                var components = DateComponents()
-                components.year = pickerYear
-                components.month = pickerMonth
-                if let newDate = Calendar.current.date(from: components) {
-                    selectedDate = DateRangeHelper.monthBounds(for: newDate).start
-                    onDateChanged()
-                }
-                showingDatePicker = false
-            }
-            .buttonStyle(.borderedProminent)
-            .padding(.bottom)
-        }
-        .presentationDetents([.height(300)])
-        .onAppear {
-            pickerMonth = Calendar.current.component(.month, from: selectedDate)
-            pickerYear = Calendar.current.component(.year, from: selectedDate)
-        }
-    }
-}
-
-struct BudgetMonthView: View {
-    let budget: Budget
-    let month: Date
-    let categoryViewModel: CategoryViewModel?
-    @EnvironmentObject var currencyManager: CurrencyManager
-    @Binding var searchText: String
-    @Binding var showingDatePicker: Bool
-    
-    @Query(filter: #Predicate<Transaction> { $0.isActive == true }, sort: \Transaction.date, order: .reverse)
-    private var allTransactions: [Transaction]
-    
-    // Quick Add Bindings
-    @Binding var newCategoryName: String
-    @Binding var newCategoryAmount: String
-    @Binding var newCategoryIsIncome: Bool
-    let onAddCategory: () -> Void
-    
-    var body: some View {
-        List {
-            // Month Selector
-            Section("Period") {
-                Button(action: { showingDatePicker = true }) {
-                    LabeledContent("Viewing Period") {
-                        HStack(spacing: 4) {
-                            Text(DateRangeHelper.monthYearString(from: month))
-                                .font(.body)
-                                .fontWeight(.medium)
-                            Image(systemName: "chevron.up.chevron.down")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                .foregroundStyle(.primary)
-            }
-
-            Section("Total Savings") {
-                let savings = budget.remainingInMonth(month)
-                LabeledContent("Savings") {
-                    Text(savings, format: .currency(code: currencyManager.currencyCode))
-                        .foregroundStyle(savings >= 0 ? .green : .red)
-                        .fontWeight(.semibold)
-                }
-            }
-
-            Section("Expense Overview") {
-                let pExpense = budget.plannedExpenses(for: month)
-                let aExpense = budget.expensesInMonth(month)
-                let dExpense = budget.expenseDiffInMonth(month)
-                
-                LabeledContent("Planned Expense", value: pExpense, format: .currency(code: currencyManager.currencyCode))
-                LabeledContent("Actual Expense", value: aExpense, format: .currency(code: currencyManager.currencyCode))
-                LabeledContent("Difference") {
-                    Text(dExpense, format: .currency(code: currencyManager.currencyCode))
-                        .foregroundStyle(dExpense >= 0 ? .green : .red)
-                        .fontWeight(.semibold)
-                }
-            }
-            
-            Section("Income Overview") {
-                let pIncome = budget.plannedIncome(for: month)
-                let aIncome = budget.incomeInMonth(month)
-                let dIncome = budget.incomeDiffInMonth(month)
-                
-                LabeledContent("Planned Income", value: pIncome, format: .currency(code: currencyManager.currencyCode))
-                LabeledContent("Actual Income", value: aIncome, format: .currency(code: currencyManager.currencyCode))
-                LabeledContent("Difference") {
-                    Text(dIncome, format: .currency(code: currencyManager.currencyCode))
-                        .foregroundStyle(dIncome >= 0 ? .green : .red)
-                        .fontWeight(.semibold)
-                }
-            }
-            
-            if let viewModel = categoryViewModel {
-                let searchResults = searchText.isEmpty 
-                    ? viewModel.categories 
-                    : viewModel.categories.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
-                
-                let expenses = searchResults.filter { !$0.isIncome }
-                let incomes = searchResults.filter { $0.isIncome }
-                
-                if viewModel.categories.isEmpty {
-                    Section("Categories") {
-                        Text("No categories")
-                            .foregroundStyle(.secondary)
-                    }
-                } else if !searchText.isEmpty && searchResults.isEmpty {
-                    Section("Categories") {
-                        Text("No matching categories")
-                            .foregroundStyle(.secondary)
-                    }
-                } else {
-                    if !expenses.isEmpty {
-                        Section("Expense Categories") {
-                            ForEach(expenses) { category in
-                                NavigationLink(destination: CategoryTransactionsView(category: category, month: month)) {
-                                    CategoryRowView(category: category, month: month)
-                                }
-                                .listRowBackground(Color.clear)
-                                .listRowSeparator(.hidden)
-                                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                            }
-                        }
-                    }
-                    
-                    if !incomes.isEmpty {
-                        Section("Income Categories") {
-                            ForEach(incomes) { category in
-                                NavigationLink(destination: CategoryTransactionsView(category: category, month: month)) {
-                                    CategoryRowView(category: category, month: month)
-                                }
-                                .listRowBackground(Color.clear)
-                                .listRowSeparator(.hidden)
-                                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                            }
-                        }
-                    }
-                }
-                
-                // MARK: - Inline Quick Create Row
-                Section {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Quick Add Category").font(.caption).foregroundStyle(.secondary)
-                        
-                        HStack(spacing: 12) {
-                            TextField("Name", text: $newCategoryName)
-                                .textFieldStyle(.roundedBorder)
-                            
-                            TextField("Amount", text: $newCategoryAmount)
-                                .keyboardType(.decimalPad)
-                                .textFieldStyle(.roundedBorder)
-                                .frame(width: 100)
-                        }
-                        
-                        HStack {
-                            Picker("Type", selection: $newCategoryIsIncome) {
-                                Text("Expense").tag(false)
-                                Text("Income").tag(true)
-                            }
-                            .pickerStyle(.segmented)
-                            .frame(maxWidth: 160)
-                            
-                            Spacer()
-                            
-                            Button(action: onAddCategory) {
-                                Image(systemName: "plus.circle.fill")
-                                    .font(.title2)
-                                    .foregroundStyle(Color.appAccent)
-                            }
-                            .disabled(newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty || (Decimal(string: newCategoryAmount) ?? 0) <= 0)
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.vertical, 8)
-                    .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
-                }
-            }
-        }
     }
 }

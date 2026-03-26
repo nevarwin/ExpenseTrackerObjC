@@ -25,6 +25,7 @@ final class Budget {
         let periods = Set(transactionPeriods + categoryPeriods)
         return periods.sorted()
     }
+
     
     init(
         name: String,
