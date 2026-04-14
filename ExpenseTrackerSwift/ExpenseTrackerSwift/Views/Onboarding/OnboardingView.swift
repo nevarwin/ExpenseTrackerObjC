@@ -53,7 +53,7 @@ struct OnboardingView: View {
                         hasCompletedOnboarding = true
                     }
                 }) {
-                    Text(currentPage < 2 ? "Next" : "Get Started")
+                    Text(currentPage < 2 ? String(localized: "Next") : String(localized: "Get Started"))
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)

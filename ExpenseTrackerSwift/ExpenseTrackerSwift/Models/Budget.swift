@@ -4,13 +4,13 @@ import Foundation
 @Model
 final class Budget {
     var id: UUID = UUID()
-    var name: String
-    var startDate: Date
-    var totalAmount: Decimal
-    var remainingAmount: Decimal
-    var isActive: Bool
-    var createdAt: Date
-    var updatedAt: Date
+    var name: String = ""
+    var startDate: Date = Date()
+    var totalAmount: Decimal = 0
+    var remainingAmount: Decimal = 0
+    var isActive: Bool = true
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
     
     @Relationship(deleteRule: .cascade, inverse: \Category.budget)
     var categories: [Category] = []

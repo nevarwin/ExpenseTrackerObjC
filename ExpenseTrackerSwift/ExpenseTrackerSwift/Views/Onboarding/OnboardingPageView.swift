@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct OnboardingPageView: View {
-    let title: String
-    let description: String
+    let title: LocalizedStringKey
+    let description: LocalizedStringKey
     let imageName: String
     let imageColor: Color
     

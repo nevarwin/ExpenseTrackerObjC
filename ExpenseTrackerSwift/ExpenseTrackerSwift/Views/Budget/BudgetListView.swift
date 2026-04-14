@@ -26,7 +26,7 @@ struct BudgetListView: View {
                     ProgressView()
                 }
             }
-            .navigationTitle("Budgets")
+            .navigationTitle(String(localized: "Budgets"))
             .onAppear {
                 PostHogManager.shared.trackScreen("Home")
                 if injectedViewModel == nil && internalViewModel == nil {
@@ -71,14 +71,14 @@ struct HomeContent: View {
                             Button(role: .destructive) {
                                 budgetToDelete = budget
                             } label: {
-                                Label("Delete", systemImage: "trash")
+                                Label(String(localized: "Delete"), systemImage: "trash")
                             }
                             
                             Button {
                                 budgetToEdit = budget
                                 PostHogManager.shared.trackEvent("Budget Edit Swiped")
                             } label: {
-                                Label("Edit", systemImage: "pencil")
+                                Label(String(localized: "Edit"), systemImage: "pencil")
                             }
                             .tint(.blue)
                         }
@@ -110,40 +110,40 @@ struct HomeContent: View {
         ) { result in
             handleImport(result)
         }
-        .alert("Import Result", isPresented: $showingImportAlert) {
-            Button("OK") { }
+        .alert(String(localized: "Import Result"), isPresented: $showingImportAlert) {
+            Button(String(localized: "OK")) { }
         } message: {
-            Text(importSuccessMessage ?? "Unknown result")
+            Text(importSuccessMessage ?? String(localized: "Unknown result"))
         }
-        .alert("Error", isPresented: $showingError) {
-            Button("OK") {
+        .alert(String(localized: "Error"), isPresented: $showingError) {
+            Button(String(localized: "OK")) {
                 viewModel.errorMessage = nil
             }
         } message: {
-            Text(viewModel.errorMessage ?? "An error occurred")
+            Text(viewModel.errorMessage ?? String(localized: "An error occurred"))
         }
         .onChange(of: viewModel.errorMessage) { _, newValue in
             showingError = newValue != nil
         }
         .confirmationDialog(
-            "Delete Budget",
+            String(localized: "Delete Budget"),
             isPresented: Binding(
                 get: { budgetToDelete != nil },
                 set: { if !$0 { budgetToDelete = nil } }
             ),
             titleVisibility: .visible
         ) {
-            Button("Delete", role: .destructive) {
+            Button(String(localized: "Delete"), role: .destructive) {
                 if let budget = budgetToDelete {
                     try? viewModel.deleteBudget(budget)
                     PostHogManager.shared.trackEvent("Budget Delete Confirmed", properties: ["budget_name": budget.name])
                 }
             }
-            Button("Cancel", role: .cancel) {
+            Button(String(localized: "Cancel"), role: .cancel) {
                 budgetToDelete = nil
             }
         } message: {
-            Text("Are you sure you want to delete this budget? All associated categories and transactions will be permanently deleted.")
+            Text(String(localized: "Are you sure you want to delete this budget? All associated categories and transactions will be permanently deleted."))
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -151,6 +151,7 @@ struct HomeContent: View {
                     toolbarMenu
                 } label: {
                     Image(systemName: "ellipsis.circle")
+                        .accessibilityLabel(String(localized: "Menu"))
                 }
             }
         }
@@ -162,14 +163,14 @@ struct HomeContent: View {
             showingAddBudget = true
             PostHogManager.shared.trackEvent("Budget Add Button Clicked")
         } label: {
-            Label("Add Budget", systemImage: "plus")
+            Label(String(localized: "Add Budget"), systemImage: "plus")
         }
         
         Button {
             isImportingBudget = true
             PostHogManager.shared.trackEvent("Budget Import Button Clicked")
         } label: {
-            Label("Import Budget", systemImage: "square.and.arrow.down")
+            Label(String(localized: "Import Budget"), systemImage: "square.and.arrow.down")
         }
         
         Divider()
@@ -177,7 +178,7 @@ struct HomeContent: View {
         NavigationLink {
             SettingsView()
         } label: {
-            Label("Settings", systemImage: "gearshape.fill")
+            Label(String(localized: "Settings"), systemImage: "gearshape.fill")
         }
     }
     
@@ -272,7 +273,7 @@ struct BudgetSummaryCard: View {
             VStack(spacing: 12) {
                 HStack {
                     VStack(alignment: .leading) {
-                        Text("Income")
+                        Text(String(localized: "Income"))
                             .font(.caption)
                             .foregroundStyle(Color.secondary)
                         HStack(alignment: .lastTextBaseline, spacing: 4) {
@@ -288,7 +289,7 @@ struct BudgetSummaryCard: View {
                     Spacer()
                     
                     VStack(alignment: .trailing) {
-                        Text("Expenses")
+                        Text(String(localized: "Expenses"))
                             .font(.caption)
                             .foregroundStyle(Color.secondary)
                         HStack(alignment: .lastTextBaseline, spacing: 4) {
@@ -327,9 +328,13 @@ struct BudgetSummaryCard: View {
                     }
                 }
                 .frame(height: 12)
+                .accessibilityLabel(String(localized: "Budget Progress"))
+                .accessibilityValue(String(localized: "\(Int(animatedProgress * 100))% spent"))
             }
         }
         .appCardStyle()
+        .accessibilityElement(children: .combine)
+        .accessibilityHint(String(localized: "View details for budget \(budget.name)"))
         .onAppear {
             updateProgress()
         }
@@ -362,12 +367,13 @@ struct EmptyBudgetCard: View {
                 .font(.system(size: 48))
                 .foregroundStyle(Color.appAccent)
                 .padding(.top, 8)
+                .accessibilityHidden(true)
             
             VStack(spacing: 8) {
-                Text("No Active Budget")
+                Text(String(localized: "No Active Budget"))
                     .headerStyle()
                 
-                Text("Create your first budget to start tracking your expenses effectively.")
+                Text(String(localized: "Create your first budget to start tracking your expenses effectively."))
                     .font(.body)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(Color.appSecondary)
@@ -378,7 +384,7 @@ struct EmptyBudgetCard: View {
                 onAddBudget?() 
                 PostHogManager.shared.trackEvent("Budget Create New Clicked (Empty State)")
             }) {
-                Text("Create New Budget")
+                Text(String(localized: "Create New Budget"))
                     .font(.headline)
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)

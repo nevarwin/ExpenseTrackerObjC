@@ -3,13 +3,13 @@ import Foundation
 
 @Model
 final class Transaction {
-    var amount: Decimal
-    var desc: String
-    var date: Date
-    var budgetPeriod: Date  // First day of the month this transaction belongs to
-    var isActive: Bool
-    var createdAt: Date
-    var updatedAt: Date
+    var amount: Decimal = 0
+    var desc: String = ""
+    var date: Date = Date()
+    var budgetPeriod: Date = Date()
+    var isActive: Bool = true
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
     
     // Relationships
     var budget: Budget?

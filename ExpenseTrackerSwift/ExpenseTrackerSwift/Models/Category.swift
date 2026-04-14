@@ -3,15 +3,15 @@ import Foundation
 
 @Model
 final class Category {
-    var name: String
-    var budgetPeriod: Date
-    var allocatedAmount: Decimal
-    var usedAmount: Decimal
-    var isIncome: Bool
-    var isActive: Bool
+    var name: String = ""
+    var budgetPeriod: Date = Date()
+    var allocatedAmount: Decimal = 0
+    var usedAmount: Decimal = 0
+    var isIncome: Bool = false
+    var isActive: Bool = true
 
-    var createdAt: Date
-    var updatedAt: Date
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
     
     var budget: Budget?
     

@@ -8,10 +8,23 @@ class AppearanceManager: ObservableObject {
         }
     }
     
+    @Published var isAnalyticsEnabled: Bool = true {
+        didSet {
+            UserDefaults.standard.set(isAnalyticsEnabled, forKey: "isAnalyticsEnabled")
+        }
+    }
+    
     init() {
         if let savedValue = UserDefaults.standard.string(forKey: "userAppearance"),
            let appearance = Appearance(rawValue: savedValue) {
             self.userAppearance = appearance
+        }
+        
+        // Default to true if not set
+        if UserDefaults.standard.object(forKey: "isAnalyticsEnabled") == nil {
+            self.isAnalyticsEnabled = true
+        } else {
+            self.isAnalyticsEnabled = UserDefaults.standard.bool(forKey: "isAnalyticsEnabled")
         }
     }
 }

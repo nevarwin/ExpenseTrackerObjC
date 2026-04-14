@@ -27,11 +27,11 @@ struct ContentView: View {
                 TabView {
                     TransactionListView()
                         .tabItem {
-                            Label("Transactions", systemImage: "list.bullet")
+                            Label(String(localized: "Transactions"), systemImage: "list.bullet")
                         }
                     BudgetListView(viewModel: viewModel)
                         .tabItem {
-                            Label("Budget", systemImage: "creditcard.fill")
+                            Label(String(localized: "Budget"), systemImage: "creditcard.fill")
                         }
                 }
             } else {
