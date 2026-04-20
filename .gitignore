@@ -29,3 +29,6 @@ build/
 
 ## Secrets
 *.xcconfig
+
+## Graphify output
+graphify-out/
