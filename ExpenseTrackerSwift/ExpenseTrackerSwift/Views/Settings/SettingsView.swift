@@ -2,6 +2,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var appearanceManager: AppearanceManager
+    @State private var showingAnalyticsAlert = false
+    @State private var pendingAnalyticsValue = false
     
     var body: some View {
         NavigationStack {
@@ -19,7 +21,13 @@ struct SettingsView: View {
                         }
                     }
                     
-                    Toggle(isOn: $appearanceManager.isAnalyticsEnabled) {
+                    Toggle(isOn: Binding(
+                        get: { appearanceManager.isAnalyticsEnabled },
+                        set: { newValue in
+                            pendingAnalyticsValue = newValue
+                            showingAnalyticsAlert = true
+                        }
+                    )) {
                         Label(String(localized: "Analytics"), systemImage: "chart.bar")
                     }
                     .onChange(of: appearanceManager.isAnalyticsEnabled) { _, newValue in
@@ -54,6 +62,18 @@ struct SettingsView: View {
             .navigationTitle(String(localized: "Settings"))
             .onAppear {
                 PostHogManager.shared.trackScreen("Settings")
+            }
+        }
+        .alert(pendingAnalyticsValue ? String(localized: "Enable Analytics?") : String(localized: "Disable Analytics?"), isPresented: $showingAnalyticsAlert) {
+            Button(pendingAnalyticsValue ? String(localized: "Enable") : String(localized: "Disable"), role: pendingAnalyticsValue ? .none : .destructive) {
+                appearanceManager.isAnalyticsEnabled = pendingAnalyticsValue
+            }
+            Button(String(localized: "Cancel"), role: .cancel) { }
+        } message: {
+            if pendingAnalyticsValue {
+                Text(String(localized: "Enabling analytics helps us improve the app by understanding how it's used. No personal data is collected."))
+            } else {
+                Text(String(localized: "Are you sure you want to disable analytics? This will limit our ability to improve the app based on your usage."))
             }
         }
     }
