@@ -40,17 +40,7 @@ struct SettingsView: View {
                         Label(String(localized: "Privacy Policy"), systemImage: "shield.lefthalf.filled")
                     }
                     
-                    Button {
-                        let email = "ravencsolis@gmail.com"
-                        let subject = String(localized: "ExpenseMe Support Request")
-                        let body = "\n\n--- \(String(localized: "Device Info")) ---\n\(String(localized: "Version")): \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")"
-                        
-                        let mailto = "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&body=\(body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
-                        
-                        if let url = URL(string: mailto) {
-                            UIApplication.shared.open(url)
-                        }
-                    } label: {
+                    NavigationLink(destination: ContactSupportView()) {
                         Label(String(localized: "Contact Support"), systemImage: "envelope")
                     }
                 }
