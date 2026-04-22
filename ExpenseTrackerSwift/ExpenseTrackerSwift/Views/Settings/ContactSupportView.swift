@@ -8,6 +8,7 @@ struct ContactSupportView: View {
     @State private var selectedImageData: Data? = nil
     @State private var showingMailView = false
     @State private var showingMailError = false
+    @State private var showingPermissionAlert = false
     @State private var mailErrorMsg = ""
     
     private let supportEmail = "ravencsolis@gmail.com"
@@ -67,6 +68,9 @@ struct ContactSupportView: View {
                                     .foregroundStyle(.secondary.opacity(0.3))
                             )
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            checkPermission()
+                        })
                         .onChange(of: selectedItem) { _, newItem in
                             Task {
                                 if let data = try? await newItem?.loadTransferable(type: Data.self) {
@@ -127,6 +131,22 @@ struct ContactSupportView: View {
             Button(String(localized: "OK"), role: .cancel) { }
         } message: {
             Text(mailErrorMsg)
+        }
+        .alert(String(localized: "Photo Access Denied"), isPresented: $showingPermissionAlert) {
+            Button(String(localized: "Open Settings")) {
+                PermissionManager.shared.openSettings()
+            }
+            Button(String(localized: "Cancel"), role: .cancel) { }
+        } message: {
+            Text(String(localized: "Please enable photo library access in Settings to attach screenshots to your support request."))
+        }
+    }
+    
+    private func checkPermission() {
+        PermissionManager.shared.checkPhotoLibraryPermission { status in
+            if status == .denied || status == .restricted {
+                showingPermissionAlert = true
+            }
         }
     }
     
