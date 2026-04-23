@@ -35,6 +35,14 @@ struct SettingsView: View {
                     }
                 }
                 
+                Section(String(localized: "Data Management")) {
+                    if let templateURL = Bundle.main.excelTemplateURL {
+                        ShareLink(item: templateURL, preview: SharePreview(String(localized: "Import Template"), image: Image(systemName: "tablecells"))) {
+                            Label(String(localized: "Download Import Template"), systemImage: "square.and.arrow.down")
+                        }
+                    }
+                }
+                
                 Section(String(localized: "Legal & Support")) {
                     NavigationLink(destination: PrivacyPolicyView()) {
                         Label(String(localized: "Privacy Policy"), systemImage: "shield.lefthalf.filled")
