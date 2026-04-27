@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSPrivacyTracking</key>
-	<true/>
+	<false/>
 	<key>NSPrivacyTrackingDomains</key>
 	<array>
 		<string>app.posthog.com</string>
@@ -16,7 +16,7 @@
 			<key>NSPrivacyCollectedDataTypeLinkedToUser</key>
 			<false/>
 			<key>NSPrivacyCollectedDataTypeUsedForTracking</key>
-			<true/>
+			<false/>
 			<key>NSPrivacyCollectedDataTypePurposes</key>
 			<array>
 				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
