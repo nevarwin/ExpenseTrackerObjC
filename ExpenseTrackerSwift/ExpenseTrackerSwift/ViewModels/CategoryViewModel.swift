@@ -14,7 +14,7 @@ final class CategoryViewModel {
         self.modelContext = modelContext
     }
     
-    func loadCategories(for budget: Budget? = nil, isIncome: Bool? = nil) {
+    func loadCategories(for budget: Budget? = nil, isIncome: Bool? = nil, month: Date? = nil) {
         isLoading = true
         errorMessage = nil
         
@@ -41,6 +41,14 @@ final class CategoryViewModel {
                 fetchedCategories = fetchedCategories.filter { $0.budget?.id == budget.id }
             }
             
+            // Filter by month if specified
+            if let month = month {
+                let bounds = DateRangeHelper.monthBounds(for: month)
+                fetchedCategories = fetchedCategories.filter { category in
+                    DateRangeHelper.isSameMonth(category.budgetPeriod, bounds.start)
+                }
+            }
+            
             categories = fetchedCategories
         } catch {
             errorMessage = "Failed to load categories: \(error.localizedDescription)"
@@ -53,18 +61,18 @@ final class CategoryViewModel {
         name: String,
         allocatedAmount: Decimal,
         isIncome: Bool,
-        budget: Budget?
+        budget: Budget?,
+        month: Date? = nil
     ) throws {
         let category = Category(
             name: name,
             allocatedAmount: allocatedAmount,
             isIncome: isIncome,
-            budgetPeriod: budget?.startDate,
+            budgetPeriod: month ?? budget?.startDate,
             budget: budget
         )
         modelContext.insert(category)
         try modelContext.save()
         categories.insert(category, at: 0)
     }
-    
 }

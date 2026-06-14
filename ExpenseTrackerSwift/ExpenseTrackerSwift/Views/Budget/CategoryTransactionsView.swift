@@ -5,6 +5,7 @@ struct CategoryTransactionsView: View {
     let category: Category
     let month: Date
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var currencyManager: CurrencyManager
 
     @Query(filter: #Predicate<Transaction> { $0.isActive == true }, sort: \Transaction.date, order: .reverse)
@@ -14,6 +15,7 @@ struct CategoryTransactionsView: View {
     private var activeBudgets: [Budget]
 
     @State private var showingAddTransaction = false
+    @State private var showingEditCategory = false
     @State private var selectedTransaction: Transaction?
     @State private var transactionViewModel: TransactionViewModel?
 
@@ -71,12 +73,20 @@ struct CategoryTransactionsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showingAddTransaction = true
-                } label: {
-                    Image(systemName: "plus")
+                HStack(spacing: 16) {
+                    Button {
+                        showingEditCategory = true
+                    } label: {
+                        Image(systemName: "pencil")
+                    }
+                    
+                    Button {
+                        showingAddTransaction = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .disabled(activeBudgets.isEmpty)
                 }
-                .disabled(activeBudgets.isEmpty)
             }
         }
         .sheet(item: $selectedTransaction) { transaction in
@@ -98,6 +108,14 @@ struct CategoryTransactionsView: View {
                     initialCategory: category,
                     initialDate: month // Pre-fill with the month being viewed
                 )
+            }
+        }
+        .sheet(isPresented: $showingEditCategory) {
+            CategoryEditFormView(category: category)
+        }
+        .onChange(of: category.isActive) { _, newValue in
+            if !newValue {
+                dismiss()
             }
         }
         .onAppear {

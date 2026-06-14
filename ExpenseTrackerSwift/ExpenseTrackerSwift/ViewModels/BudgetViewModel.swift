@@ -82,4 +82,38 @@ final class BudgetViewModel: ObservableObject {
         // This prevents index mismatch with SwiftUI's list
         loadBudgets()
     }
+    
+    func addBudgetPeriod(for budget: Budget, month: Date) throws {
+        let normalizedMonth = DateRangeHelper.monthBounds(for: month).start
+        
+        let hasCategories = budget.categories.contains { 
+            DateRangeHelper.isSameMonth($0.budgetPeriod, normalizedMonth) 
+        }
+        
+        guard !hasCategories else { return }
+        
+        let existingCategories = budget.categories.filter { $0.isActive }
+        let groupedByMonth = Dictionary(grouping: existingCategories, by: { 
+            DateRangeHelper.monthBounds(for: $0.budgetPeriod).start 
+        })
+        
+        let sortedMonths = groupedByMonth.keys.filter { $0 < normalizedMonth }.sorted(by: >)
+        
+        if let mostRecentMonth = sortedMonths.first, let categoriesToCopy = groupedByMonth[mostRecentMonth] {
+            for categoryToCopy in categoriesToCopy {
+                let newCategory = Category(
+                    name: categoryToCopy.name,
+                    allocatedAmount: categoryToCopy.allocatedAmount,
+                    isIncome: categoryToCopy.isIncome,
+                    budgetPeriod: normalizedMonth,
+                    budget: budget
+                )
+                modelContext.insert(newCategory)
+                budget.categories.append(newCategory)
+            }
+        }
+        
+        budget.updatedAt = Date()
+        try modelContext.save()
+    }
 }
