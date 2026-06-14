@@ -24,32 +24,51 @@ class ImportManager {
     
     // MARK: - Import Budget
     
+    private func extractBaseBudgetName(from filename: String) -> String {
+        let monthNames = ["january", "february", "march", "april", "may", "june",
+                          "july", "august", "september", "october", "november", "december"]
+        let monthAbbreviations = ["jan", "feb", "mar", "apr", "may", "jun",
+                                  "jul", "aug", "sep", "oct", "nov", "dec"]
+        let extraAbbreviations = ["sept": 9]
+        
+        let monthGroup = "(" + (monthNames + monthAbbreviations + Array(extraAbbreviations.keys)).joined(separator: "|") + ")"
+        let pattern = monthGroup + "[\\s_.-]*(\\d{4}|\\d{2})"
+        
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
+            return filename
+        }
+        
+        let nsRange = NSRange(filename.startIndex..<filename.endIndex, in: filename)
+        if let match = regex.firstMatch(in: filename, options: [], range: nsRange) {
+            let matchedRange = match.range
+            var modifiedString = filename
+            if let swiftRange = Range(matchedRange, in: filename) {
+                modifiedString.removeSubrange(swiftRange)
+            }
+            let trimmed = modifiedString.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "-_")))
+            return trimmed.isEmpty ? "Monthly Budget" : trimmed
+        }
+        
+        return filename
+    }
+    
     func importBudget(from csvBudget: CSVBudget) throws -> Budget {
-        let budgetName = csvBudget.name
-        var budget: Budget!
+        let filename = csvBudget.name
+        let budgetName = extractBaseBudgetName(from: filename)
+        let startDate = parseBudgetPeriod(from: filename) ?? Date()
         
         let descriptor = FetchDescriptor<Budget>(
             predicate: #Predicate<Budget> { $0.name == budgetName }
         )
         
+        var budget: Budget!
         if let existing = try? modelContext.fetch(descriptor).first {
             budget = existing
-            // If existing budget doesn't have startDate set correctly, we might want to update it
-            if budget.startDate == Date(timeIntervalSince1970: 0) || Calendar.current.isDateInToday(budget.startDate) {
-                if let parsedDate = parseBudgetPeriod(from: budgetName) {
-                    budget.startDate = parsedDate
-                }
+            if existing.startDate > startDate {
+                existing.startDate = startDate
             }
         } else {
-            
-            let totalIncome = csvBudget.items
-                .filter { $0.isIncome }
-                .reduce(Decimal.zero) { $0 + $1.plannedAmount }
-                
-            let totalInitial = totalIncome > 0 ? totalIncome : 0
-            let startDate = parseBudgetPeriod(from: budgetName) ?? Date()
-            
-            budget = Budget(name: budgetName, startDate: startDate, totalAmount: totalInitial)
+            budget = Budget(name: budgetName, startDate: startDate, totalAmount: 0)
             modelContext.insert(budget)
         }
         
@@ -57,20 +76,36 @@ class ImportManager {
             let categoryName = item.categoryName
             let category: Category
             
-            if let existingCategory = budget.categories.first(where: { $0.name.caseInsensitiveCompare(categoryName) == .orderedSame }) {
+            if let existingCategory = budget.categories.first(where: {
+                $0.name.caseInsensitiveCompare(categoryName) == .orderedSame &&
+                DateRangeHelper.isSameMonth($0.budgetPeriod, startDate)
+            }) {
                 category = existingCategory
                 category.allocatedAmount = item.plannedAmount
+                category.isIncome = item.isIncome
+                category.isActive = true
+                category.updatedAt = Date()
             } else {
                 category = Category(
                     name: categoryName,
                     allocatedAmount: item.plannedAmount,
                     isIncome: item.isIncome,
+                    budgetPeriod: startDate,
                     budget: budget
                 )
                 modelContext.insert(category)
                 budget.categories.append(category)
             }
         }
+        
+        let activeIncomeTotal = budget.categories
+            .filter { $0.isIncome && $0.isActive && DateRangeHelper.isSameMonth($0.budgetPeriod, startDate) }
+            .reduce(Decimal.zero) { $0 + $1.allocatedAmount }
+        if activeIncomeTotal > 0 {
+            budget.totalAmount = activeIncomeTotal
+        }
+        
+        budget.updateRemainingAmount()
         
         do {
             try modelContext.save()
@@ -145,20 +180,23 @@ class ImportManager {
     func importTransactions(from csvTransactions: [CSVTransaction], into budget: Budget, filename: String) throws -> Int {
         var count = 0
         
+        guard let parsedPeriod = parseBudgetPeriod(from: filename) else {
+            throw ImportError.invalidFilenameForBudgetPeriod
+        }
+        let budgetPeriod: Date = parsedPeriod
+        
         for csvTx in csvTransactions {
             let categoryName = csvTx.category
             
             let category: Category
-            if let existing = budget.categories.first(where: { $0.name.caseInsensitiveCompare(categoryName) == .orderedSame }) {
+            if let existing = budget.categories.first(where: {
+                $0.name.caseInsensitiveCompare(categoryName) == .orderedSame &&
+                DateRangeHelper.isSameMonth($0.budgetPeriod, budgetPeriod)
+            }) {
                 category = existing
             } else {
-                guard let parsedPeriod = parseBudgetPeriod(from: filename) else {
-                    throw ImportError.invalidFilenameForBudgetPeriod
-                }
-                
-                let latestConfig = findLatestCategoryConfiguration(name: categoryName, before: parsedPeriod)
+                let latestConfig = findLatestCategoryConfiguration(name: categoryName, before: budgetPeriod, budget: budget)
                 let allocatedAmount = latestConfig?.allocatedAmount ?? 0
-                let budgetPeriod = latestConfig?.period ?? parsedPeriod
                 
                 category = Category(
                     name: categoryName,
@@ -170,11 +208,6 @@ class ImportManager {
                 modelContext.insert(category)
                 budget.categories.append(category)
             }
-            
-            guard let parsedPeriod = parseBudgetPeriod(from: filename) else {
-                throw ImportError.invalidFilenameForBudgetPeriod
-            }
-            let budgetPeriod: Date = parsedPeriod
             
             let transaction = Transaction(
                 amount: csvTx.amount,
@@ -203,9 +236,53 @@ class ImportManager {
         return count
     }
     
-    private func findLatestCategoryConfiguration(name: String, before: Date) -> (allocatedAmount: Decimal, period: Date)? {
+    func importCategories(from csvBudget: CSVBudget, into budget: Budget, for month: Date) throws {
+        let normalizedMonth = DateRangeHelper.monthBounds(for: month).start
+        
+        for item in csvBudget.items {
+            let categoryName = item.categoryName
+            
+            if let existingCategory = budget.categories.first(where: {
+                $0.name.caseInsensitiveCompare(categoryName) == .orderedSame &&
+                DateRangeHelper.isSameMonth($0.budgetPeriod, normalizedMonth)
+            }) {
+                existingCategory.allocatedAmount = item.plannedAmount
+                existingCategory.isIncome = item.isIncome
+                existingCategory.isActive = true
+                existingCategory.updatedAt = Date()
+            } else {
+                let category = Category(
+                    name: categoryName,
+                    allocatedAmount: item.plannedAmount,
+                    isIncome: item.isIncome,
+                    budgetPeriod: normalizedMonth,
+                    budget: budget
+                )
+                modelContext.insert(category)
+                budget.categories.append(category)
+            }
+        }
+        
+        let activeIncomeTotal = budget.categories
+            .filter { $0.isIncome && $0.isActive && DateRangeHelper.isSameMonth($0.budgetPeriod, normalizedMonth) }
+            .reduce(Decimal.zero) { $0 + $1.allocatedAmount }
+        if activeIncomeTotal > 0 {
+            budget.totalAmount = activeIncomeTotal
+        }
+        
+        budget.updateRemainingAmount()
+        
+        do {
+            try modelContext.save()
+        } catch {
+            throw ImportError.dataPersistenceFailed(error.localizedDescription)
+        }
+    }
+    
+    private func findLatestCategoryConfiguration(name: String, before: Date, budget: Budget) -> (allocatedAmount: Decimal, period: Date)? {
+        let budgetID = budget.id
         let descriptor = FetchDescriptor<Category>(
-            predicate: #Predicate<Category> { $0.name == name && $0.budgetPeriod < before },
+            predicate: #Predicate<Category> { $0.name == name && $0.budgetPeriod < before && $0.budget?.id == budgetID },
             sortBy: [SortDescriptor(\.budgetPeriod, order: .reverse)]
         )
         

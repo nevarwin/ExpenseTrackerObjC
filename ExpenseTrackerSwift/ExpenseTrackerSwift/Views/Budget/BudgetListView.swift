@@ -45,9 +45,6 @@ struct HomeContent: View {
     @State private var showingAddBudget = false
     @State private var budgetToEdit: Budget?
     @State private var showingError = false
-    @State private var isImportingBudget = false
-    @State private var importSuccessMessage: String?
-    @State private var showingImportAlert = false
     @State private var budgetToDelete: Budget?
     
     var body: some View {
@@ -103,18 +100,6 @@ struct HomeContent: View {
         }) { budget in
             BudgetFormView(viewModel: viewModel, existingBudget: budget)
         }
-        .fileImporter(
-            isPresented: $isImportingBudget,
-            allowedContentTypes: [.commaSeparatedText, .plainText],
-            allowsMultipleSelection: true
-        ) { result in
-            handleImport(result)
-        }
-        .alert(String(localized: "Import Result"), isPresented: $showingImportAlert) {
-            Button(String(localized: "OK")) { }
-        } message: {
-            Text(importSuccessMessage ?? String(localized: "Unknown result"))
-        }
         .alert(String(localized: "Error"), isPresented: $showingError) {
             Button(String(localized: "OK")) {
                 viewModel.errorMessage = nil
@@ -166,13 +151,6 @@ struct HomeContent: View {
             Label(String(localized: "Add Budget"), systemImage: "plus")
         }
         
-        Button {
-            isImportingBudget = true
-            PostHogManager.shared.trackEvent("Budget Import Button Clicked")
-        } label: {
-            Label(String(localized: "Import Budget"), systemImage: "square.and.arrow.down")
-        }
-        
         Divider()
         
         NavigationLink {
@@ -181,59 +159,21 @@ struct HomeContent: View {
             Label(String(localized: "Settings"), systemImage: "gearshape.fill")
         }
     }
-    
-    private func handleImport(_ result: Result<[URL], Error>) {
-        switch result {
-        case .success(let urls):
-            guard !urls.isEmpty else { return }
-            
-            do {
-                let parser = CSVParser.shared
-                let importManager = ImportManager(modelContext: viewModel.modelContext)
-                var importedNames: [String] = []
-                var failedCount = 0
-                
-                for url in urls {
-                    if url.startAccessingSecurityScopedResource() {
-                        do {
-                            let csvBudget = try parser.parseBudget(from: url)
-                            let newBudget = try importManager.importBudget(from: csvBudget)
-                            importedNames.append(newBudget.name)
-                        } catch {
-                            print("Import failed for \(url.lastPathComponent): \(error.localizedDescription)")
-                            failedCount += 1
-                        }
-                        url.stopAccessingSecurityScopedResource()
-                    } else {
-                        failedCount += 1
-                    }
-                }
-                
-                if importedNames.isEmpty {
-                    viewModel.errorMessage = "Failed to import budgets. Ensure files are accessible."
-                    PostHogManager.shared.trackEvent("Budget Import Failed", properties: ["failed_count": failedCount])
-                } else {
-                    let baseMessage = "Successfully imported \(importedNames.count) budget(s)."
-                    importSuccessMessage = failedCount > 0 ? "\(baseMessage) (\(failedCount) failed.)" : baseMessage
-                    showingImportAlert = true
-                    viewModel.loadBudgets()
-                    PostHogManager.shared.trackEvent("Budget Import Success", properties: [
-                        "imported_count": importedNames.count,
-                        "failed_count": failedCount
-                    ])
-                }
-            }
-            
-        case .failure(let error):
-            viewModel.errorMessage = "Import failed: \(error.localizedDescription)"
-        }
-    }
 }
 
 struct BudgetSummaryCard: View {
     let budget: Budget
     @EnvironmentObject var currencyManager: CurrencyManager
     @State private var animatedProgress: Double = 0
+    
+    private var displayMonth: Date {
+        let currentMonthStart = DateRangeHelper.monthBounds(for: Date()).start
+        let activePeriods = budget.activeBudgetPeriods()
+        if activePeriods.contains(where: { DateRangeHelper.isSameMonth($0, currentMonthStart) }) || activePeriods.isEmpty {
+            return currentMonthStart
+        }
+        return activePeriods.last ?? currentMonthStart
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -244,7 +184,7 @@ struct BudgetSummaryCard: View {
                         .fontWeight(.bold)
                         .foregroundStyle(Color.appPrimary)
                     
-                    Text("\(DateRangeHelper.monthYearString(from: Date())) Budget")
+                    Text("\(DateRangeHelper.monthYearString(from: displayMonth)) Budget")
                         .subheaderStyle()
                 }
                 
@@ -258,7 +198,7 @@ struct BudgetSummaryCard: View {
                     Circle()
                         .trim(from: 0, to: animatedProgress)
                         .stroke(
-                            budget.remainingAmount >= 0 ? Color.appAccent : Color.red,
+                            budget.remainingInMonth(displayMonth) >= 0 ? Color.appAccent : Color.red,
                             style: StrokeStyle(lineWidth: 6, lineCap: .round)
                         )
                         .rotationEffect(.degrees(-90))
@@ -277,10 +217,10 @@ struct BudgetSummaryCard: View {
                             .font(.caption)
                             .foregroundStyle(Color.secondary)
                         HStack(alignment: .lastTextBaseline, spacing: 4) {
-                            Text(budget.currentMonthIncome, format: .currency(code: currencyManager.currencyCode))
+                            Text(budget.incomeInMonth(displayMonth), format: .currency(code: currencyManager.currencyCode))
                                 .font(.system(.headline, design: .rounded))
                                 .fontWeight(.bold)
-                            Text("/ " + budget.plannedIncome().formatted(.currency(code: currencyManager.currencyCode)))
+                            Text("/ " + budget.plannedIncome(for: displayMonth).formatted(.currency(code: currencyManager.currencyCode)))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -293,11 +233,11 @@ struct BudgetSummaryCard: View {
                             .font(.caption)
                             .foregroundStyle(Color.secondary)
                         HStack(alignment: .lastTextBaseline, spacing: 4) {
-                            Text(budget.currentMonthExpenses, format: .currency(code: currencyManager.currencyCode))
+                            Text(budget.expensesInMonth(displayMonth), format: .currency(code: currencyManager.currencyCode))
                                 .font(.system(.headline, design: .rounded))
                                 .fontWeight(.bold)
-                                .foregroundStyle(budget.currentMonthExpenses > budget.plannedExpenses() ? .red : .appPrimary)
-                            Text("/ " + budget.plannedExpenses().formatted(.currency(code: currencyManager.currencyCode)))
+                                .foregroundStyle(budget.expensesInMonth(displayMonth) > budget.plannedExpenses(for: displayMonth) ? .red : .appPrimary)
+                            Text("/ " + budget.plannedExpenses(for: displayMonth).formatted(.currency(code: currencyManager.currencyCode)))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -311,7 +251,7 @@ struct BudgetSummaryCard: View {
                             .fill(Color.appLightGray)
                             .frame(height: 12)
                         
-                        let isOverBudget = budget.currentMonthExpenses > budget.plannedExpenses() && budget.plannedExpenses() > 0
+                        let isOverBudget = budget.expensesInMonth(displayMonth) > budget.plannedExpenses(for: displayMonth) && budget.plannedExpenses(for: displayMonth) > 0
                         
                         Capsule()
                             .fill(
@@ -338,7 +278,7 @@ struct BudgetSummaryCard: View {
         .onAppear {
             updateProgress()
         }
-        .onChange(of: budget.currentMonthExpenses) { _, _ in
+        .onChange(of: budget.transactions) { _, _ in
             updateProgress()
         }
         .onChange(of: budget.categories) { _, _ in
@@ -347,8 +287,8 @@ struct BudgetSummaryCard: View {
     }
     
     private func updateProgress() {
-        let planned = budget.plannedExpenses()
-        let spent = budget.currentMonthExpenses
+        let planned = budget.plannedExpenses(for: displayMonth)
+        let spent = budget.expensesInMonth(displayMonth)
         let progress = planned > 0 ? min(max(0, Double(truncating: (spent / planned) as NSDecimalNumber)), 1.0) : 0
         
         withAnimation(.spring(duration: 1.0)) {
