@@ -351,6 +351,11 @@ final class TransactionViewModel {
                     days.append(date)
                 }
             }
+            
+            let remaining = 42 - days.count
+            if remaining > 0 {
+                days.append(contentsOf: Array(repeating: nil, count: remaining))
+            }
             return days
             
         case .week:

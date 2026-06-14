@@ -158,7 +158,7 @@ struct CalendarView: View {
                 
                 // Actual days
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 12) {
-                    ForEach(viewModel.generateCalendarDays(), id: \.self) { date in
+                    ForEach(Array(viewModel.generateCalendarDays().enumerated()), id: \.offset) { _, date in
                         if let date = date {
                             DayCell(date: date, viewModel: viewModel) {
                                 viewModel.selectDate(date)
@@ -168,7 +168,8 @@ struct CalendarView: View {
                                 onDateTapped?(hasTx)
                             }
                         } else {
-                            Text("")
+                            Color.clear
+                                .frame(minHeight: 32)
                         }
                     }
                 }

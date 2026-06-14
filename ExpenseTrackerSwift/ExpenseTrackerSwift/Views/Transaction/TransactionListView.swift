@@ -110,22 +110,24 @@ struct TransactionListView: View {
     
     @ViewBuilder
     private func transactionListContent(viewModel: TransactionViewModel) -> some View {
-        if viewModel.isLoading {
-            ProgressView("Loading transactions...")
-                .frame(maxHeight: .infinity)
-                .frame(maxWidth: .infinity)
-        } else {
+        VStack(spacing: 0) {
+            if verticalSizeClass != .compact {
+                calendarContent(viewModel: viewModel)
+            }
+            
             List {
-                if verticalSizeClass != .compact {
+                if viewModel.isLoading {
                     Section {
-                        calendarContent(viewModel: viewModel)
+                        HStack {
+                            Spacer()
+                            ProgressView("Loading transactions...")
+                            Spacer()
+                        }
+                        .padding(.vertical, 40)
                     }
-                    .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
-                }
-                
-                if !hasUserSelectedDate && viewModel.searchText.isEmpty {
+                } else if !hasUserSelectedDate && viewModel.searchText.isEmpty {
                     Section {
                         ContentUnavailableView(
                             "Select a Date",
@@ -196,6 +198,7 @@ struct TransactionListView: View {
             .listSectionSpacing(0)
             .coordinateSpace(name: "scroll")
             .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                guard !viewModel.isLoading else { return }
                 // Collapsing logic
                 // If scrolling down (value goes negative), collapse to week
                 // If scrolling up near top (value goes near 0), expand to month
@@ -203,7 +206,7 @@ struct TransactionListView: View {
                     withAnimation {
                         viewModel.calendarScope = .week
                     }
-                } else if value > 0 && viewModel.calendarScope == .week {
+                } else if value >= 0 && viewModel.calendarScope == .week {
                     withAnimation {
                         viewModel.calendarScope = .month
                     }
