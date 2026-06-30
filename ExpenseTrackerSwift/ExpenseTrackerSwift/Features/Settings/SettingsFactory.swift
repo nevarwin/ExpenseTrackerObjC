@@ -12,7 +12,10 @@ import SwiftUI
 final class SettingsFactory {
 
     static func make() -> UIViewController {
-        let view = SettingsView()
+        let view = SettingsView(
+            appearanceService: SharedAppearanceService.instance,
+            analyticsService: SharedAnalyticsService.instance
+        )
         return UIHostingController(rootView: view)
     }
 

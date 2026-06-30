@@ -1,4 +1,4 @@
-//  
+//
 //  SettingsView.swift
 //  ExpenseTrackerSwift
 //
@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @EnvironmentObject var appearanceManager: AppearanceManager
+    @ObservedObject var appearanceService: SharedAppearanceService
+    let analyticsService: AnalyticsServiceProtocol
+    
     @State private var showingAnalyticsAlert = false
     @State private var pendingAnalyticsValue = false
     
@@ -29,7 +31,7 @@ struct SettingsView: View {
                     }
                     
                     Toggle(isOn: Binding(
-                        get: { appearanceManager.isAnalyticsEnabled },
+                        get: { appearanceService.isAnalyticsEnabled },
                         set: { newValue in
                             pendingAnalyticsValue = newValue
                             showingAnalyticsAlert = true
@@ -37,7 +39,7 @@ struct SettingsView: View {
                     )) {
                         Label(String(localized: "Analytics"), systemImage: "chart.bar")
                     }
-                    .onChange(of: appearanceManager.isAnalyticsEnabled) { _, newValue in
+                    .onChange(of: appearanceService.isAnalyticsEnabled) { _, newValue in
                         PostHogManager.shared.setEnabled(newValue)
                     }
                 }
@@ -71,7 +73,7 @@ struct SettingsView: View {
         }
         .alert(pendingAnalyticsValue ? String(localized: "Enable Analytics?") : String(localized: "Disable Analytics?"), isPresented: $showingAnalyticsAlert) {
             Button(pendingAnalyticsValue ? String(localized: "Enable") : String(localized: "Disable"), role: pendingAnalyticsValue ? .none : .destructive) {
-                appearanceManager.isAnalyticsEnabled = pendingAnalyticsValue
+                appearanceService.isAnalyticsEnabled = pendingAnalyticsValue
             }
             Button(String(localized: "Cancel"), role: .cancel) { }
         } message: {
@@ -82,10 +84,5 @@ struct SettingsView: View {
             }
         }
     }
-}
-
-#Preview {
-    SettingsView()
-        .environmentObject(CurrencyManager())
 }
 

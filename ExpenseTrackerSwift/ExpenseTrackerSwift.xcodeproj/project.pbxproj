@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		23A5749A13F6C8D145356A1F /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0213E257FD2ED0642FBA8CC6 /* Category.swift */; };
 		976D07222F6AE17B008D9A7C /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 976D07212F6AE17B008D9A7C /* PostHog */; };
 /* End PBXBuildFile section */
 
@@ -52,7 +51,6 @@
 			membershipExceptions = (
 				Info.plist,
 				Secrets.xcconfig,
-				Shared/Models/Category.swift,
 			);
 			target = 973C37E92F1E74D800CB57BA /* ExpenseTrackerSwift */;
 		};
@@ -357,7 +355,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				23A5749A13F6C8D145356A1F /* Category.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

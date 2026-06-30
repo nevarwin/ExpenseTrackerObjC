@@ -3,10 +3,19 @@ import SwiftData
 
 @main
 struct ExpenseMeApp: App {
-    @StateObject private var appearanceManager = AppearanceManager()
+    // Keep it as a StateObject for SwiftUI environment observation
+    @StateObject private var appearanceManager: SharedAppearanceService
     
     init() {
-        PostHogManager.shared.setup()
+        // 1. Configure services
+        SharedAppearanceService.configure()
+        SharedAnalyticsService.configure()
+        
+        // 2. Setup analytics
+        SharedAnalyticsService.instance.setup()
+        
+        // 3. Initialize StateObject
+        _appearanceManager = StateObject(wrappedValue: SharedAppearanceService.instance)
     }
     
     var body: some Scene {
@@ -16,8 +25,8 @@ struct ExpenseMeApp: App {
                 .preferredColorScheme(appearanceManager.userAppearance.colorScheme)
         }
         .modelContainer(for: [
-            Transaction.self, 
-            Category.self, 
+            Transaction.self,
+            Category.self,
             Budget.self
         ])
     }
