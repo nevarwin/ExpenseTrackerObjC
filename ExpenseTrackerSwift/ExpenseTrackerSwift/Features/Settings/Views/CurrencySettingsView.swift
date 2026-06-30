@@ -1,3 +1,10 @@
+//
+//  CurrencySettingsView.swift
+//  ExpenseTrackerSwift
+//
+//  Created by raven on 6/30/26.
+//
+
 import SwiftUI
 
 struct CurrencySettingsView: View {
@@ -33,3 +40,4 @@ struct CurrencySettingsView: View {
             .environmentObject(CurrencyManager())
     }
 }
+

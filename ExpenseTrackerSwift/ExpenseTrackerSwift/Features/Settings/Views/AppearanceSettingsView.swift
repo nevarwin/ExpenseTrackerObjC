@@ -1,3 +1,10 @@
+//
+//  AppearanceSettingsView.swift
+//  ExpenseTrackerSwift
+//
+//  Created by raven on 6/30/26.
+//
+
 import SwiftUI
 
 struct AppearanceSettingsView: View {

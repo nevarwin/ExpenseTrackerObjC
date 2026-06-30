@@ -1,5 +1,12 @@
+//
+//  ContactSupportView.swift
+//  ExpenseTrackerSwift
+//
+//  Created by raven on 6/30/26.
+//
+
 import SwiftUI
-import PhotosUI
+import _PhotosUI_SwiftUI
 import MessageUI
 
 struct ContactSupportView: View {
