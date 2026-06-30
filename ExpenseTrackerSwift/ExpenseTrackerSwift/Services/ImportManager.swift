@@ -15,6 +15,7 @@ enum ImportError: Error, LocalizedError {
     }
 }
 
+@MainActor
 class ImportManager {
     let modelContext: ModelContext
     
@@ -62,6 +63,8 @@ class ImportManager {
         )
         
         var budget: Budget!
+        var budgetModel: BudgetModel!
+        
         if let existing = try? modelContext.fetch(descriptor).first {
             budget = existing
             if existing.startDate > startDate {
@@ -71,6 +74,8 @@ class ImportManager {
             budget = Budget(name: budgetName, startDate: startDate, totalAmount: 0)
             modelContext.insert(budget)
         }
+        
+        budgetModel = BudgetModel(budgetModel: budget)
         
         for item in csvBudget.items {
             let categoryName = item.categoryName
@@ -105,7 +110,7 @@ class ImportManager {
             budget.totalAmount = activeIncomeTotal
         }
         
-        budget.updateRemainingAmount()
+        budgetModel.updateRemainingAmount()
         
         do {
             try modelContext.save()
@@ -170,6 +175,7 @@ class ImportManager {
     }
     
     func importBatchTransactions(files: [(filename: String, transactions: [CSVTransaction])], into budget: Budget) throws -> Int {
+        let budgetModel = BudgetModel(budgetModel: budget)
         var totalImported = 0
         for file in files {
             totalImported += try importTransactions(from: file.transactions, into: budget, filename: file.filename)
@@ -178,6 +184,7 @@ class ImportManager {
     }
     
     func importTransactions(from csvTransactions: [CSVTransaction], into budget: Budget, filename: String) throws -> Int {
+        let budgetModel = BudgetModel(budgetModel: budget)
         var count = 0
         
         guard let parsedPeriod = parseBudgetPeriod(from: filename) else {
@@ -225,7 +232,7 @@ class ImportManager {
             count += 1
         }
         
-        budget.updateRemainingAmount()
+        budgetModel.updateRemainingAmount()
         
         do {
             try modelContext.save()
@@ -237,6 +244,7 @@ class ImportManager {
     }
     
     func importCategories(from csvBudget: CSVBudget, into budget: Budget, for month: Date) throws {
+        let budgetModel = BudgetModel(budgetModel: budget)
         let normalizedMonth = DateRangeHelper.monthBounds(for: month).start
         
         for item in csvBudget.items {
@@ -270,7 +278,7 @@ class ImportManager {
             budget.totalAmount = activeIncomeTotal
         }
         
-        budget.updateRemainingAmount()
+        budgetModel.updateRemainingAmount()
         
         do {
             try modelContext.save()

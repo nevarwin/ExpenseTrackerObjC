@@ -9,6 +9,7 @@ struct MonthlyBudgetDetailView: View {
     let budget: Budget
     let month: Date
     var budgetViewModel: BudgetViewModel?
+    var budgetModel: BudgetModel
     
     @State private var categoryViewModel: CategoryViewModel?
     
@@ -23,9 +24,9 @@ struct MonthlyBudgetDetailView: View {
     var body: some View {
         List {
             Section("Expense Overview") {
-                let pExpense = budget.plannedExpenses(for: month)
-                let aExpense = budget.expensesInMonth(month)
-                let dExpense = budget.expenseDiffInMonth(month)
+                let pExpense = budgetModel.plannedExpenses(date: month)
+                let aExpense = budgetModel.expensesInMonth(date: month)
+                let dExpense = budgetModel.expenseDiffInMonth(date: month)
                 
                 LabeledContent("Planned Expense", value: pExpense, format: .currency(code: currencyManager.currencyCode))
                 LabeledContent("Actual Expense", value: aExpense, format: .currency(code: currencyManager.currencyCode))
@@ -37,9 +38,9 @@ struct MonthlyBudgetDetailView: View {
             }
             
             Section("Income Overview") {
-                let pIncome = budget.plannedIncome(for: month)
-                let aIncome = budget.incomeInMonth(month)
-                let dIncome = budget.incomeDiffInMonth(month)
+                let pIncome = budgetModel.plannedIncome(date: month)
+                let aIncome = budgetModel.incomeInMonth(date: month)
+                let dIncome = budgetModel.incomeDiffInMonth(date: month)
                 
                 LabeledContent("Planned Income", value: pIncome, format: .currency(code: currencyManager.currencyCode))
                 LabeledContent("Actual Income", value: aIncome, format: .currency(code: currencyManager.currencyCode))
@@ -51,7 +52,7 @@ struct MonthlyBudgetDetailView: View {
             }
 
             Section("Total Savings") {
-                let savings = budget.remainingInMonth(month)
+                let savings = budgetModel.remainingInMonth(date: month)
                 LabeledContent("Savings") {
                     Text(savings, format: .currency(code: currencyManager.currencyCode))
                         .foregroundStyle(savings >= 0 ? .green : .red)

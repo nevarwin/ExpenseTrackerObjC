@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 @Observable
+@MainActor
 final class TransactionViewModel {
     var transactions: [Transaction] = []
     var availableCategories: [Category] = []
@@ -265,7 +266,8 @@ final class TransactionViewModel {
         }
         
         // Update budget remaining amount
-        budget.updateRemainingAmount()
+        let budgetModel = BudgetModel(budgetModel: budget)
+        budgetModel.updateRemainingAmount()
         
         try modelContext.save()
         loadTransactions(for: budget)
@@ -282,7 +284,10 @@ final class TransactionViewModel {
         }
         
         // Update budget
-        budget?.updateRemainingAmount()
+        if let budget = budget {
+            let budgetModel = BudgetModel(budgetModel: budget)
+            budgetModel.updateRemainingAmount()
+        }
         
         modelContext.delete(transaction)
         try modelContext.save()

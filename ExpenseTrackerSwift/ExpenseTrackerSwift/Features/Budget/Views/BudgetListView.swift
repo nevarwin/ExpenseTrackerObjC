@@ -1,3 +1,10 @@
+//
+//  BudgetListView.swift
+//  ExpenseTrackerSwift
+//
+//  Created by raven on 6/30/26.
+//
+
 import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
@@ -163,12 +170,18 @@ struct HomeContent: View {
 
 struct BudgetSummaryCard: View {
     let budget: Budget
+    private let budgetModel: BudgetModel
     @EnvironmentObject var currencyManager: CurrencyManager
     @State private var animatedProgress: Double = 0
     
+    init(budget: Budget) {
+        self.budget = budget
+        self.budgetModel = BudgetModel(budgetModel: budget)
+    }
+    
     private var displayMonth: Date {
         let currentMonthStart = DateRangeHelper.monthBounds(for: Date()).start
-        let activePeriods = budget.activeBudgetPeriods()
+        let activePeriods = budgetModel.activeBudgetPeriods()
         if activePeriods.contains(where: { DateRangeHelper.isSameMonth($0, currentMonthStart) }) || activePeriods.isEmpty {
             return currentMonthStart
         }
@@ -198,7 +211,7 @@ struct BudgetSummaryCard: View {
                     Circle()
                         .trim(from: 0, to: animatedProgress)
                         .stroke(
-                            budget.remainingInMonth(displayMonth) >= 0 ? Color.appAccent : Color.red,
+                            budgetModel.remainingInMonth(date: displayMonth) >= 0 ? Color.appAccent : Color.red,
                             style: StrokeStyle(lineWidth: 6, lineCap: .round)
                         )
                         .rotationEffect(.degrees(-90))
@@ -217,10 +230,10 @@ struct BudgetSummaryCard: View {
                             .font(.caption)
                             .foregroundStyle(Color.secondary)
                         HStack(alignment: .lastTextBaseline, spacing: 4) {
-                            Text(budget.incomeInMonth(displayMonth), format: .currency(code: currencyManager.currencyCode))
+                            Text(budgetModel.incomeInMonth(date: displayMonth), format: .currency(code: currencyManager.currencyCode))
                                 .font(.system(.headline, design: .rounded))
                                 .fontWeight(.bold)
-                            Text("/ " + budget.plannedIncome(for: displayMonth).formatted(.currency(code: currencyManager.currencyCode)))
+                            Text("/ " + budgetModel.plannedIncome(date: displayMonth).formatted(.currency(code: currencyManager.currencyCode)))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -233,11 +246,11 @@ struct BudgetSummaryCard: View {
                             .font(.caption)
                             .foregroundStyle(Color.secondary)
                         HStack(alignment: .lastTextBaseline, spacing: 4) {
-                            Text(budget.expensesInMonth(displayMonth), format: .currency(code: currencyManager.currencyCode))
+                            Text(budgetModel.expensesInMonth(date: displayMonth), format: .currency(code: currencyManager.currencyCode))
                                 .font(.system(.headline, design: .rounded))
                                 .fontWeight(.bold)
-                                .foregroundStyle(budget.expensesInMonth(displayMonth) > budget.plannedExpenses(for: displayMonth) ? .red : .appPrimary)
-                            Text("/ " + budget.plannedExpenses(for: displayMonth).formatted(.currency(code: currencyManager.currencyCode)))
+                                .foregroundStyle(budgetModel.expensesInMonth(date: displayMonth) > budgetModel.plannedExpenses(date: displayMonth) ? .red : .appPrimary)
+                            Text("/ " + budgetModel.plannedExpenses(date: displayMonth).formatted(.currency(code: currencyManager.currencyCode)))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -251,7 +264,7 @@ struct BudgetSummaryCard: View {
                             .fill(Color.appLightGray)
                             .frame(height: 12)
                         
-                        let isOverBudget = budget.expensesInMonth(displayMonth) > budget.plannedExpenses(for: displayMonth) && budget.plannedExpenses(for: displayMonth) > 0
+                        let isOverBudget = budgetModel.expensesInMonth(date: displayMonth) > budgetModel.plannedExpenses(date: displayMonth) && budgetModel.plannedExpenses(date: displayMonth) > 0
                         
                         Capsule()
                             .fill(
@@ -287,8 +300,8 @@ struct BudgetSummaryCard: View {
     }
     
     private func updateProgress() {
-        let planned = budget.plannedExpenses(for: displayMonth)
-        let spent = budget.expensesInMonth(displayMonth)
+        let planned = budgetModel.plannedExpenses(date: displayMonth)
+        let spent = budgetModel.expensesInMonth(date: displayMonth)
         let progress = planned > 0 ? min(max(0, Double(truncating: (spent / planned) as NSDecimalNumber)), 1.0) : 0
         
         withAnimation(.spring(duration: 1.0)) {
@@ -320,8 +333,8 @@ struct EmptyBudgetCard: View {
                     .padding(.horizontal)
             }
             
-            Button(action: { 
-                onAddBudget?() 
+            Button(action: {
+                onAddBudget?()
                 PostHogManager.shared.trackEvent("Budget Create New Clicked (Empty State)")
             }) {
                 Text(String(localized: "Create New Budget"))
@@ -346,3 +359,4 @@ struct EmptyBudgetCard: View {
         .modelContainer(for: [Budget.self, Category.self, Transaction.self])
         .environmentObject(CurrencyManager())
 }
+

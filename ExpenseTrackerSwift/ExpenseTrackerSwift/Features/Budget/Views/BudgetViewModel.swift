@@ -1,3 +1,10 @@
+//  
+//  BudgetViewModel.swift
+//  ExpenseTrackerSwift
+//
+//  Created by raven on 6/30/26.
+//
+
 import Combine
 import SwiftData
 import SwiftUI
@@ -86,15 +93,15 @@ final class BudgetViewModel: ObservableObject {
     func addBudgetPeriod(for budget: Budget, month: Date) throws {
         let normalizedMonth = DateRangeHelper.monthBounds(for: month).start
         
-        let hasCategories = budget.categories.contains { 
-            DateRangeHelper.isSameMonth($0.budgetPeriod, normalizedMonth) 
+        let hasCategories = budget.categories.contains {
+            DateRangeHelper.isSameMonth($0.budgetPeriod, normalizedMonth)
         }
         
         guard !hasCategories else { return }
         
         let existingCategories = budget.categories.filter { $0.isActive }
-        let groupedByMonth = Dictionary(grouping: existingCategories, by: { 
-            DateRangeHelper.monthBounds(for: $0.budgetPeriod).start 
+        let groupedByMonth = Dictionary(grouping: existingCategories, by: {
+            DateRangeHelper.monthBounds(for: $0.budgetPeriod).start
         })
         
         let sortedMonths = groupedByMonth.keys.filter { $0 < normalizedMonth }.sorted(by: >)

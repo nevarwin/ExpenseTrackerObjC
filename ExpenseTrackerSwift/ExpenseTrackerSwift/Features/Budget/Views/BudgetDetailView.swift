@@ -1,3 +1,10 @@
+//
+//  BudgetDetailView.swift
+//  ExpenseTrackerSwift
+//
+//  Created by raven on 6/30/26.
+//
+
 import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
@@ -7,7 +14,14 @@ struct BudgetDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var currencyManager: CurrencyManager
     let budget: Budget
+    private let budgetModel: BudgetModel
     var viewModel: BudgetViewModel?
+    
+    init(budget: Budget, viewModel: BudgetViewModel? = nil) {
+        self.budget = budget
+        self.viewModel = viewModel
+        self.budgetModel = BudgetModel(budgetModel: budget)
+    }
     
     @State private var showingEditSheet = false
     @State private var showingDeleteConfirmation = false
@@ -44,7 +58,7 @@ struct BudgetDetailView: View {
             
             // List of months
             Section("Budget Periods") {
-                let periods = budget.activeBudgetPeriods()
+                let periods = budgetModel.activeBudgetPeriods()
                 if periods.isEmpty {
                     Text("No active budget months. Tap 'Add Month' or import templates to initialize.")
                         .font(.subheadline)
@@ -52,15 +66,15 @@ struct BudgetDetailView: View {
                         .padding(.vertical, 8)
                 } else {
                     ForEach(periods.reversed(), id: \.self) { month in
-                        NavigationLink(destination: MonthlyBudgetDetailView(budget: budget, month: month, budgetViewModel: viewModel)) {
+                        NavigationLink(destination: MonthlyBudgetDetailView(budget: budget, month: month, budgetViewModel: viewModel, budgetModel: budgetModel)) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(DateRangeHelper.monthYearString(from: month))
                                         .font(.headline)
                                     
                                     // Small summary of spent vs planned
-                                    let planned = budget.plannedExpenses(for: month)
-                                    let spent = budget.expensesInMonth(month)
+                                    let planned = budgetModel.plannedExpenses(date: month)
+                                    let spent = budgetModel.expensesInMonth(date: month)
                                     Text("Spent: \(spent.formatted(.currency(code: currencyManager.currencyCode))) / Planned: \(planned.formatted(.currency(code: currencyManager.currencyCode)))")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
@@ -68,7 +82,7 @@ struct BudgetDetailView: View {
                                 Spacer()
                                 
                                 // Progress pill
-                                let remaining = budget.remainingInMonth(month)
+                                let remaining = budgetModel.remainingInMonth(date: month)
                                 Text(remaining >= 0 ? "Under" : "Over")
                                     .font(.caption2)
                                     .fontWeight(.bold)
@@ -156,7 +170,7 @@ struct BudgetDetailView: View {
                     Picker("Year", selection: $pickerYear) {
                         let currentYear = Calendar.current.component(.year, from: Date())
                         ForEach((currentYear - 5)...(currentYear + 5), id: \.self) { year in
-                            Text(String(year).replacingOccurrences(of: ",", with: "")).tag(year)
+                            Text("\(year)").tag(year)
                         }
                     }
                     .pickerStyle(.wheel)

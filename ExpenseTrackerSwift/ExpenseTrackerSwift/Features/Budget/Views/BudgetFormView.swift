@@ -1,3 +1,10 @@
+//
+//  BudgetFormView.swift
+//  ExpenseTrackerSwift
+//
+//  Created by raven on 6/30/26.
+//
+
 import SwiftUI
 import SwiftData
 
@@ -106,3 +113,4 @@ struct BudgetFormView: View {
 
     BudgetFormView(viewModel: viewModel)
 }
+

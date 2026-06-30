@@ -3,7 +3,13 @@ import Charts
 
 struct BudgetHistoryView: View {
     let budget: Budget
+    private let budgetModel: BudgetModel
     @EnvironmentObject var currencyManager: CurrencyManager
+    
+    init(budget: Budget) {
+        self.budget = budget
+        self.budgetModel = BudgetModel(budgetModel: budget)
+    }
     @State private var selectedRange: DateRange = .sixMonths
     
     enum DateRange: String, CaseIterable {
@@ -70,14 +76,14 @@ struct BudgetHistoryView: View {
                             ForEach(monthsToShow, id: \.self) { month in
                                 LineMark(
                                     x: .value("Month", month, unit: .month),
-                                    y: .value("Expenses", NSDecimalNumber(decimal: budget.expensesInMonth(month)).doubleValue)
+                                    y: .value("Expenses", NSDecimalNumber(decimal: budgetModel.expensesInMonth(date: month)).doubleValue)
                                 )
                                 .foregroundStyle(Color.appAccent)
                                 .interpolationMethod(.catmullRom)
                                 
                                 AreaMark(
                                     x: .value("Month", month, unit: .month),
-                                    y: .value("Expenses", NSDecimalNumber(decimal: budget.expensesInMonth(month)).doubleValue)
+                                    y: .value("Expenses", NSDecimalNumber(decimal: budgetModel.expensesInMonth(date: month)).doubleValue)
                                 )
                                 .foregroundStyle(
                                     LinearGradient(
@@ -158,7 +164,14 @@ struct BudgetHistoryView: View {
 struct MonthSummaryRow: View {
     let budget: Budget
     let month: Date
+    private let budgetModel: BudgetModel
     @EnvironmentObject var currencyManager: CurrencyManager
+    
+    init(budget: Budget, month: Date) {
+        self.budget = budget
+        self.month = month
+        self.budgetModel = BudgetModel(budgetModel: budget)
+    }
     
     private var isCurrentMonth: Bool {
         DateRangeHelper.isInCurrentMonth(month)
@@ -189,7 +202,7 @@ struct MonthSummaryRow: View {
                     Text("Income")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text(budget.incomeInMonth(month), format: .currency(code: currencyManager.currencyCode))
+                    Text(budgetModel.incomeInMonth(date: month), format: .currency(code: currencyManager.currencyCode))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundStyle(.green)
@@ -199,7 +212,7 @@ struct MonthSummaryRow: View {
                     Text("Spent")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text(budget.expensesInMonth(month), format: .currency(code: currencyManager.currencyCode))
+                    Text(budgetModel.expensesInMonth(date: month), format: .currency(code: currencyManager.currencyCode))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                 }
@@ -210,10 +223,10 @@ struct MonthSummaryRow: View {
                     Text("Remaining")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text(budget.remainingInMonth(month), format: .currency(code: currencyManager.currencyCode))
+                    Text(budgetModel.remainingInMonth(date: month), format: .currency(code: currencyManager.currencyCode))
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundStyle(budget.remainingInMonth(month) >= 0 ? .green : .red)
+                        .foregroundStyle(budgetModel.remainingInMonth(date: month) >= 0 ? .green : .red)
                 }
             }
         }
