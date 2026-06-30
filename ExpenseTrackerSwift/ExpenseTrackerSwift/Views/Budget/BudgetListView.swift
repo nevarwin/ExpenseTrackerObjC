@@ -154,7 +154,7 @@ struct HomeContent: View {
         Divider()
         
         NavigationLink {
-            SettingsView()
+            SettingsFactory.make()
         } label: {
             Label(String(localized: "Settings"), systemImage: "gearshape.fill")
         }
