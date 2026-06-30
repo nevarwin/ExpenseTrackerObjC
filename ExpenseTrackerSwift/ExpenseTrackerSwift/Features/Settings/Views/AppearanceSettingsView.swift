@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AppearanceSettingsView: View {
-    @EnvironmentObject var appearanceManager: AppearanceManager
+    @EnvironmentObject var appearanceManager: SharedAppearanceService
     
     var body: some View {
         List {
@@ -34,4 +34,9 @@ struct AppearanceSettingsView: View {
         .navigationTitle("Appearance")
         .navigationBarTitleDisplayMode(.inline)
     }
+}
+
+#Preview {
+    AppearanceSettingsView()
+        .environmentObject(SharedAppearanceService.instance)
 }
