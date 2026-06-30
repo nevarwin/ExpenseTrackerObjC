@@ -51,8 +51,8 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				Models/Category.swift,
 				Secrets.xcconfig,
+				Shared/Models/Category.swift,
 			);
 			target = 973C37E92F1E74D800CB57BA /* ExpenseTrackerSwift */;
 		};
