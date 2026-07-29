@@ -50,7 +50,7 @@ class CSVParser {
     }()
     
     func parseTransactions(from url: URL) throws -> [CSVTransaction] {
-        guard let data = try? String(contentsOf: url) else {
+        guard let data = try? String(contentsOf: url, encoding: .utf8) else {
             throw CSVParserError.fileReadFailed
         }
         
@@ -98,7 +98,7 @@ class CSVParser {
     }
     
     func parseBudget(from url: URL) throws -> CSVBudget {
-        guard let data = try? String(contentsOf: url) else {
+        guard let data = try? String(contentsOf: url, encoding: .utf8) else {
             throw CSVParserError.fileReadFailed
         }
         

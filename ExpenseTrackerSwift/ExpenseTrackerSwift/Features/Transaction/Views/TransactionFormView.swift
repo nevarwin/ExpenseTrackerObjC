@@ -40,7 +40,7 @@ struct TransactionFormView: View {
             // For new transactions, use initial values if provided
             let transactionDate = initialDate ?? Date()
             _date = State(initialValue: transactionDate)
-            _selectedBudgetPeriod = State(initialValue: DateRangeHelper.monthBounds(for: transactionDate).start)
+            _selectedBudgetPeriod = State(initialValue: transactionDate.monthBounds.start)
             _selectedCategory = State(initialValue: initialCategory)
         }
     }
@@ -83,7 +83,7 @@ struct TransactionFormView: View {
                             Text("Assign to Month")
                                 .foregroundStyle(.primary)
                             Spacer()
-                            Text(DateRangeHelper.monthYearString(from: selectedBudgetPeriod))
+                            Text(selectedBudgetPeriod.monthYearString)
                                 .foregroundStyle(.secondary)
                             Image(systemName: "chevron.right")
                                 .font(.caption)
@@ -145,7 +145,7 @@ struct TransactionFormView: View {
         
         .onChange(of: date) { _, newDate in
             // Auto-sync budget period when transaction date changes
-            selectedBudgetPeriod = DateRangeHelper.monthBounds(for: newDate).start
+            selectedBudgetPeriod = newDate.monthBounds.start
             loadCategories()
         }
         .onChange(of: selectedBudget) { _, _ in

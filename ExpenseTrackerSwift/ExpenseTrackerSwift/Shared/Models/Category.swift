@@ -27,7 +27,7 @@ final class Category {
     ) {
         self.name = name
         self.allocatedAmount = allocatedAmount
-        self.budgetPeriod = DateRangeHelper.monthBounds(for: budgetPeriod ?? budget?.startDate ?? Date()).start
+        self.budgetPeriod = (budgetPeriod ?? budget?.startDate ?? Date()).monthBounds.start
         self.usedAmount = 0
         self.isIncome = isIncome
         self.isActive = true
@@ -53,10 +53,10 @@ final class Category {
     
     
     func transactionsInMonth(_ date: Date = Date()) -> [Transaction] {
-        let bounds = DateRangeHelper.monthBounds(for: date)
+        let bounds = date.monthBounds
         return transactions.filter { transaction in
             transaction.isActive &&
-            DateRangeHelper.isSameMonth(transaction.budgetPeriod, bounds.start)
+            transaction.budgetPeriod.isSameMonth(as: bounds.start)
         }
     }
     

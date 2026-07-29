@@ -27,7 +27,7 @@ final class Transaction {
         self.desc = description
         self.date = date
         // Auto-assign budgetPeriod to the start of the transaction date's month if not provided
-        self.budgetPeriod = budgetPeriod ?? DateRangeHelper.monthBounds(for: date).start
+        self.budgetPeriod = budgetPeriod ?? date.monthBounds.start
         self.isActive = true
         self.budget = budget
         self.category = category

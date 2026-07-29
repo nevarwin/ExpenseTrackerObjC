@@ -16,7 +16,7 @@ struct CategoryRowView: View {
                     Text(category.name)
                         .font(.headline)
                     if let month = month {
-                        Text(DateRangeHelper.monthYearString(from: month))
+                        Text(month.monthYearString)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

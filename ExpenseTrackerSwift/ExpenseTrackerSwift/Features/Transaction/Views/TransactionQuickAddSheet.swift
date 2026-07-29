@@ -35,7 +35,7 @@ struct TransactionQuickAddSheet: View {
         
         let initialDate = viewModel.selectedDate
         _date = State(initialValue: initialDate)
-        let monthBounds = DateRangeHelper.monthBounds(for: initialDate)
+        let monthBounds = initialDate.monthBounds
         _selectedBudgetPeriod = State(initialValue: monthBounds.start)
     }
     
@@ -93,7 +93,7 @@ struct TransactionQuickAddSheet: View {
             Text(errorMessage)
         }
         .onAppear {
-            selectedBudgetPeriod = DateRangeHelper.monthBounds(for: date).start
+            selectedBudgetPeriod = date.monthBounds.start
             viewModel.loadAvailableCategories(
                 transactionDate: date,
                 budget: initialBudget,

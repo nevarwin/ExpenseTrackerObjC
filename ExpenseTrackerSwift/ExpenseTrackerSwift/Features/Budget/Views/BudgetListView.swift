@@ -180,9 +180,9 @@ struct BudgetSummaryCard: View {
     }
     
     private var displayMonth: Date {
-        let currentMonthStart = DateRangeHelper.monthBounds(for: Date()).start
+        let currentMonthStart = Date().monthBounds.start
         let activePeriods = budgetModel.activeBudgetPeriods()
-        if activePeriods.contains(where: { DateRangeHelper.isSameMonth($0, currentMonthStart) }) || activePeriods.isEmpty {
+        if activePeriods.contains(where: { $0.isSameMonth(as: currentMonthStart) }) || activePeriods.isEmpty {
             return currentMonthStart
         }
         return activePeriods.last ?? currentMonthStart
@@ -197,7 +197,7 @@ struct BudgetSummaryCard: View {
                         .fontWeight(.bold)
                         .foregroundStyle(Color.appPrimary)
                     
-                    Text("\(DateRangeHelper.monthYearString(from: displayMonth)) Budget")
+                    Text("\(displayMonth.monthYearString) Budget")
                         .subheaderStyle()
                 }
                 

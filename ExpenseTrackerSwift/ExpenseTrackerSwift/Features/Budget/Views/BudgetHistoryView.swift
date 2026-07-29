@@ -44,7 +44,7 @@ struct BudgetHistoryView: View {
                 startDate = oldestTransaction
         }
         
-        return DateRangeHelper.monthsBetween(start: startDate, end: Date())
+        return Date.monthsBetween(start: startDate, end: Date())
     }
     
     var body: some View {
@@ -174,13 +174,13 @@ struct MonthSummaryRow: View {
     }
     
     private var isCurrentMonth: Bool {
-        DateRangeHelper.isInCurrentMonth(month)
+        month.isInCurrentMonth
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text(DateRangeHelper.monthYearString(from: month))
+                Text(month.monthYearString)
                     .font(.headline)
                 
                 if isCurrentMonth {

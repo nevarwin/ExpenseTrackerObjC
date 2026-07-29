@@ -91,17 +91,17 @@ final class BudgetViewModel: ObservableObject {
     }
     
     func addBudgetPeriod(for budget: Budget, month: Date) throws {
-        let normalizedMonth = DateRangeHelper.monthBounds(for: month).start
+        let normalizedMonth = month.monthBounds.start
         
         let hasCategories = budget.categories.contains {
-            DateRangeHelper.isSameMonth($0.budgetPeriod, normalizedMonth)
+            $0.budgetPeriod.isSameMonth(as: normalizedMonth)
         }
         
         guard !hasCategories else { return }
         
         let existingCategories = budget.categories.filter { $0.isActive }
         let groupedByMonth = Dictionary(grouping: existingCategories, by: {
-            DateRangeHelper.monthBounds(for: $0.budgetPeriod).start
+            $0.budgetPeriod.monthBounds.start
         })
         
         let sortedMonths = groupedByMonth.keys.filter { $0 < normalizedMonth }.sorted(by: >)

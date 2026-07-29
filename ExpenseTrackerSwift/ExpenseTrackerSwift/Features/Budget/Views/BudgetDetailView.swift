@@ -69,7 +69,7 @@ struct BudgetDetailView: View {
                         NavigationLink(destination: MonthlyBudgetDetailView(budget: budget, month: month, budgetViewModel: viewModel, budgetModel: budgetModel)) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text(DateRangeHelper.monthYearString(from: month))
+                                    Text(month.monthYearString)
                                         .font(.headline)
                                     
                                     // Small summary of spent vs planned

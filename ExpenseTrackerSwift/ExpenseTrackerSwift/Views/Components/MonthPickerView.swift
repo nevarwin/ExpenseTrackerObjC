@@ -22,11 +22,11 @@ struct MonthPickerView: View {
                     }
                     
                     Button("Previous Month") {
-                        selectedDate = DateRangeHelper.previousMonth(from: selectedDate)
+                        selectedDate = selectedDate.previousMonth
                     }
                     
                     Button("Next Month") {
-                        selectedDate = DateRangeHelper.nextMonth(from: selectedDate)
+                        selectedDate = selectedDate.nextMonth
                     }
                 }
             }

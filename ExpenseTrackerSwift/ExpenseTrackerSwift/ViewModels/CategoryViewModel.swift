@@ -43,9 +43,9 @@ final class CategoryViewModel {
             
             // Filter by month if specified
             if let month = month {
-                let bounds = DateRangeHelper.monthBounds(for: month)
+                let bounds = month.monthBounds
                 fetchedCategories = fetchedCategories.filter { category in
-                    DateRangeHelper.isSameMonth(category.budgetPeriod, bounds.start)
+                    category.budgetPeriod.isSameMonth(as: bounds.start)
                 }
             }
             

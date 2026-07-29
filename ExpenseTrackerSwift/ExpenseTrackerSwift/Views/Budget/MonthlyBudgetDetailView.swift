@@ -146,7 +146,7 @@ struct MonthlyBudgetDetailView: View {
             }
         }
         .searchable(text: $searchText, prompt: "Search categories")
-        .navigationTitle(DateRangeHelper.monthYearString(from: month))
+        .navigationTitle(month.monthYearString)
         .onAppear {
             if categoryViewModel == nil {
                 categoryViewModel = CategoryViewModel(modelContext: modelContext)

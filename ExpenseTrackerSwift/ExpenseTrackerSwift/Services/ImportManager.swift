@@ -83,7 +83,7 @@ class ImportManager {
             
             if let existingCategory = budget.categories.first(where: {
                 $0.name.caseInsensitiveCompare(categoryName) == .orderedSame &&
-                DateRangeHelper.isSameMonth($0.budgetPeriod, startDate)
+                $0.budgetPeriod.isSameMonth(as: startDate)
             }) {
                 category = existingCategory
                 category.allocatedAmount = item.plannedAmount
@@ -104,7 +104,7 @@ class ImportManager {
         }
         
         let activeIncomeTotal = budget.categories
-            .filter { $0.isIncome && $0.isActive && DateRangeHelper.isSameMonth($0.budgetPeriod, startDate) }
+            .filter { $0.isIncome && $0.isActive && $0.budgetPeriod.isSameMonth(as: startDate) }
             .reduce(Decimal.zero) { $0 + $1.allocatedAmount }
         if activeIncomeTotal > 0 {
             budget.totalAmount = activeIncomeTotal
@@ -198,7 +198,7 @@ class ImportManager {
             let category: Category
             if let existing = budget.categories.first(where: {
                 $0.name.caseInsensitiveCompare(categoryName) == .orderedSame &&
-                DateRangeHelper.isSameMonth($0.budgetPeriod, budgetPeriod)
+                $0.budgetPeriod.isSameMonth(as: budgetPeriod)
             }) {
                 category = existing
             } else {
@@ -245,14 +245,14 @@ class ImportManager {
     
     func importCategories(from csvBudget: CSVBudget, into budget: Budget, for month: Date) throws {
         let budgetModel = BudgetModel(budgetModel: budget)
-        let normalizedMonth = DateRangeHelper.monthBounds(for: month).start
+        let normalizedMonth = month.monthBounds.start
         
         for item in csvBudget.items {
             let categoryName = item.categoryName
             
             if let existingCategory = budget.categories.first(where: {
                 $0.name.caseInsensitiveCompare(categoryName) == .orderedSame &&
-                DateRangeHelper.isSameMonth($0.budgetPeriod, normalizedMonth)
+                $0.budgetPeriod.isSameMonth(as: normalizedMonth)
             }) {
                 existingCategory.allocatedAmount = item.plannedAmount
                 existingCategory.isIncome = item.isIncome
@@ -272,7 +272,7 @@ class ImportManager {
         }
         
         let activeIncomeTotal = budget.categories
-            .filter { $0.isIncome && $0.isActive && DateRangeHelper.isSameMonth($0.budgetPeriod, normalizedMonth) }
+            .filter { $0.isIncome && $0.isActive && $0.budgetPeriod.isSameMonth(as: normalizedMonth) }
             .reduce(Decimal.zero) { $0 + $1.allocatedAmount }
         if activeIncomeTotal > 0 {
             budget.totalAmount = activeIncomeTotal

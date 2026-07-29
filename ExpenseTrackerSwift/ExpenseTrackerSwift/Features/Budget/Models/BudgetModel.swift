@@ -48,10 +48,10 @@ extension BudgetModel {
     }
     
     func transactionsInMonth(date: Date) -> [Transaction] {
-        let bounds = DateRangeHelper.monthBounds(for: date)
+        let bounds = date.monthBounds
         return transactions.filter { transaction in
             transaction.isActive &&
-            DateRangeHelper.isSameMonth(transaction.budgetPeriod, bounds.start)
+            transaction.budgetPeriod.isSameMonth(as: bounds.start)
         }
     }
     
