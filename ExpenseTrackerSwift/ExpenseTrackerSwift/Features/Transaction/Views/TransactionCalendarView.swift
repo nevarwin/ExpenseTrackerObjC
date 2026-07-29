@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct CalendarView: View {
+struct TransactionCalendarView: View {
     @Bindable var viewModel: TransactionViewModel
     var onDateTapped: ((Bool) -> Void)? = nil
     

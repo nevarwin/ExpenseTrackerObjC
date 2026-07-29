@@ -2,6 +2,7 @@ import XCTest
 import SwiftData
 @testable import ExpenseTrackerSwift
 
+@MainActor
 final class ImportManagerTests: XCTestCase {
     var container: ModelContainer!
     var context: ModelContext!

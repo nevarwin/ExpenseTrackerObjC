@@ -34,6 +34,8 @@ struct CSVBudgetItem {
     let actualAmount: Decimal
     let differenceAmount: Decimal
     let isIncome: Bool
+    
+    var amount: Decimal { plannedAmount }
 }
 
 class CSVParser {

@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-struct QuickAddTransactionSheet: View {
+struct TransactionQuickAddSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var viewModel: TransactionViewModel
     

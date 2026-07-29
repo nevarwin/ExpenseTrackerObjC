@@ -46,7 +46,7 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingAddTransaction) {
             if let firstBudget = activeBudgets.first {
-                QuickAddTransactionSheet(
+                TransactionQuickAddSheet(
                     viewModel: getTransactionViewModel(),
                     activeBudgets: activeBudgets,
                     initialBudget: firstBudget
