@@ -3,7 +3,7 @@ import SwiftData
 
 struct TransactionFormView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var currencyManager: CurrencyManager
+    @EnvironmentObject var currencyManager: SharedCurrencyService
     @Bindable var viewModel: TransactionViewModel
     
     let availableBudgets: [Budget]

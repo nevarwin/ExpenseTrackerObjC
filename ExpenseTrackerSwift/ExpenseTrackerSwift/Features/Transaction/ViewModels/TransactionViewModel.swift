@@ -4,6 +4,14 @@ import SwiftData
 @Observable
 @MainActor
 final class TransactionViewModel {
+
+    // MARK: - Nested Types
+
+    enum CalendarScope {
+        case month
+        case week
+    }
+
     var transactions: [Transaction] = []
     var availableCategories: [Category] = []
     var selectedCategory: Category?
@@ -250,7 +258,7 @@ final class TransactionViewModel {
             existing.budget = budget
             existing.category = category
             existing.updatedAt = Date()
-            PostHogManager.shared.trackEvent("Transaction Updated")
+            SharedAnalyticsService.instance.trackEvent("Transaction Updated")
         } else {
             let transaction = Transaction(
                 amount: amount,
@@ -262,7 +270,7 @@ final class TransactionViewModel {
             )
             modelContext.insert(transaction)
             transactions.insert(transaction, at: 0)
-            PostHogManager.shared.trackEvent("Transaction Added")
+            SharedAnalyticsService.instance.trackEvent("Transaction Added")
         }
         
         // Update budget remaining amount
@@ -292,7 +300,7 @@ final class TransactionViewModel {
         modelContext.delete(transaction)
         try modelContext.save()
         
-        PostHogManager.shared.trackEvent("Transaction Deleted")
+        SharedAnalyticsService.instance.trackEvent("Transaction Deleted")
         
         // Reload transactions from database instead of manually manipulating array
         loadTransactions(for: budget)
@@ -427,9 +435,4 @@ final class TransactionViewModel {
         
         isLoading = false
     }
-}
-
-enum CalendarScope {
-    case month
-    case week
 }

@@ -1,28 +1,52 @@
+//
+//  SharedPermissionService.swift
+//  ExpenseTrackerSwift
+//
+//  Created by raven on 7/30/26.
+//
+
 import Foundation
 import Photos
 import UIKit
-import Combine
 
-final class PermissionManager: ObservableObject {
-    static let shared = PermissionManager()
-    
+// MARK: - Protocol
+
+protocol PermissionServiceProtocol: AnyObject {
+    func openSettings()
+    func checkPhotoLibraryPermission(completion: @escaping (PHAuthorizationStatus) -> Void)
+}
+
+// MARK: - Service
+
+final class SharedPermissionService: PermissionServiceProtocol {
+
+    private static var _instance: SharedPermissionService?
+
+    static var instance: SharedPermissionService {
+        guard let instance = _instance else {
+            fatalError("Please configure SharedPermissionService first.")
+        }
+        return instance
+    }
+
+    static func configure() {
+        guard _instance == nil else { return }
+        _instance = SharedPermissionService()
+    }
+
     private init() {}
-    
+
     /// Opens the System Settings app for the current application.
     func openSettings() {
         guard let settingsUrl = URL(string: UIApplication.openSettingsURLString) else { return }
-        
         if UIApplication.shared.canOpenURL(settingsUrl) {
             UIApplication.shared.open(settingsUrl)
         }
     }
-    
+
     /// Checks the photo library authorization status.
-    /// Note: PhotosPicker (SwiftUI) handles picking without full library access, 
-    /// but this is useful if we need to check if the user has explicitly blocked the app.
     func checkPhotoLibraryPermission(completion: @escaping (PHAuthorizationStatus) -> Void) {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
-        
         if status == .notDetermined {
             PHPhotoLibrary.requestAuthorization(for: .readWrite) { newStatus in
                 DispatchQueue.main.async {

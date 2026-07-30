@@ -4,7 +4,7 @@ import SwiftData
 struct CategoryEditFormView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject var currencyManager: CurrencyManager
+    @EnvironmentObject var currencyManager: SharedCurrencyService
     
     @Bindable var category: Category
     

@@ -4,7 +4,7 @@ import SwiftData
 struct MonthlyBudgetDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var currencyManager: CurrencyManager
+    @EnvironmentObject var currencyManager: SharedCurrencyService
     
     let budget: Budget
     let month: Date

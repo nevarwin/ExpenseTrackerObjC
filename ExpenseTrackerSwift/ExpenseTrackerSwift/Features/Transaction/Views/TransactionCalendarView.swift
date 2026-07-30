@@ -39,8 +39,8 @@ struct TransactionCalendarView: View {
                     Spacer()
                     
                     Picker("Scope", selection: $viewModel.calendarScope) {
-                        Text("Week").tag(CalendarScope.week)
-                        Text("Month").tag(CalendarScope.month)
+                        Text("Week").tag(TransactionViewModel.CalendarScope.week)
+                        Text("Month").tag(TransactionViewModel.CalendarScope.month)
                     }
                     .pickerStyle(.segmented)
                     .frame(width: 150)

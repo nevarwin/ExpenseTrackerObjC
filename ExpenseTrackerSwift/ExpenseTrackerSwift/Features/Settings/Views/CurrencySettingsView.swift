@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CurrencySettingsView: View {
-    @EnvironmentObject var currencyManager: CurrencyManager
+    @EnvironmentObject var currencyManager: SharedCurrencyService
     
     var body: some View {
         Form {
@@ -21,7 +21,7 @@ struct CurrencySettingsView: View {
                 }
                 .pickerStyle(.inline)
                 .onChange(of: currencyManager.currencyCode) { _, newValue in
-                    PostHogManager.shared.trackEvent("Currency Changed", properties: ["currency_code": newValue])
+                    SharedAnalyticsService.instance.trackEvent("Currency Changed", properties: ["currency_code": newValue])
                 }
             }
             
@@ -37,7 +37,7 @@ struct CurrencySettingsView: View {
 #Preview {
     NavigationStack {
         CurrencySettingsView()
-            .environmentObject(CurrencyManager())
+            .environmentObject(SharedCurrencyService())
     }
 }
 

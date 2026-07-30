@@ -4,7 +4,7 @@ import Charts
 struct BudgetHistoryView: View {
     let budget: Budget
     private let budgetModel: BudgetModel
-    @EnvironmentObject var currencyManager: CurrencyManager
+    @EnvironmentObject var currencyManager: SharedCurrencyService
     
     init(budget: Budget) {
         self.budget = budget
@@ -58,7 +58,7 @@ struct BudgetHistoryView: View {
                 }
                 .pickerStyle(.segmented)
                 .onChange(of: selectedRange) { _, newValue in
-                    PostHogManager.shared.trackEvent("View History Range Changed", properties: ["range": newValue.rawValue])
+                    SharedAnalyticsService.instance.trackEvent("View History Range Changed", properties: ["range": newValue.rawValue])
                 }
             }
             .listRowInsets(EdgeInsets())
@@ -165,7 +165,7 @@ struct MonthSummaryRow: View {
     let budget: Budget
     let month: Date
     private let budgetModel: BudgetModel
-    @EnvironmentObject var currencyManager: CurrencyManager
+    @EnvironmentObject var currencyManager: SharedCurrencyService
     
     init(budget: Budget, month: Date) {
         self.budget = budget
@@ -243,7 +243,7 @@ struct MonthSummaryRow: View {
     
     NavigationStack {
         BudgetHistoryView(budget: budget)
-            .environmentObject(CurrencyManager())
+            .environmentObject(SharedCurrencyService())
     }
 }
 

@@ -6,7 +6,7 @@ struct CategoryTransactionsView: View {
     let month: Date
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var currencyManager: CurrencyManager
+    @EnvironmentObject var currencyManager: SharedCurrencyService
 
     @Query(filter: #Predicate<Transaction> { $0.isActive == true }, sort: \Transaction.date, order: .reverse)
     private var allTransactions: [Transaction]
@@ -134,6 +134,6 @@ struct CategoryTransactionsView: View {
 
     NavigationStack {
         CategoryTransactionsView(category: category, month: Date())
-            .environmentObject(CurrencyManager())
+            .environmentObject(SharedCurrencyService())
     }
 }

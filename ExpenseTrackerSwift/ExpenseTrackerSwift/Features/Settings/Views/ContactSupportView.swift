@@ -141,7 +141,7 @@ struct ContactSupportView: View {
         }
         .alert(String(localized: "Photo Access Denied"), isPresented: $showingPermissionAlert) {
             Button(String(localized: "Open Settings")) {
-                PermissionManager.shared.openSettings()
+                SharedPermissionService.instance.openSettings()
             }
             Button(String(localized: "Cancel"), role: .cancel) { }
         } message: {
@@ -150,7 +150,7 @@ struct ContactSupportView: View {
     }
     
     private func checkPermission() {
-        PermissionManager.shared.checkPhotoLibraryPermission { status in
+        SharedPermissionService.instance.checkPhotoLibraryPermission { status in
             if status == .denied || status == .restricted {
                 showingPermissionAlert = true
             }

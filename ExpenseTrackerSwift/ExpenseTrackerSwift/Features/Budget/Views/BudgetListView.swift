@@ -35,7 +35,7 @@ struct BudgetListView: View {
             }
             .navigationTitle(String(localized: "Budgets"))
             .onAppear {
-                PostHogManager.shared.trackScreen("Home")
+                SharedAnalyticsService.instance.trackScreen("Home")
                 if injectedViewModel == nil && internalViewModel == nil {
                     let vm = BudgetViewModel(modelContext: modelContext)
                     self.internalViewModel = vm
@@ -80,7 +80,7 @@ struct HomeContent: View {
                             
                             Button {
                                 budgetToEdit = budget
-                                PostHogManager.shared.trackEvent("Budget Edit Swiped")
+                                SharedAnalyticsService.instance.trackEvent("Budget Edit Swiped")
                             } label: {
                                 Label(String(localized: "Edit"), systemImage: "pencil")
                             }
@@ -128,7 +128,7 @@ struct HomeContent: View {
             Button(String(localized: "Delete"), role: .destructive) {
                 if let budget = budgetToDelete {
                     try? viewModel.deleteBudget(budget)
-                    PostHogManager.shared.trackEvent("Budget Delete Confirmed", properties: ["budget_name": budget.name])
+                    SharedAnalyticsService.instance.trackEvent("Budget Delete Confirmed", properties: ["budget_name": budget.name])
                 }
             }
             Button(String(localized: "Cancel"), role: .cancel) {
@@ -153,7 +153,7 @@ struct HomeContent: View {
     private var toolbarMenu: some View {
         Button {
             showingAddBudget = true
-            PostHogManager.shared.trackEvent("Budget Add Button Clicked")
+            SharedAnalyticsService.instance.trackEvent("Budget Add Button Clicked")
         } label: {
             Label(String(localized: "Add Budget"), systemImage: "plus")
         }
@@ -161,7 +161,10 @@ struct HomeContent: View {
         Divider()
         
         NavigationLink {
-            SettingsFactory.make()
+            SettingsView(
+                appearanceService: SharedAppearanceService.instance,
+                analyticsService: SharedAnalyticsService.instance
+            )
         } label: {
             Label(String(localized: "Settings"), systemImage: "gearshape.fill")
         }
@@ -171,7 +174,7 @@ struct HomeContent: View {
 struct BudgetSummaryCard: View {
     let budget: Budget
     private let budgetModel: BudgetModel
-    @EnvironmentObject var currencyManager: CurrencyManager
+    @EnvironmentObject var currencyManager: SharedCurrencyService
     @State private var animatedProgress: Double = 0
     
     init(budget: Budget) {
@@ -335,7 +338,7 @@ struct EmptyBudgetCard: View {
             
             Button(action: {
                 onAddBudget?()
-                PostHogManager.shared.trackEvent("Budget Create New Clicked (Empty State)")
+                SharedAnalyticsService.instance.trackEvent("Budget Create New Clicked (Empty State)")
             }) {
                 Text(String(localized: "Create New Budget"))
                     .font(.headline)
@@ -357,6 +360,6 @@ struct EmptyBudgetCard: View {
 #Preview {
     BudgetListView()
         .modelContainer(for: [Budget.self, Category.self, Transaction.self])
-        .environmentObject(CurrencyManager())
+        .environmentObject(SharedCurrencyService())
 }
 

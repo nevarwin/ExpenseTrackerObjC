@@ -9,10 +9,19 @@ import Foundation
 import PostHog
 
 protocol AnalyticsServiceProtocol: Sendable {
-    func setup()
     func trackScreen(_ screenName: String, properties: [String: Any]?)
     func trackEvent(_ eventName: String, properties: [String: Any]?)
+    func setup()
     func setEnabled(_ enabled: Bool)
+}
+
+extension AnalyticsServiceProtocol {
+    func trackScreen(_ screenName: String) {
+        trackScreen(screenName, properties: nil)
+    }
+    func trackEvent(_ eventName: String) {
+        trackEvent(eventName, properties: nil)
+    }
 }
 
 final class SharedAnalyticsService: AnalyticsServiceProtocol {

@@ -4,7 +4,7 @@ import SwiftData
 struct BudgetCategoryRowView: View {
     let category: Category
     let month: Date?  // Optional month to display specific period data
-    @EnvironmentObject var currencyManager: CurrencyManager
+    @EnvironmentObject var currencyManager: SharedCurrencyService
     
     @Query(filter: #Predicate<Transaction> { $0.isActive == true })
     private var allTransactions: [Transaction]

@@ -40,7 +40,7 @@ struct SettingsView: View {
                         Label(String(localized: "Analytics"), systemImage: "chart.bar")
                     }
                     .onChange(of: appearanceService.isAnalyticsEnabled) { _, newValue in
-                        PostHogManager.shared.setEnabled(newValue)
+                        SharedAnalyticsService.instance.setEnabled(newValue)
                     }
                 }
                 
@@ -68,7 +68,7 @@ struct SettingsView: View {
             }
             .navigationTitle(String(localized: "Settings"))
             .onAppear {
-                PostHogManager.shared.trackScreen("Settings")
+                SharedAnalyticsService.instance.trackScreen("Settings")
             }
         }
         .alert(pendingAnalyticsValue ? String(localized: "Enable Analytics?") : String(localized: "Disable Analytics?"), isPresented: $showingAnalyticsAlert) {

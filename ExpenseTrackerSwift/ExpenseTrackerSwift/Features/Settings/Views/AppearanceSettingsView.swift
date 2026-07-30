@@ -12,10 +12,10 @@ struct AppearanceSettingsView: View {
     
     var body: some View {
         List {
-            ForEach(AppearanceManager.Appearance.allCases) { appearance in
+            ForEach(Appearance.allCases) { appearance in
                 Button {
                     appearanceManager.userAppearance = appearance
-                    PostHogManager.shared.trackEvent("Appearance Changed", properties: ["appearance": appearance.title])
+                    SharedAnalyticsService.instance.trackEvent("Appearance Changed", properties: ["appearance": appearance.title])
                 } label: {
                     HStack {
                         Label(appearance.title, systemImage: appearance.icon)

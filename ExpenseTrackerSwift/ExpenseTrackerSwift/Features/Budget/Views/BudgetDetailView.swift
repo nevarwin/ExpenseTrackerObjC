@@ -12,7 +12,7 @@ import UniformTypeIdentifiers
 struct BudgetDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var currencyManager: CurrencyManager
+    @EnvironmentObject var currencyManager: SharedCurrencyService
     let budget: Budget
     private let budgetModel: BudgetModel
     var viewModel: BudgetViewModel?
@@ -112,7 +112,7 @@ struct BudgetDetailView: View {
                     
                     Button {
                         showingEditSheet = true
-                        PostHogManager.shared.trackEvent("Budget Edit Clicked (Detail)")
+                        SharedAnalyticsService.instance.trackEvent("Budget Edit Clicked (Detail)")
                     } label: {
                         Label("Edit Budget", systemImage: "pencil")
                     }
@@ -121,14 +121,14 @@ struct BudgetDetailView: View {
 
                     Button {
                         showingImportBudgetInstruction = true
-                        PostHogManager.shared.trackEvent("Budget Import Clicked")
+                        SharedAnalyticsService.instance.trackEvent("Budget Import Clicked")
                     } label: {
                         Label("Import Budget Templates", systemImage: "folder.badge.plus")
                     }
                     
                     Button {
                         showingImportInstruction = true
-                        PostHogManager.shared.trackEvent("Transaction Import Clicked")
+                        SharedAnalyticsService.instance.trackEvent("Transaction Import Clicked")
                     } label: {
                         Label("Import Transactions", systemImage: "square.and.arrow.down")
                     }
@@ -243,7 +243,7 @@ struct BudgetDetailView: View {
         .confirmationDialog("Delete Budget", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
             Button("Delete", role: .destructive) {
                 deleteBudget()
-                PostHogManager.shared.trackEvent("Budget Delete Confirmed (Detail)", properties: ["budget_name": budget.name])
+                SharedAnalyticsService.instance.trackEvent("Budget Delete Confirmed (Detail)", properties: ["budget_name": budget.name])
             }
             Button("Cancel", role: .cancel) { }
         } message: {
@@ -307,7 +307,7 @@ struct BudgetDetailView: View {
                     importMessage = "No new transactions were imported. They might be duplicates."
                 }
                 showingImportAlert = true
-                PostHogManager.shared.trackEvent("Transaction Import Success", properties: [
+                SharedAnalyticsService.instance.trackEvent("Transaction Import Success", properties: [
                     "imported_count": totalCount,
                     "file_count": processedFiles.count
                 ])
@@ -315,7 +315,7 @@ struct BudgetDetailView: View {
             } catch {
                 importErrorMessage = "Import failed: \(error.localizedDescription)"
                 showingImportError = true
-                PostHogManager.shared.trackEvent("Transaction Import Failed", properties: ["error": error.localizedDescription])
+                SharedAnalyticsService.instance.trackEvent("Transaction Import Failed", properties: ["error": error.localizedDescription])
             }
             
             for tempURL in tempFileURLs {
@@ -374,7 +374,7 @@ struct BudgetDetailView: View {
                 
                 importMessage = "Successfully imported \(count) category allocation(s)."
                 showingImportAlert = true
-                PostHogManager.shared.trackEvent("Budget Template Import Success", properties: [
+                SharedAnalyticsService.instance.trackEvent("Budget Template Import Success", properties: [
                     "imported_categories": count,
                     "file_count": processedBudgets.count
                 ])
@@ -382,7 +382,7 @@ struct BudgetDetailView: View {
             } catch {
                 importErrorMessage = "Import failed: \(error.localizedDescription)"
                 showingImportError = true
-                PostHogManager.shared.trackEvent("Budget Template Import Failed", properties: ["error": error.localizedDescription])
+                SharedAnalyticsService.instance.trackEvent("Budget Template Import Failed", properties: ["error": error.localizedDescription])
             }
             
             for tempURL in tempFileURLs {

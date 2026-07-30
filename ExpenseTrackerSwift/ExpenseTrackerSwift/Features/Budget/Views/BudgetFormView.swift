@@ -10,7 +10,7 @@ import SwiftData
 
 struct BudgetFormView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var currencyManager: CurrencyManager
+    @EnvironmentObject var currencyManager: SharedCurrencyService
     @ObservedObject var viewModel: BudgetViewModel
 
     @State private var name: String = ""
@@ -72,7 +72,7 @@ struct BudgetFormView: View {
                 Text(errorMessage)
             }
             .onAppear {
-                PostHogManager.shared.trackScreen("Budget Form")
+                SharedAnalyticsService.instance.trackScreen("Budget Form")
             }
         }
     }
@@ -81,10 +81,10 @@ struct BudgetFormView: View {
         do {
             if let existing = existingBudget {
                 try viewModel.updateBudget(existing, name: name, totalAmount: existing.totalAmount)
-                PostHogManager.shared.trackEvent("Budget Updated")
+                SharedAnalyticsService.instance.trackEvent("Budget Updated")
             } else {
                 _ = try viewModel.createBudget(name: name, totalAmount: 0)
-                PostHogManager.shared.trackEvent("Budget Created")
+                SharedAnalyticsService.instance.trackEvent("Budget Created")
             }
             dismiss()
         } catch {
@@ -97,7 +97,7 @@ struct BudgetFormView: View {
         guard let budget = existingBudget else { return }
         do {
             try viewModel.deleteBudget(budget)
-            PostHogManager.shared.trackEvent("Budget Deleted")
+            SharedAnalyticsService.instance.trackEvent("Budget Deleted")
             dismiss()
         } catch {
             errorMessage = error.localizedDescription

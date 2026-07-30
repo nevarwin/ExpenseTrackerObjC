@@ -2,7 +2,7 @@ import SwiftUI
 
 struct TransactionRowView: View {
     let transaction: Transaction
-    @EnvironmentObject var currencyManager: CurrencyManager
+    @EnvironmentObject var currencyManager: SharedCurrencyService
     
     @State private var isRevealed: Bool = false
 

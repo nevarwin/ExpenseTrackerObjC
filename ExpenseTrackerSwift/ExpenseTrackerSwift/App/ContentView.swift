@@ -3,7 +3,6 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @StateObject private var currencyManager = CurrencyManager()
     @State private var budgetViewModel: BudgetViewModel?
     @State private var showingAddTransaction = false
     @State private var transactionViewModel: TransactionViewModel?
@@ -53,7 +52,6 @@ struct ContentView: View {
                 )
             }
         }
-        .environmentObject(currencyManager)
     }
     
     private func getTransactionViewModel() -> TransactionViewModel {
