@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-struct CategoryRowView: View {
+struct BudgetCategoryRowView: View {
     let category: Category
     let month: Date?  // Optional month to display specific period data
     @EnvironmentObject var currencyManager: CurrencyManager

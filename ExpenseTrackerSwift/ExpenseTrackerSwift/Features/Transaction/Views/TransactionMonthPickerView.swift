@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct MonthPickerView: View {
+struct TransactionMonthPickerView: View {
     @Binding var selectedDate: Date
     @Environment(\.dismiss) var dismiss
     
@@ -50,5 +50,5 @@ struct MonthPickerView: View {
 }
 
 #Preview {
-    MonthPickerView(selectedDate: .constant(Date()))
+    TransactionMonthPickerView(selectedDate: .constant(Date()))
 }

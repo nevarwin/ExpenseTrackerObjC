@@ -83,7 +83,7 @@ struct MonthlyBudgetDetailView: View {
                         Section("Expense Categories") {
                             ForEach(expenses) { category in
                                 NavigationLink(destination: CategoryTransactionsView(category: category, month: month)) {
-                                    CategoryRowView(category: category, month: month)
+                                    BudgetCategoryRowView(category: category, month: month)
                                 }
                                 .listRowBackground(Color.clear)
                                 .listRowSeparator(.hidden)
@@ -96,7 +96,7 @@ struct MonthlyBudgetDetailView: View {
                         Section("Income Categories") {
                             ForEach(incomes) { category in
                                 NavigationLink(destination: CategoryTransactionsView(category: category, month: month)) {
-                                    CategoryRowView(category: category, month: month)
+                                    BudgetCategoryRowView(category: category, month: month)
                                 }
                                 .listRowBackground(Color.clear)
                                 .listRowSeparator(.hidden)

@@ -15,7 +15,7 @@ struct TransactionRowView: View {
                     .frame(width: 40, height: 40)
                 
                 if let category = transaction.category {
-                    Image(systemName: IconHelper.icon(for: category.name))
+                    Image(systemName: category.iconName)
                         .foregroundStyle(Color.appAccent)
                         .font(.system(size: 16))
                 } else {

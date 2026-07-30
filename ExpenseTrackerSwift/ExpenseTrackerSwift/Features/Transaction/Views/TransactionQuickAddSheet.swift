@@ -250,7 +250,7 @@ struct CompactCategoryButton: View {
     
     var body: some View {
         VStack(alignment: .center, spacing: 4) {
-            Image(systemName: IconHelper.icon(for: category.name))
+            Image(systemName: category.iconName)
                 .font(.subheadline)
                 .foregroundColor(isSelected ? .white : Color.appSecondary)
                 .frame(width: 44, height: 44)

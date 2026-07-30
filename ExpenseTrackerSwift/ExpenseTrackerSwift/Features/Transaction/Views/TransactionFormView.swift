@@ -137,7 +137,7 @@ struct TransactionFormView: View {
             }
         }
         .sheet(isPresented: $showingBudgetPeriodPicker) {
-            MonthPickerView(selectedDate: $selectedBudgetPeriod)
+            TransactionMonthPickerView(selectedDate: $selectedBudgetPeriod)
         }
         .onAppear {
             loadCategories()
