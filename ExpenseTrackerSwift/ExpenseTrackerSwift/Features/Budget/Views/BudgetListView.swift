@@ -144,6 +144,7 @@ struct HomeContent: View {
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .accessibilityLabel(String(localized: "Menu"))
+                        .accessibilityIdentifier("budget_menu_button")
                 }
             }
         }
@@ -168,6 +169,7 @@ struct HomeContent: View {
         } label: {
             Label(String(localized: "Settings"), systemImage: "gearshape.fill")
         }
+        .accessibilityIdentifier("settings_menu_item")
     }
 }
 

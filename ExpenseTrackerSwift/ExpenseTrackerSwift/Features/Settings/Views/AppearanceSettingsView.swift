@@ -29,8 +29,10 @@ struct AppearanceSettingsView: View {
                         }
                     }
                 }
+                .accessibilityIdentifier("appearance_option_\(appearance.rawValue)")
             }
         }
+        .accessibilityIdentifier("appearance_list")
         .navigationTitle("Appearance")
         .navigationBarTitleDisplayMode(.inline)
     }

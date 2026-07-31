@@ -20,6 +20,7 @@ struct CurrencySettingsView: View {
                     }
                 }
                 .pickerStyle(.inline)
+                .accessibilityIdentifier("currency_picker")
                 .onChange(of: currencyManager.currencyCode) { _, newValue in
                     SharedAnalyticsService.instance.trackEvent("Currency Changed", properties: ["currency_code": newValue])
                 }
@@ -27,9 +28,12 @@ struct CurrencySettingsView: View {
             
             Section {
                 LabeledContent("Current Selection", value: currencyManager.currencyCode)
+                    .accessibilityIdentifier("currency_current_selection")
                 LabeledContent("Symbol", value: currencyManager.currencySymbol)
+                    .accessibilityIdentifier("currency_symbol")
             }
         }
+        .accessibilityIdentifier("currency_settings_form")
         .navigationTitle("Currency")
     }
 }

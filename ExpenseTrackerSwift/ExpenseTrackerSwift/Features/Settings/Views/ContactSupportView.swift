@@ -75,6 +75,7 @@ struct ContactSupportView: View {
                                     .foregroundStyle(.secondary.opacity(0.3))
                             )
                         }
+                        .accessibilityIdentifier("contact_support_attach_photo")
                         .simultaneousGesture(TapGesture().onEnded {
                             checkPermission()
                         })
@@ -106,10 +107,12 @@ struct ContactSupportView: View {
                         Spacer()
                     }
                 }
+                .accessibilityIdentifier("contact_support_send_email_button")
                 .listRowBackground(Color.accentColor)
                 .foregroundStyle(.white)
             }
         }
+        .accessibilityIdentifier("contact_support_view")
         .navigationTitle(String(localized: "Contact Support"))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingMailView) {
