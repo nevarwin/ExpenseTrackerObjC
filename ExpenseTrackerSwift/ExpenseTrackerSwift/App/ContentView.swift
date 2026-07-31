@@ -13,11 +13,17 @@ struct ContentView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     
     var body: some View {
-        if hasCompletedOnboarding {
+        if hasCompletedOnboarding || shouldSkipOnboarding {
             mainContent
         } else {
             OnboardingView()
         }
+    }
+    
+    /// Returns true when the app is launched with the `-skipOnboarding` argument.
+    /// Used exclusively by UI tests — has no effect in normal or release builds.
+    private var shouldSkipOnboarding: Bool {
+        ProcessInfo.processInfo.arguments.contains("-skipOnboarding")
     }
     
     private var mainContent: some View {

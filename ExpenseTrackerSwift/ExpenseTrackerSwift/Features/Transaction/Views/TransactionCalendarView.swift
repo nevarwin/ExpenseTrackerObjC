@@ -35,6 +35,7 @@ struct TransactionCalendarView: View {
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
+                    .accessibilityIdentifier("calendar_today_button")
                     
                     Spacer()
                     
@@ -44,12 +45,14 @@ struct TransactionCalendarView: View {
                     }
                     .pickerStyle(.segmented)
                     .frame(width: 150)
+                    .accessibilityIdentifier("calendar_scope_picker")
                     
                     Spacer()
                     
                     Toggle("Range", isOn: $viewModel.isRangeMode)
                         .labelsHidden()
                         .toggleStyle(SwitchToggleStyle(tint: .appAccent))
+                        .accessibilityIdentifier("calendar_range_toggle")
                 }
                 .padding(.horizontal)
                 
@@ -68,6 +71,7 @@ struct TransactionCalendarView: View {
                             .foregroundStyle(.primary)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("calendar_prev_button")
                     
                     // Month/Year Title (Unified Picker)
                     Button(action: { showingDatePicker = true }) {
@@ -83,6 +87,7 @@ struct TransactionCalendarView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                         .foregroundStyle(.primary)
                     }
+                    .accessibilityIdentifier("calendar_month_year_button")
                     .sheet(isPresented: $showingDatePicker) {
                         VStack(spacing: 20) {
                             Text("Select Month & Year")
@@ -140,6 +145,7 @@ struct TransactionCalendarView: View {
                             .foregroundStyle(.primary)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("calendar_next_button")
                 }
                 .padding(.horizontal)
             }

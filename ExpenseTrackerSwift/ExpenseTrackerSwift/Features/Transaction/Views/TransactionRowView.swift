@@ -30,6 +30,7 @@ struct TransactionRowView: View {
                     .font(.system(.body, design: .rounded))
                     .fontWeight(.medium)
                     .foregroundStyle(Color.appPrimary)
+                    .accessibilityIdentifier("transaction_desc")
                 
                 Text(transaction.date, style: .date)
                     .font(.caption)
@@ -43,6 +44,7 @@ struct TransactionRowView: View {
                     .font(.system(.body, design: .rounded))
                     .fontWeight(.bold)
                     .foregroundStyle(transaction.isIncome ? Color.green : Color.appPrimary)
+                    .accessibilityIdentifier("transaction_amount_censored")
                     .onTapGesture {
                         withAnimation {
                             isRevealed.toggle()
@@ -53,6 +55,7 @@ struct TransactionRowView: View {
                     .font(.system(.body, design: .rounded))
                     .fontWeight(.bold)
                     .foregroundStyle(transaction.isIncome ? Color.green : Color.appPrimary)
+                    .accessibilityIdentifier("transaction_amount")
                     .onTapGesture {
                         if transaction.shouldCensorAmount {
                             withAnimation {
@@ -63,5 +66,6 @@ struct TransactionRowView: View {
             }
         }
         .appCardStyle()
+        .accessibilityIdentifier("transaction_row")
     }
 }

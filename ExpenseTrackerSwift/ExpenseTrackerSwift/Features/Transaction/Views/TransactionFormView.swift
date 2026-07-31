@@ -54,11 +54,13 @@ struct TransactionFormView: View {
                             Text(budget.name).tag(budget)
                         }
                     }
+                    .accessibilityIdentifier("form_budget_picker")
                     
                     LabeledContent("Amount") {
                         TextField("0.00", text: $amount)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
+                            .accessibilityIdentifier("form_amount_field")
                             .onChange(of: amount) { oldValue, newValue in
                                 let parts = newValue.split(separator: ".")
                                 if let intPart = parts.first, intPart.count > 9 {
@@ -70,9 +72,11 @@ struct TransactionFormView: View {
                     LabeledContent("Description") {
                         TextField("Enter description", text: $description)
                             .multilineTextAlignment(.trailing)
+                            .accessibilityIdentifier("form_description_field")
                     }
                     
                     DatePicker("Date", selection: $date, displayedComponents: .date)
+                        .accessibilityIdentifier("form_date_picker")
                 }
                 
                 Section("Budget Period") {
@@ -90,6 +94,7 @@ struct TransactionFormView: View {
                                 .foregroundStyle(.tertiary)
                         }
                     }
+                    .accessibilityIdentifier("form_budget_period_button")
                 }
                 
                 Section("Category") {
@@ -108,6 +113,7 @@ struct TransactionFormView: View {
                             }
                         }
                     }
+                    .accessibilityIdentifier("form_category_picker")
                 }
             }
             .navigationTitle(existingTransaction == nil ? "New Transaction" : "Edit Transaction")
@@ -115,11 +121,13 @@ struct TransactionFormView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .accessibilityIdentifier("form_cancel_button")
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { saveTransaction() }
                         .disabled(!isValid)
+                        .accessibilityIdentifier("form_save_button")
                 }
             }
             .alert("Amount Exceeds Allocation", isPresented: $showingOverflowAlert) {

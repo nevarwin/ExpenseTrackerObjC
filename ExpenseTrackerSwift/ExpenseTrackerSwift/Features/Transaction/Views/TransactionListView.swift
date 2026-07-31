@@ -57,6 +57,7 @@ struct TransactionListView: View {
                         Label("Add Transaction", systemImage: "plus")
                     }
                     .disabled(activeBudgets.isEmpty)
+                    .accessibilityIdentifier("transaction_add_button")
                 }
             }
             .sheet(isPresented: $showingAddTransaction) {
@@ -124,6 +125,7 @@ struct TransactionListView: View {
                             Spacer()
                         }
                         .padding(.vertical, 40)
+                        .accessibilityIdentifier("transaction_loading")
                     }
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
@@ -135,6 +137,7 @@ struct TransactionListView: View {
                             description: Text(verticalSizeClass == .compact ? "Tap a date on the calendar to the left to view your transactions." : "Tap a date on the calendar above to view your transactions.")
                         )
                         .padding(.vertical, 40)
+                        .accessibilityIdentifier("transaction_empty_select_date")
                     }
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
@@ -146,6 +149,7 @@ struct TransactionListView: View {
                             description: Text(viewModel.searchText.isEmpty ? "No transactions found for this period" : "No transactions match '\(viewModel.searchText)'")
                         )
                         .padding(.vertical, 40)
+                        .accessibilityIdentifier("transaction_empty_no_results")
                     }
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
@@ -197,6 +201,7 @@ struct TransactionListView: View {
             .listStyle(.insetGrouped)
             .listSectionSpacing(0)
             .coordinateSpace(name: "scroll")
+            .accessibilityIdentifier("transaction_list")
             .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
                 guard !viewModel.isLoading else { return }
                 // Collapsing logic

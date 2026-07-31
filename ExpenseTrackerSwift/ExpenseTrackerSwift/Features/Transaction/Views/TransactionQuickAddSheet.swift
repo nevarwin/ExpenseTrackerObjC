@@ -64,6 +64,7 @@ struct TransactionQuickAddSheet: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
+                        .accessibilityIdentifier("quickadd_expand_button")
                         .padding(.bottom, 8)
                     }
                 }
@@ -76,6 +77,7 @@ struct TransactionQuickAddSheet: View {
             if !showFullForm {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .accessibilityIdentifier("quickadd_cancel_button")
                 }
             }
         }
@@ -123,6 +125,7 @@ struct TransactionQuickAddSheet: View {
                     .font(.system(size: 36, weight: .bold))
                     .keyboardType(.decimalPad)
                     .focused($isAmountFocused)
+                    .accessibilityIdentifier("quickadd_amount_field")
             }
             
             VStack(alignment: .leading, spacing: 4) {
@@ -134,6 +137,7 @@ struct TransactionQuickAddSheet: View {
                     .padding(8)
                     .background(Color.secondary.opacity(0.1))
                     .cornerRadius(8)
+                    .accessibilityIdentifier("quickadd_description_field")
             }
         }
         .padding(.horizontal)
@@ -171,6 +175,7 @@ struct TransactionQuickAddSheet: View {
             }
             .pickerStyle(.segmented)
             .frame(width: 160)
+            .accessibilityIdentifier("quickadd_type_picker")
             
             Spacer()
             
@@ -186,6 +191,7 @@ struct TransactionQuickAddSheet: View {
                         .background(Color.accentColor)
                         .clipShape(Capsule())
                 }
+                .accessibilityIdentifier("quickadd_save_button")
             }
         }
         .padding(.horizontal)
@@ -264,5 +270,6 @@ struct CompactCategoryButton: View {
                 .multilineTextAlignment(.center)
         }
         .frame(width: 60)
+        .accessibilityIdentifier("quickadd_category_\(category.name)")
     }
 }
