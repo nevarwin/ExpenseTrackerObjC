@@ -64,7 +64,7 @@ final class SettingsUITests: TransactionUITestCase {
             currencyLink.tap()
         }
 
-        let currencyForm = app.forms["currency_settings_form"].firstMatch
+        let currencyForm = app.otherElements["currency_settings_form"].firstMatch
         let currencyTitle = app.navigationBars["Currency"].firstMatch
         XCTAssertTrue(currencyForm.waitForExistence(timeout: 3) || currencyTitle.waitForExistence(timeout: 3), "Currency settings page should be visible")
 
@@ -167,7 +167,7 @@ final class SettingsUITests: TransactionUITestCase {
             contactLink.tap()
         }
 
-        let contactForm = app.forms["contact_support_view"].firstMatch
+        let contactForm = app.otherElements["contact_support_view"].firstMatch
         let sendEmailButton = app.buttons["contact_support_send_email_button"].firstMatch
         let altSendEmail = app.buttons["Send Email"].firstMatch
 
