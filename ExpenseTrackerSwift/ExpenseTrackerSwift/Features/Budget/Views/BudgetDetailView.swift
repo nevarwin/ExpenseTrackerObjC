@@ -31,19 +31,8 @@ struct BudgetDetailView: View {
     @State private var pickerMonth = Calendar.current.component(.month, from: Date())
     @State private var pickerYear = Calendar.current.component(.year, from: Date())
     
-    // Import States (Transactions)
-    @State private var isImportingTransactions = false
-    @State private var showingImportInstruction = false
-    
-    // Import States (Budget Template)
-    @State private var isImportingBudget = false
-    @State private var showingImportBudgetInstruction = false
-    
-    // Import Result States
-    @State private var importMessage: String?
-    @State private var showingImportAlert = false
-    @State private var importErrorMessage: String?
-    @State private var showingImportError = false
+    // Import Sheet State
+    @State private var showingImportSheet = false
 
     var body: some View {
         List {
@@ -120,17 +109,10 @@ struct BudgetDetailView: View {
                     Divider()
 
                     Button {
-                        showingImportBudgetInstruction = true
-                        SharedAnalyticsService.instance.trackEvent("Budget Import Clicked")
+                        showingImportSheet = true
+                        SharedAnalyticsService.instance.trackEvent("Import CSV Clicked")
                     } label: {
-                        Label("Import Budget Templates", systemImage: "folder.badge.plus")
-                    }
-                    
-                    Button {
-                        showingImportInstruction = true
-                        SharedAnalyticsService.instance.trackEvent("Transaction Import Clicked")
-                    } label: {
-                        Label("Import Transactions", systemImage: "square.and.arrow.down")
+                        Label("Import CSV Data", systemImage: "square.and.arrow.down")
                     }
                     
                     Divider()
@@ -151,6 +133,9 @@ struct BudgetDetailView: View {
                 viewModel: viewModel ?? BudgetViewModel(modelContext: modelContext),
                 existingBudget: budget
             )
+        }
+        .sheet(isPresented: $showingImportSheet) {
+            ImportView(targetBudget: budget)
         }
         .sheet(isPresented: $showingAddMonthPicker) {
             VStack(spacing: 20) {
@@ -200,46 +185,6 @@ struct BudgetDetailView: View {
                 pickerYear = Calendar.current.component(.year, from: Date())
             }
         }
-        .alert("Import Transactions", isPresented: $showingImportInstruction) {
-            Button("Continue") {
-                isImportingTransactions = true
-            }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("Select one or more CSV files. The budget period for each file will be auto-detected from its filename (e.g., 'Dec25.csv')")
-        }
-        .alert("Import Budget Templates", isPresented: $showingImportBudgetInstruction) {
-            Button("Continue") {
-                isImportingBudget = true
-            }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("Select one or more CSV files containing category allocations. The month period will be auto-detected from the filename (e.g. 'Jun26.csv').")
-        }
-        .fileImporter(
-            isPresented: $isImportingTransactions,
-            allowedContentTypes: [.commaSeparatedText, .plainText],
-            allowsMultipleSelection: true
-        ) { result in
-            handleTransactionFilePicked(result)
-        }
-        .fileImporter(
-            isPresented: $isImportingBudget,
-            allowedContentTypes: [.commaSeparatedText, .plainText],
-            allowsMultipleSelection: true
-        ) { result in
-            handleBudgetFilePicked(result)
-        }
-        .alert("Import Success", isPresented: $showingImportAlert) {
-            Button("OK") { }
-        } message: {
-            Text(importMessage ?? "Import complete")
-        }
-        .alert("Import Failed", isPresented: $showingImportError) {
-            Button("OK") { }
-        } message: {
-            Text(importErrorMessage ?? "Unknown error")
-        }
         .confirmationDialog("Delete Budget", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
             Button("Delete", role: .destructive) {
                 deleteBudget()
@@ -259,139 +204,5 @@ struct BudgetDetailView: View {
             try? modelContext.save()
         }
         dismiss()
-    }
-    
-    private func handleTransactionFilePicked(_ result: Result<[URL], Error>) {
-        switch result {
-        case .success(let urls):
-            guard !urls.isEmpty else { return }
-            
-            var processedFiles: [(String, [CSVTransaction])] = []
-            var tempFileURLs: [URL] = []
-            let parser = CSVParser.shared
-            
-            for url in urls {
-                guard url.startAccessingSecurityScopedResource() else { continue }
-                
-                let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(url.lastPathComponent)
-                do {
-                    if FileManager.default.fileExists(atPath: tempURL.path) {
-                        try FileManager.default.removeItem(at: tempURL)
-                    }
-                    try FileManager.default.copyItem(at: url, to: tempURL)
-                    tempFileURLs.append(tempURL)
-                    
-                    let transactions = try parser.parseTransactions(from: tempURL)
-                    processedFiles.append((url.lastPathComponent, transactions))
-                    
-                } catch {
-                    print("Error preparing/parsing file \(url.lastPathComponent): \(error)")
-                }
-                
-                url.stopAccessingSecurityScopedResource()
-            }
-            
-            guard !processedFiles.isEmpty else {
-                importErrorMessage = "Failed to parse any selected files."
-                showingImportError = true
-                return
-            }
-            
-            do {
-                let importManager = ImportManager(modelContext: modelContext)
-                let totalCount = try importManager.importBatchTransactions(files: processedFiles, into: budget)
-                
-                if totalCount > 0 {
-                    importMessage = "Successfully imported \(totalCount) transactions from \(processedFiles.count) file(s)."
-                } else {
-                    importMessage = "No new transactions were imported. They might be duplicates."
-                }
-                showingImportAlert = true
-                SharedAnalyticsService.instance.trackEvent("Transaction Import Success", properties: [
-                    "imported_count": totalCount,
-                    "file_count": processedFiles.count
-                ])
-                
-            } catch {
-                importErrorMessage = "Import failed: \(error.localizedDescription)"
-                showingImportError = true
-                SharedAnalyticsService.instance.trackEvent("Transaction Import Failed", properties: ["error": error.localizedDescription])
-            }
-            
-            for tempURL in tempFileURLs {
-                try? FileManager.default.removeItem(at: tempURL)
-            }
-            
-        case .failure(let error):
-            importErrorMessage = error.localizedDescription
-            showingImportError = true
-        }
-    }
-    
-    private func handleBudgetFilePicked(_ result: Result<[URL], Error>) {
-        switch result {
-        case .success(let urls):
-            guard !urls.isEmpty else { return }
-            
-            var processedBudgets: [CSVBudget] = []
-            var tempFileURLs: [URL] = []
-            let parser = CSVParser.shared
-            
-            for url in urls {
-                guard url.startAccessingSecurityScopedResource() else { continue }
-                
-                let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(url.lastPathComponent)
-                do {
-                    if FileManager.default.fileExists(atPath: tempURL.path) {
-                        try FileManager.default.removeItem(at: tempURL)
-                    }
-                    try FileManager.default.copyItem(at: url, to: tempURL)
-                    tempFileURLs.append(tempURL)
-                    
-                    let csvBudget = try parser.parseBudget(from: tempURL)
-                    processedBudgets.append(csvBudget)
-                    
-                } catch {
-                    print("Error preparing/parsing file \(url.lastPathComponent): \(error)")
-                }
-                
-                url.stopAccessingSecurityScopedResource()
-            }
-            
-            guard !processedBudgets.isEmpty else {
-                importErrorMessage = "Failed to parse any selected budget template files."
-                showingImportError = true
-                return
-            }
-            
-            do {
-                let importManager = ImportManager(modelContext: modelContext)
-                var count = 0
-                for csvBudget in processedBudgets {
-                    _ = try importManager.importBudget(from: csvBudget)
-                    count += csvBudget.items.count
-                }
-                
-                importMessage = "Successfully imported \(count) category allocation(s)."
-                showingImportAlert = true
-                SharedAnalyticsService.instance.trackEvent("Budget Template Import Success", properties: [
-                    "imported_categories": count,
-                    "file_count": processedBudgets.count
-                ])
-                
-            } catch {
-                importErrorMessage = "Import failed: \(error.localizedDescription)"
-                showingImportError = true
-                SharedAnalyticsService.instance.trackEvent("Budget Template Import Failed", properties: ["error": error.localizedDescription])
-            }
-            
-            for tempURL in tempFileURLs {
-                try? FileManager.default.removeItem(at: tempURL)
-            }
-            
-        case .failure(let error):
-            importErrorMessage = error.localizedDescription
-            showingImportError = true
-        }
     }
 }

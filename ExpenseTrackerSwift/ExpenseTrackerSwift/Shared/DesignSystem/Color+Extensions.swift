@@ -25,4 +25,9 @@ extension Color {
             opacity: Double(a) / 255
         )
     }
+
+    static var appCardBackground: Color {
+        Color(UIColor.secondarySystemGroupedBackground)
+    }
 }
+
