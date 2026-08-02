@@ -16,10 +16,17 @@ final class ImportViewModel {
     var selectedImportType: ImportType = .transactions
     
     private let modelContext: ModelContext
-    private let parser = CSVParser.shared
+    private let parser: CSVParser
+    private let analyticsService: AnalyticsServiceProtocol
     
-    init(modelContext: ModelContext) {
+    init(
+        modelContext: ModelContext,
+        parser: CSVParser = CSVParser.shared,
+        analyticsService: AnalyticsServiceProtocol = SharedAnalyticsService.instance
+    ) {
         self.modelContext = modelContext
+        self.parser = parser
+        self.analyticsService = analyticsService
     }
     
     func importTransactionFiles(urls: [URL], into budget: Budget) {
@@ -74,7 +81,7 @@ final class ImportViewModel {
                 errorDescription: nil
             )
             
-            SharedAnalyticsService.instance.trackEvent("Transaction Import Success", properties: [
+            analyticsService.trackEvent("Transaction Import Success", properties: [
                 "imported_count": totalCount,
                 "file_count": processedFiles.count
             ])
@@ -88,7 +95,7 @@ final class ImportViewModel {
                 fileCount: processedFiles.count,
                 errorDescription: errString
             )
-            SharedAnalyticsService.instance.trackEvent("Transaction Import Failed", properties: ["error": errString])
+            analyticsService.trackEvent("Transaction Import Failed", properties: ["error": errString])
         }
         
         cleanupTempFiles(tempFileURLs)
@@ -148,7 +155,7 @@ final class ImportViewModel {
                 errorDescription: nil
             )
             
-            SharedAnalyticsService.instance.trackEvent("Budget Template Import Success", properties: [
+            analyticsService.trackEvent("Budget Template Import Success", properties: [
                 "imported_categories": count,
                 "file_count": processedBudgets.count
             ])
@@ -162,7 +169,7 @@ final class ImportViewModel {
                 fileCount: processedBudgets.count,
                 errorDescription: errString
             )
-            SharedAnalyticsService.instance.trackEvent("Budget Template Import Failed", properties: ["error": errString])
+            analyticsService.trackEvent("Budget Template Import Failed", properties: ["error": errString])
         }
         
         cleanupTempFiles(tempFileURLs)

@@ -4,6 +4,7 @@ import Charts
 struct BudgetHistoryView: View {
     let budget: Budget
     private let budgetModel: BudgetModel
+    @Environment(\.analyticsService) private var analyticsService
     @EnvironmentObject var currencyManager: SharedCurrencyService
     
     init(budget: Budget) {
@@ -58,7 +59,7 @@ struct BudgetHistoryView: View {
                 }
                 .pickerStyle(.segmented)
                 .onChange(of: selectedRange) { _, newValue in
-                    SharedAnalyticsService.instance.trackEvent("View History Range Changed", properties: ["range": newValue.rawValue])
+                    analyticsService.trackEvent("View History Range Changed", properties: ["range": newValue.rawValue])
                 }
             }
             .listRowInsets(EdgeInsets())

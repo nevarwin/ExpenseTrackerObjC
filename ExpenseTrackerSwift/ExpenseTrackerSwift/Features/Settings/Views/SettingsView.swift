@@ -14,6 +14,14 @@ struct SettingsView: View {
     @State private var showingAnalyticsAlert = false
     @State private var pendingAnalyticsValue = false
     
+    init(
+        appearanceService: SharedAppearanceService = SharedAppearanceService.instance,
+        analyticsService: AnalyticsServiceProtocol = SharedAnalyticsService.instance
+    ) {
+        self.appearanceService = appearanceService
+        self.analyticsService = analyticsService
+    }
+    
     var body: some View {
         NavigationStack {
             List {
@@ -43,7 +51,7 @@ struct SettingsView: View {
                     }
                     .accessibilityIdentifier("settings_analytics_toggle")
                     .onChange(of: appearanceService.isAnalyticsEnabled) { _, newValue in
-                        SharedAnalyticsService.instance.setEnabled(newValue)
+                        analyticsService.setEnabled(newValue)
                     }
                 }
                 
@@ -76,7 +84,7 @@ struct SettingsView: View {
             .accessibilityIdentifier("settings_list")
             .navigationTitle(String(localized: "Settings"))
             .onAppear {
-                SharedAnalyticsService.instance.trackScreen("Settings")
+                analyticsService.trackScreen("Settings")
             }
         }
         .alert(pendingAnalyticsValue ? String(localized: "Enable Analytics?") : String(localized: "Disable Analytics?"), isPresented: $showingAnalyticsAlert) {

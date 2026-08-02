@@ -11,6 +11,7 @@ import UniformTypeIdentifiers
 
 struct BudgetListView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.analyticsService) private var analyticsService
     @State private var internalViewModel: BudgetViewModel?
     private let injectedViewModel: BudgetViewModel?
     
@@ -35,7 +36,7 @@ struct BudgetListView: View {
             }
             .navigationTitle(String(localized: "Budgets"))
             .onAppear {
-                SharedAnalyticsService.instance.trackScreen("Home")
+                analyticsService.trackScreen("Home")
                 if injectedViewModel == nil && internalViewModel == nil {
                     let vm = BudgetViewModel(modelContext: modelContext)
                     self.internalViewModel = vm
@@ -47,6 +48,7 @@ struct BudgetListView: View {
 }
 
 struct HomeContent: View {
+    @Environment(\.analyticsService) private var analyticsService
     @ObservedObject var viewModel: BudgetViewModel
     
     @State private var showingAddBudget = false
@@ -80,7 +82,7 @@ struct HomeContent: View {
                             
                             Button {
                                 budgetToEdit = budget
-                                SharedAnalyticsService.instance.trackEvent("Budget Edit Swiped")
+                                analyticsService.trackEvent("Budget Edit Swiped")
                             } label: {
                                 Label(String(localized: "Edit"), systemImage: "pencil")
                             }
@@ -128,7 +130,7 @@ struct HomeContent: View {
             Button(String(localized: "Delete"), role: .destructive) {
                 if let budget = budgetToDelete {
                     try? viewModel.deleteBudget(budget)
-                    SharedAnalyticsService.instance.trackEvent("Budget Delete Confirmed", properties: ["budget_name": budget.name])
+                    analyticsService.trackEvent("Budget Delete Confirmed", properties: ["budget_name": budget.name])
                 }
             }
             Button(String(localized: "Cancel"), role: .cancel) {
@@ -154,7 +156,7 @@ struct HomeContent: View {
     private var toolbarMenu: some View {
         Button {
             showingAddBudget = true
-            SharedAnalyticsService.instance.trackEvent("Budget Add Button Clicked")
+            analyticsService.trackEvent("Budget Add Button Clicked")
         } label: {
             Label(String(localized: "Add Budget"), systemImage: "plus")
         }
@@ -162,10 +164,7 @@ struct HomeContent: View {
         Divider()
         
         NavigationLink {
-            SettingsView(
-                appearanceService: SharedAppearanceService.instance,
-                analyticsService: SharedAnalyticsService.instance
-            )
+            SettingsView()
         } label: {
             Label(String(localized: "Settings"), systemImage: "gearshape.fill")
         }
@@ -316,6 +315,7 @@ struct BudgetSummaryCard: View {
 }
 
 struct EmptyBudgetCard: View {
+    @Environment(\.analyticsService) private var analyticsService
     var viewModel: BudgetViewModel?
     var onAddBudget: (() -> Void)?
     
@@ -340,7 +340,7 @@ struct EmptyBudgetCard: View {
             
             Button(action: {
                 onAddBudget?()
-                SharedAnalyticsService.instance.trackEvent("Budget Create New Clicked (Empty State)")
+                analyticsService.trackEvent("Budget Create New Clicked (Empty State)")
             }) {
                 Text(String(localized: "Create New Budget"))
                     .font(.headline)

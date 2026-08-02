@@ -10,6 +10,7 @@ import SwiftData
 
 struct BudgetFormView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.analyticsService) private var analyticsService
     @EnvironmentObject var currencyManager: SharedCurrencyService
     @ObservedObject var viewModel: BudgetViewModel
 
@@ -72,7 +73,7 @@ struct BudgetFormView: View {
                 Text(errorMessage)
             }
             .onAppear {
-                SharedAnalyticsService.instance.trackScreen("Budget Form")
+                analyticsService.trackScreen("Budget Form")
             }
         }
     }
@@ -81,10 +82,10 @@ struct BudgetFormView: View {
         do {
             if let existing = existingBudget {
                 try viewModel.updateBudget(existing, name: name, totalAmount: existing.totalAmount)
-                SharedAnalyticsService.instance.trackEvent("Budget Updated")
+                analyticsService.trackEvent("Budget Updated")
             } else {
                 _ = try viewModel.createBudget(name: name, totalAmount: 0)
-                SharedAnalyticsService.instance.trackEvent("Budget Created")
+                analyticsService.trackEvent("Budget Created")
             }
             dismiss()
         } catch {
@@ -97,7 +98,7 @@ struct BudgetFormView: View {
         guard let budget = existingBudget else { return }
         do {
             try viewModel.deleteBudget(budget)
-            SharedAnalyticsService.instance.trackEvent("Budget Deleted")
+            analyticsService.trackEvent("Budget Deleted")
             dismiss()
         } catch {
             errorMessage = error.localizedDescription

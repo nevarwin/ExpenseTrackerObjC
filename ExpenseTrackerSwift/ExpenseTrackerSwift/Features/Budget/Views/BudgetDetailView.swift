@@ -12,6 +12,7 @@ import UniformTypeIdentifiers
 struct BudgetDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.analyticsService) private var analyticsService
     @EnvironmentObject var currencyManager: SharedCurrencyService
     let budget: Budget
     private let budgetModel: BudgetModel
@@ -101,7 +102,7 @@ struct BudgetDetailView: View {
                     
                     Button {
                         showingEditSheet = true
-                        SharedAnalyticsService.instance.trackEvent("Budget Edit Clicked (Detail)")
+                        analyticsService.trackEvent("Budget Edit Clicked (Detail)")
                     } label: {
                         Label("Edit Budget", systemImage: "pencil")
                     }
@@ -110,7 +111,7 @@ struct BudgetDetailView: View {
 
                     Button {
                         showingImportSheet = true
-                        SharedAnalyticsService.instance.trackEvent("Import CSV Clicked")
+                        analyticsService.trackEvent("Import CSV Clicked")
                     } label: {
                         Label("Import CSV Data", systemImage: "square.and.arrow.down")
                     }
@@ -188,7 +189,7 @@ struct BudgetDetailView: View {
         .confirmationDialog("Delete Budget", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
             Button("Delete", role: .destructive) {
                 deleteBudget()
-                SharedAnalyticsService.instance.trackEvent("Budget Delete Confirmed (Detail)", properties: ["budget_name": budget.name])
+                analyticsService.trackEvent("Budget Delete Confirmed (Detail)", properties: ["budget_name": budget.name])
             }
             Button("Cancel", role: .cancel) { }
         } message: {

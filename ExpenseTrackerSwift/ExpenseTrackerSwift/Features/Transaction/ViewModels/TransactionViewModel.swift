@@ -39,9 +39,14 @@ final class TransactionViewModel {
     }
     
     private let modelContext: ModelContext
+    private let analyticsService: AnalyticsServiceProtocol
     
-    init(modelContext: ModelContext) {
+    init(
+        modelContext: ModelContext,
+        analyticsService: AnalyticsServiceProtocol = SharedAnalyticsService.instance
+    ) {
         self.modelContext = modelContext
+        self.analyticsService = analyticsService
     }
     
     // MARK: - Filter Logic
@@ -258,7 +263,7 @@ final class TransactionViewModel {
             existing.budget = budget
             existing.category = category
             existing.updatedAt = Date()
-            SharedAnalyticsService.instance.trackEvent("Transaction Updated")
+            analyticsService.trackEvent("Transaction Updated")
         } else {
             let transaction = Transaction(
                 amount: amount,
@@ -270,7 +275,7 @@ final class TransactionViewModel {
             )
             modelContext.insert(transaction)
             transactions.insert(transaction, at: 0)
-            SharedAnalyticsService.instance.trackEvent("Transaction Added")
+            analyticsService.trackEvent("Transaction Added")
         }
         
         // Update budget remaining amount
@@ -300,7 +305,7 @@ final class TransactionViewModel {
         modelContext.delete(transaction)
         try modelContext.save()
         
-        SharedAnalyticsService.instance.trackEvent("Transaction Deleted")
+        analyticsService.trackEvent("Transaction Deleted")
         
         // Reload transactions from database instead of manually manipulating array
         loadTransactions(for: budget)

@@ -9,13 +9,14 @@ import SwiftUI
 
 struct AppearanceSettingsView: View {
     @EnvironmentObject var appearanceManager: SharedAppearanceService
+    @Environment(\.analyticsService) private var analyticsService
     
     var body: some View {
         List {
             ForEach(Appearance.allCases) { appearance in
                 Button {
                     appearanceManager.userAppearance = appearance
-                    SharedAnalyticsService.instance.trackEvent("Appearance Changed", properties: ["appearance": appearance.title])
+                    analyticsService.trackEvent("Appearance Changed", properties: ["appearance": appearance.title])
                 } label: {
                     HStack {
                         Label(appearance.title, systemImage: appearance.icon)
