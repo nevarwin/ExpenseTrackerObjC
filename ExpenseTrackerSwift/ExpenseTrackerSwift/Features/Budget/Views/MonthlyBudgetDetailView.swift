@@ -9,7 +9,7 @@ struct MonthlyBudgetDetailView: View {
     let budget: Budget
     let month: Date
     var budgetViewModel: BudgetViewModel?
-    var budgetModel: BudgetModel
+    var budgetCalculator: BudgetCalculator
     
     @State private var categoryViewModel: CategoryViewModel?
     
@@ -24,35 +24,29 @@ struct MonthlyBudgetDetailView: View {
     var body: some View {
         List {
             Section("Expense Overview") {
-                let pExpense = budgetModel.plannedExpenses(date: month)
-                let aExpense = budgetModel.expensesInMonth(date: month)
-                let dExpense = budgetModel.expenseDiffInMonth(date: month)
+                let pExpense = budgetCalculator.plannedExpenses(date: month)
+                let aExpense = budgetCalculator.expensesInMonth(date: month)
+                let dExpense = budgetCalculator.expenseDiffInMonth(date: month)
                 
-                LabeledContent("Planned Expense", value: pExpense, format: .currency(code: currencyManager.currencyCode))
-                LabeledContent("Actual Expense", value: aExpense, format: .currency(code: currencyManager.currencyCode))
-                LabeledContent("Difference") {
-                    Text(dExpense, format: .currency(code: currencyManager.currencyCode))
-                        .foregroundStyle(dExpense >= 0 ? .green : .red)
-                        .fontWeight(.semibold)
-                }
+                LabeledContent("Planned Expenses", value: pExpense.formatted(.currency(code: currencyManager.currencyCode)))
+                LabeledContent("Actual Expenses", value: aExpense.formatted(.currency(code: currencyManager.currencyCode)))
+                LabeledContent("Difference", value: dExpense.formatted(.currency(code: currencyManager.currencyCode)))
+                    .foregroundStyle(dExpense >= 0 ? .green : .red)
             }
             
             Section("Income Overview") {
-                let pIncome = budgetModel.plannedIncome(date: month)
-                let aIncome = budgetModel.incomeInMonth(date: month)
-                let dIncome = budgetModel.incomeDiffInMonth(date: month)
+                let pIncome = budgetCalculator.plannedIncome(date: month)
+                let aIncome = budgetCalculator.incomeInMonth(date: month)
+                let dIncome = budgetCalculator.incomeDiffInMonth(date: month)
                 
-                LabeledContent("Planned Income", value: pIncome, format: .currency(code: currencyManager.currencyCode))
-                LabeledContent("Actual Income", value: aIncome, format: .currency(code: currencyManager.currencyCode))
-                LabeledContent("Difference") {
-                    Text(dIncome, format: .currency(code: currencyManager.currencyCode))
-                        .foregroundStyle(dIncome >= 0 ? .green : .red)
-                        .fontWeight(.semibold)
-                }
+                LabeledContent("Planned Income", value: pIncome.formatted(.currency(code: currencyManager.currencyCode)))
+                LabeledContent("Actual Income", value: aIncome.formatted(.currency(code: currencyManager.currencyCode)))
+                LabeledContent("Difference", value: dIncome.formatted(.currency(code: currencyManager.currencyCode)))
+                    .foregroundStyle(dIncome >= 0 ? .green : .red)
             }
-
-            Section("Total Savings") {
-                let savings = budgetModel.remainingInMonth(date: month)
+            
+            Section("Net Savings") {
+                let savings = budgetCalculator.remainingInMonth(date: month)
                 LabeledContent("Savings") {
                     Text(savings, format: .currency(code: currencyManager.currencyCode))
                         .foregroundStyle(savings >= 0 ? .green : .red)

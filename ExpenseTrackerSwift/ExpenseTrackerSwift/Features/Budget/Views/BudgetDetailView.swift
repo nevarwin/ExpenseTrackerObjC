@@ -15,13 +15,13 @@ struct BudgetDetailView: View {
     @Environment(\.analyticsService) private var analyticsService
     @EnvironmentObject var currencyManager: SharedCurrencyService
     let budget: Budget
-    private let budgetModel: BudgetModel
+    private let budgetCalculator: BudgetCalculator
     var viewModel: BudgetViewModel?
     
     init(budget: Budget, viewModel: BudgetViewModel? = nil) {
         self.budget = budget
         self.viewModel = viewModel
-        self.budgetModel = BudgetModel(budgetModel: budget)
+        self.budgetCalculator = BudgetCalculator(budget: budget)
     }
     
     @State private var showingEditSheet = false
@@ -48,7 +48,7 @@ struct BudgetDetailView: View {
             
             // List of months
             Section("Budget Periods") {
-                let periods = budgetModel.activeBudgetPeriods()
+                let periods = budgetCalculator.activeBudgetPeriods()
                 if periods.isEmpty {
                     Text("No active budget months. Tap 'Add Month' or import templates to initialize.")
                         .font(.subheadline)
@@ -56,15 +56,15 @@ struct BudgetDetailView: View {
                         .padding(.vertical, 8)
                 } else {
                     ForEach(periods.reversed(), id: \.self) { month in
-                        NavigationLink(destination: MonthlyBudgetDetailView(budget: budget, month: month, budgetViewModel: viewModel, budgetModel: budgetModel)) {
+                        NavigationLink(destination: MonthlyBudgetDetailView(budget: budget, month: month, budgetViewModel: viewModel, budgetCalculator: budgetCalculator)) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(month.monthYearString)
                                         .font(.headline)
                                     
                                     // Small summary of spent vs planned
-                                    let planned = budgetModel.plannedExpenses(date: month)
-                                    let spent = budgetModel.expensesInMonth(date: month)
+                                    let planned = budgetCalculator.plannedExpenses(date: month)
+                                    let spent = budgetCalculator.expensesInMonth(date: month)
                                     Text("Spent: \(spent.formatted(.currency(code: currencyManager.currencyCode))) / Planned: \(planned.formatted(.currency(code: currencyManager.currencyCode)))")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
@@ -72,7 +72,7 @@ struct BudgetDetailView: View {
                                 Spacer()
                                 
                                 // Progress pill
-                                let remaining = budgetModel.remainingInMonth(date: month)
+                                let remaining = budgetCalculator.remainingInMonth(date: month)
                                 Text(remaining >= 0 ? "Under" : "Over")
                                     .font(.caption2)
                                     .fontWeight(.bold)

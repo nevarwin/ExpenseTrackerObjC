@@ -68,7 +68,7 @@ struct HomeContent: View {
                 } else {
                     ForEach(viewModel.budgets) { budget in
                         NavigationLink(destination: BudgetDetailView(budget: budget, viewModel: viewModel)) {
-                            BudgetSummaryCard(budget: budget)
+                            BudgetCardView(budget: budget)
                                 .padding(.horizontal)
                                 .id(budget.id)
                         }
@@ -172,28 +172,33 @@ struct HomeContent: View {
     }
 }
 
-struct BudgetSummaryCard: View {
+struct BudgetCardView: View {
     let budget: Budget
-    private let budgetModel: BudgetModel
+    @State private var selectedMonthIndex: Int = 0
+    private let budgetCalculator: BudgetCalculator
     @EnvironmentObject var currencyManager: SharedCurrencyService
     @State private var animatedProgress: Double = 0
     
     init(budget: Budget) {
         self.budget = budget
-        self.budgetModel = BudgetModel(budgetModel: budget)
+        self.budgetCalculator = BudgetCalculator(budget: budget)
+    }
+    
+    private var availableMonths: [Date] {
+        let activePeriods = budgetCalculator.activeBudgetPeriods()
+        return activePeriods.isEmpty ? [Date()] : activePeriods
     }
     
     private var displayMonth: Date {
-        let currentMonthStart = Date().monthBounds.start
-        let activePeriods = budgetModel.activeBudgetPeriods()
-        if activePeriods.contains(where: { $0.isSameMonth(as: currentMonthStart) }) || activePeriods.isEmpty {
-            return currentMonthStart
+        if selectedMonthIndex < availableMonths.count {
+            return availableMonths[selectedMonthIndex]
         }
-        return activePeriods.last ?? currentMonthStart
+        return availableMonths.last ?? Date()
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header: Budget Name & Month Selector
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(budget.name)
@@ -207,23 +212,44 @@ struct BudgetSummaryCard: View {
                 
                 Spacer()
                 
-                ZStack {
-                    Circle()
-                        .stroke(Color.appLightGray, lineWidth: 6)
-                        .frame(width: 50, height: 50)
-                    
-                    Circle()
-                        .trim(from: 0, to: animatedProgress)
-                        .stroke(
-                            budgetModel.remainingInMonth(date: displayMonth) >= 0 ? Color.appAccent : Color.red,
-                            style: StrokeStyle(lineWidth: 6, lineCap: .round)
-                        )
-                        .rotationEffect(.degrees(-90))
-                        .frame(width: 50, height: 50)
-                    
-                    Image(systemName: "creditcard.fill")
+                // Month Selector Pill
+                if availableMonths.count > 1 {
+                    Menu {
+                        ForEach(Array(availableMonths.enumerated()), id: \.offset) { index, month in
+                            Button {
+                                selectedMonthIndex = index
+                            } label: {
+                                HStack {
+                                    Text(month.monthYearString)
+                                    if index == selectedMonthIndex {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(displayMonth.monthYearString)
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                            Image(systemName: "chevron.down")
+                                .font(.caption2)
+                        }
+                        .foregroundStyle(Color.appPrimary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color.appLightGray)
+                        .clipShape(Capsule())
+                    }
+                } else {
+                    Text(displayMonth.monthYearString)
                         .font(.caption)
+                        .fontWeight(.semibold)
                         .foregroundStyle(Color.appSecondary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color.appLightGray)
+                        .clipShape(Capsule())
                 }
             }
             
@@ -234,10 +260,10 @@ struct BudgetSummaryCard: View {
                             .font(.caption)
                             .foregroundStyle(Color.secondary)
                         HStack(alignment: .lastTextBaseline, spacing: 4) {
-                            Text(budgetModel.incomeInMonth(date: displayMonth), format: .currency(code: currencyManager.currencyCode))
+                            Text(budgetCalculator.incomeInMonth(date: displayMonth), format: .currency(code: currencyManager.currencyCode))
                                 .font(.system(.headline, design: .rounded))
                                 .fontWeight(.bold)
-                            Text("/ " + budgetModel.plannedIncome(date: displayMonth).formatted(.currency(code: currencyManager.currencyCode)))
+                            Text("/ " + budgetCalculator.plannedIncome(date: displayMonth).formatted(.currency(code: currencyManager.currencyCode)))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -250,11 +276,11 @@ struct BudgetSummaryCard: View {
                             .font(.caption)
                             .foregroundStyle(Color.secondary)
                         HStack(alignment: .lastTextBaseline, spacing: 4) {
-                            Text(budgetModel.expensesInMonth(date: displayMonth), format: .currency(code: currencyManager.currencyCode))
+                            Text(budgetCalculator.expensesInMonth(date: displayMonth), format: .currency(code: currencyManager.currencyCode))
                                 .font(.system(.headline, design: .rounded))
                                 .fontWeight(.bold)
-                                .foregroundStyle(budgetModel.expensesInMonth(date: displayMonth) > budgetModel.plannedExpenses(date: displayMonth) ? .red : .appPrimary)
-                            Text("/ " + budgetModel.plannedExpenses(date: displayMonth).formatted(.currency(code: currencyManager.currencyCode)))
+                                .foregroundStyle(budgetCalculator.expensesInMonth(date: displayMonth) > budgetCalculator.plannedExpenses(date: displayMonth) ? .red : .appPrimary)
+                            Text("/ " + budgetCalculator.plannedExpenses(date: displayMonth).formatted(.currency(code: currencyManager.currencyCode)))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -268,7 +294,7 @@ struct BudgetSummaryCard: View {
                             .fill(Color.appLightGray)
                             .frame(height: 12)
                         
-                        let isOverBudget = budgetModel.expensesInMonth(date: displayMonth) > budgetModel.plannedExpenses(date: displayMonth) && budgetModel.plannedExpenses(date: displayMonth) > 0
+                        let isOverBudget = budgetCalculator.expensesInMonth(date: displayMonth) > budgetCalculator.plannedExpenses(date: displayMonth) && budgetCalculator.plannedExpenses(date: displayMonth) > 0
                         
                         Capsule()
                             .fill(
@@ -304,8 +330,8 @@ struct BudgetSummaryCard: View {
     }
     
     private func updateProgress() {
-        let planned = budgetModel.plannedExpenses(date: displayMonth)
-        let spent = budgetModel.expensesInMonth(date: displayMonth)
+        let planned = budgetCalculator.plannedExpenses(date: displayMonth)
+        let spent = budgetCalculator.expensesInMonth(date: displayMonth)
         let progress = planned > 0 ? min(max(0, Double(truncating: (spent / planned) as NSDecimalNumber)), 1.0) : 0
         
         withAnimation(.spring(duration: 1.0)) {

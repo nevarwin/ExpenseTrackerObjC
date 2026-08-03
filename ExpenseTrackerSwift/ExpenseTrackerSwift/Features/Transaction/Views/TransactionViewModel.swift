@@ -279,8 +279,8 @@ final class TransactionViewModel {
         }
         
         // Update budget remaining amount
-        let budgetModel = BudgetModel(budgetModel: budget)
-        budgetModel.updateRemainingAmount()
+        let budgetCalculator = BudgetCalculator(budget: budget)
+        budgetCalculator.updateRemainingAmount()
         
         try modelContext.save()
         loadTransactions(for: budget)
@@ -298,8 +298,8 @@ final class TransactionViewModel {
         
         // Update budget
         if let budget = budget {
-            let budgetModel = BudgetModel(budgetModel: budget)
-            budgetModel.updateRemainingAmount()
+            let budgetCalculator = BudgetCalculator(budget: budget)
+            budgetCalculator.updateRemainingAmount()
         }
         
         modelContext.delete(transaction)

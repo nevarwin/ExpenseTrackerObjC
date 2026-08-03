@@ -7,19 +7,12 @@
 
 import SwiftUI
 
+@MainActor
 struct SettingsView: View {
-    @ObservedObject var appearanceService: SharedAppearanceService
-    let analyticsService: AnalyticsServiceProtocol
+    @State private var viewModel: SettingsViewModel
     
-    @State private var showingAnalyticsAlert = false
-    @State private var pendingAnalyticsValue = false
-    
-    init(
-        appearanceService: SharedAppearanceService = SharedAppearanceService.instance,
-        analyticsService: AnalyticsServiceProtocol = SharedAnalyticsService.instance
-    ) {
-        self.appearanceService = appearanceService
-        self.analyticsService = analyticsService
+    init(viewModel: SettingsViewModel? = nil) {
+        _viewModel = State(initialValue: viewModel ?? SettingsViewModel())
     }
     
     var body: some View {
@@ -40,19 +33,10 @@ struct SettingsView: View {
                     }
                     .accessibilityIdentifier("settings_appearance_link")
                     
-                    Toggle(isOn: Binding(
-                        get: { appearanceService.isAnalyticsEnabled },
-                        set: { newValue in
-                            pendingAnalyticsValue = newValue
-                            showingAnalyticsAlert = true
-                        }
-                    )) {
+                    Toggle(isOn: $viewModel.isAnalyticsEnabled) {
                         Label(String(localized: "Analytics"), systemImage: "chart.bar")
                     }
                     .accessibilityIdentifier("settings_analytics_toggle")
-                    .onChange(of: appearanceService.isAnalyticsEnabled) { _, newValue in
-                        analyticsService.setEnabled(newValue)
-                    }
                 }
                 
                 Section(String(localized: "Data Management")) {
@@ -84,16 +68,22 @@ struct SettingsView: View {
             .accessibilityIdentifier("settings_list")
             .navigationTitle(String(localized: "Settings"))
             .onAppear {
-                analyticsService.trackScreen("Settings")
+                viewModel.trackScreen()
             }
         }
-        .alert(pendingAnalyticsValue ? String(localized: "Enable Analytics?") : String(localized: "Disable Analytics?"), isPresented: $showingAnalyticsAlert) {
-            Button(pendingAnalyticsValue ? String(localized: "Enable") : String(localized: "Disable"), role: pendingAnalyticsValue ? .none : .destructive) {
-                appearanceService.isAnalyticsEnabled = pendingAnalyticsValue
+        .alert(
+            viewModel.pendingAnalyticsValue ? String(localized: "Enable Analytics?") : String(localized: "Disable Analytics?"),
+            isPresented: $viewModel.showingAnalyticsAlert
+        ) {
+            Button(
+                viewModel.pendingAnalyticsValue ? String(localized: "Enable") : String(localized: "Disable"),
+                role: viewModel.pendingAnalyticsValue ? .none : .destructive
+            ) {
+                viewModel.confirmAnalyticsToggle()
             }
             Button(String(localized: "Cancel"), role: .cancel) { }
         } message: {
-            if pendingAnalyticsValue {
+            if viewModel.pendingAnalyticsValue {
                 Text(String(localized: "Enabling analytics helps us improve the app by understanding how it's used. No personal data is collected."))
             } else {
                 Text(String(localized: "Are you sure you want to disable analytics? This will limit our ability to improve the app based on your usage."))

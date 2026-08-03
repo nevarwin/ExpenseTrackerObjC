@@ -1,14 +1,12 @@
 //  
-//  BudgetModel.swift
+//  BudgetCalculator.swift
 //  ExpenseTrackerSwift
-//
-//  Created by raven on 6/30/26.
 //
 
 import Foundation
 
 @MainActor
-protocol BudgetModelProtocol: AnyObject {
+protocol BudgetCalculatorProtocol: AnyObject {
     func activeBudgetPeriods() -> [Date]
     func transactionsInMonth(date: Date) -> [Transaction]
     func expensesInMonth(date: Date) -> Decimal
@@ -22,22 +20,22 @@ protocol BudgetModelProtocol: AnyObject {
 }
 
 @MainActor
-final class BudgetModel: BudgetModelProtocol {
-    let budgetModel: Budget
+final class BudgetCalculator: BudgetCalculatorProtocol {
+    let budget: Budget
     
-    init(budgetModel: Budget) {
-        self.budgetModel = budgetModel
+    init(budget: Budget) {
+        self.budget = budget
     }
 }
 
-extension BudgetModel {
+extension BudgetCalculator {
     
     private var transactions: [Transaction] {
-        budgetModel.transactions
+        budget.transactions
     }
     
     private var categories: [Category] {
-        budgetModel.categories
+        budget.categories
     }
 
     func activeBudgetPeriods() -> [Date] {
@@ -99,8 +97,7 @@ extension BudgetModel {
             .filter { ($0.category?.isIncome ?? false) && $0.isActive }
             .reduce(Decimal.zero) { $0 + $1.amount }
             
-        budgetModel.remainingAmount = totalIncome - totalExpenses
-        budgetModel.updatedAt = Date()
+        budget.remainingAmount = totalIncome - totalExpenses
+        budget.updatedAt = Date()
     }
-    
 }

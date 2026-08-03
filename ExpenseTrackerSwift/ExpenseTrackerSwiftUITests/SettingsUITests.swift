@@ -8,28 +8,35 @@ final class SettingsUITests: TransactionUITestCase {
 
     // MARK: - Navigation Helper
 
-    /// Navigates from anywhere in the app to the Settings screen via the Budget tab overflow menu.
+    /// Navigates from anywhere in the app to the Settings screen via the Settings tab or Budget menu fallback.
     func navigateToSettingsFromBudget() {
-        let budgetTab = app.tabBars.buttons["Budget"]
-        assertExists(budgetTab, timeout: 5, message: "Budget tab should exist in main TabView")
-        budgetTab.tap()
-
-        let menuButton = app.buttons["budget_menu_button"].firstMatch
-        if !menuButton.waitForExistence(timeout: 3) {
-            let altMenuButton = app.buttons["Menu"].firstMatch
-            assertExists(altMenuButton, message: "Budget overflow menu button not found")
-            altMenuButton.tap()
+        let settingsTab = app.tabBars.buttons["Settings"]
+        if settingsTab.waitForExistence(timeout: 3) {
+            settingsTab.tap()
         } else {
-            menuButton.tap()
-        }
+            let budgetTab = app.tabBars.buttons["Budget"]
+            assertExists(budgetTab, timeout: 5, message: "Budget tab should exist in main TabView")
+            budgetTab.tap()
 
-        let settingsItem = app.buttons["settings_menu_item"].firstMatch
-        if !settingsItem.waitForExistence(timeout: 3) {
-            let altSettingsItem = app.buttons["Settings"].firstMatch
-            assertExists(altSettingsItem, message: "Settings item in overflow menu not found")
-            altSettingsItem.tap()
-        } else {
-            settingsItem.tap()
+            let menuButton = app.buttons["budget_menu_button"].firstMatch
+            if !menuButton.waitForExistence(timeout: 3) {
+                let altMenuButton = app.buttons["Menu"].firstMatch
+                if altMenuButton.exists {
+                    altMenuButton.tap()
+                }
+            } else {
+                menuButton.tap()
+            }
+
+            let settingsItem = app.buttons["settings_menu_item"].firstMatch
+            if settingsItem.waitForExistence(timeout: 3) {
+                settingsItem.tap()
+            } else {
+                let altSettingsItem = app.buttons["Settings"].firstMatch
+                if altSettingsItem.exists {
+                    altSettingsItem.tap()
+                }
+            }
         }
 
         let settingsList = app.collectionViews["settings_list"].firstMatch

@@ -63,7 +63,7 @@ class ImportManager {
         )
         
         var budget: Budget!
-        var budgetModel: BudgetModel!
+        var budgetCalculator: BudgetCalculator!
         
         if let existing = try? modelContext.fetch(descriptor).first {
             budget = existing
@@ -75,7 +75,7 @@ class ImportManager {
             modelContext.insert(budget)
         }
         
-        budgetModel = BudgetModel(budgetModel: budget)
+        budgetCalculator = BudgetCalculator(budget: budget)
         
         for item in csvBudget.items {
             let categoryName = item.categoryName
@@ -110,7 +110,7 @@ class ImportManager {
             budget.totalAmount = activeIncomeTotal
         }
         
-        budgetModel.updateRemainingAmount()
+        budgetCalculator.updateRemainingAmount()
         
         do {
             try modelContext.save()
@@ -175,7 +175,7 @@ class ImportManager {
     }
     
     func importBatchTransactions(files: [(filename: String, transactions: [CSVTransaction])], into budget: Budget) throws -> Int {
-        let budgetModel = BudgetModel(budgetModel: budget)
+        let budgetCalculator = BudgetCalculator(budget: budget)
         var totalImported = 0
         for file in files {
             totalImported += try importTransactions(from: file.transactions, into: budget, filename: file.filename)
@@ -184,7 +184,7 @@ class ImportManager {
     }
     
     func importTransactions(from csvTransactions: [CSVTransaction], into budget: Budget, filename: String) throws -> Int {
-        let budgetModel = BudgetModel(budgetModel: budget)
+        let budgetCalculator = BudgetCalculator(budget: budget)
         var count = 0
         
         guard let parsedPeriod = parseBudgetPeriod(from: filename) else {
@@ -232,7 +232,7 @@ class ImportManager {
             count += 1
         }
         
-        budgetModel.updateRemainingAmount()
+        budgetCalculator.updateRemainingAmount()
         
         do {
             try modelContext.save()
@@ -244,7 +244,7 @@ class ImportManager {
     }
     
     func importCategories(from csvBudget: CSVBudget, into budget: Budget, for month: Date) throws {
-        let budgetModel = BudgetModel(budgetModel: budget)
+        let budgetCalculator = BudgetCalculator(budget: budget)
         let normalizedMonth = month.monthBounds.start
         
         for item in csvBudget.items {
@@ -278,7 +278,7 @@ class ImportManager {
             budget.totalAmount = activeIncomeTotal
         }
         
-        budgetModel.updateRemainingAmount()
+        budgetCalculator.updateRemainingAmount()
         
         do {
             try modelContext.save()

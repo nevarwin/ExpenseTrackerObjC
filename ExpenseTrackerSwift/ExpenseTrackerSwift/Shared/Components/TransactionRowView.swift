@@ -1,3 +1,8 @@
+//
+//  TransactionRowView.swift
+//  ExpenseTrackerSwift
+//
+
 import SwiftUI
 
 struct TransactionRowView: View {
@@ -20,8 +25,8 @@ struct TransactionRowView: View {
                         .font(.system(size: 16))
                 } else {
                     Image(systemName: "bag.fill")
-                    .foregroundStyle(Color.appSecondary)
-                    .font(.caption)
+                        .foregroundStyle(Color.appSecondary)
+                        .font(.caption)
                 }
             }
             

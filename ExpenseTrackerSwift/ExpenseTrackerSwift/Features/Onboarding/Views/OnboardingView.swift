@@ -8,8 +8,7 @@
 import SwiftUI
 
 struct OnboardingView: View {
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
-    @State private var currentPage = 0
+    @State private var viewModel = OnboardingViewModel()
     
     var body: some View {
         ZStack {
@@ -22,7 +21,7 @@ struct OnboardingView: View {
             .ignoresSafeArea()
             
             VStack {
-                TabView(selection: $currentPage) {
+                TabView(selection: $viewModel.currentPage) {
                     OnboardingPageView(
                         title: "Track Your Expenses",
                         description: "Easily track your expenses on a monthly, daily, or weekly basis to stay on top of your finances.",
@@ -48,19 +47,12 @@ struct OnboardingView: View {
                     .tag(2)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .always))
-                .animation(.easeInOut, value: currentPage)
+                .animation(.easeInOut, value: viewModel.currentPage)
                 
                 Button(action: {
-                    if currentPage < 2 {
-                        withAnimation {
-                            currentPage += 1
-                        }
-                    } else {
-                        // Complete onboarding
-                        hasCompletedOnboarding = true
-                    }
+                    viewModel.nextPage()
                 }) {
-                    Text(currentPage < 2 ? String(localized: "Next") : String(localized: "Get Started"))
+                    Text(!viewModel.isLastPage ? String(localized: "Next") : String(localized: "Get Started"))
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
