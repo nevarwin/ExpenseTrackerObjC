@@ -2,11 +2,10 @@
 //  SharedAppearanceService.swift
 //  ExpenseTrackerSwift
 //
-//  Created by raven on 6/30/26.
-//
 
 import SwiftUI
 import Combine
+import UIKit
 
 // MARK: - Appearance Enum
 
@@ -46,7 +45,9 @@ enum Appearance: String, CaseIterable, Identifiable {
 
 protocol AppearanceServiceProtocol: ObservableObject {
     var userAppearance: Appearance { get set }
+    var selectedAccent: AccentTheme { get set }
     var isAnalyticsEnabled: Bool { get set }
+    func triggerHaptic(_ style: UIImpactFeedbackGenerator.FeedbackStyle)
 }
 
 // MARK: - Service
@@ -73,6 +74,12 @@ final class SharedAppearanceService: AppearanceServiceProtocol {
         }
     }
 
+    @Published var selectedAccent: AccentTheme = .defaultTeal {
+        didSet {
+            UserDefaults.standard.set(selectedAccent.rawValue, forKey: "selectedAccent")
+        }
+    }
+
     @Published var isAnalyticsEnabled: Bool = true {
         didSet {
             UserDefaults.standard.set(isAnalyticsEnabled, forKey: "isAnalyticsEnabled")
@@ -85,10 +92,21 @@ final class SharedAppearanceService: AppearanceServiceProtocol {
             self.userAppearance = appearance
         }
 
+        if let savedAccent = UserDefaults.standard.string(forKey: "selectedAccent"),
+           let accent = AccentTheme(rawValue: savedAccent) {
+            self.selectedAccent = accent
+        }
+
         if UserDefaults.standard.object(forKey: "isAnalyticsEnabled") == nil {
             self.isAnalyticsEnabled = true
         } else {
             self.isAnalyticsEnabled = UserDefaults.standard.bool(forKey: "isAnalyticsEnabled")
         }
+    }
+
+    func triggerHaptic(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
+        let generator = UIImpactFeedbackGenerator(style: style)
+        generator.prepare()
+        generator.impactOccurred()
     }
 }

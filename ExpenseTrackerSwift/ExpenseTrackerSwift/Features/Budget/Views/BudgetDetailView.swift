@@ -42,7 +42,7 @@ struct BudgetDetailView: View {
                 Button(action: { showingAddMonthPicker = true }) {
                     Label("Add Month", systemImage: "calendar.badge.plus")
                         .fontWeight(.medium)
-                        .foregroundStyle(Color.appAccent)
+                        .foregroundStyle(Color.dynamicAccent)
                 }
             }
             

@@ -260,7 +260,7 @@ struct CompactCategoryButton: View {
                 .font(.subheadline)
                 .foregroundColor(isSelected ? .white : Color.appSecondary)
                 .frame(width: 44, height: 44)
-                .background(isSelected ? Color.appAccent : Color.appLightGray)
+                .background(isSelected ? Color.dynamicAccent : Color.appLightGray)
                 .clipShape(Circle())
             
             Text(category.name)

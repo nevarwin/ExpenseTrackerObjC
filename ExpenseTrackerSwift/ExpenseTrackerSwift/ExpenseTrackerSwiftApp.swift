@@ -27,6 +27,7 @@ struct ExpenseMeApp: App {
                 .environmentObject(appearanceManager)
                 .environmentObject(currencyManager)
                 .preferredColorScheme(appearanceManager.userAppearance.colorScheme)
+                .tint(appearanceManager.selectedAccent.color)
         }
         .modelContainer(for: [
             Transaction.self,

@@ -28,11 +28,6 @@ struct MainTabView: View {
                         .tabItem {
                             Label(String(localized: "Budget"), systemImage: "creditcard.fill")
                         }
-                    
-                    SettingsView()
-                        .tabItem {
-                            Label(String(localized: "Settings"), systemImage: "gearshape.fill")
-                        }
                 }
             } else {
                 ProgressView()

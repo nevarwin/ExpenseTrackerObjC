@@ -119,16 +119,33 @@ struct TransactionListView: View {
             List {
                 if viewModel.isLoading {
                     Section {
-                        HStack {
-                            Spacer()
-                            ProgressView("Loading transactions...")
-                            Spacer()
+                        ForEach(0..<4, id: \.self) { _ in
+                            HStack(spacing: AppSpacing.lg) {
+                                Circle()
+                                    .fill(Color.appLightGray)
+                                    .frame(width: 40, height: 40)
+                                VStack(alignment: .leading, spacing: 6) {
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(Color.appLightGray)
+                                        .frame(width: 120, height: 16)
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(Color.appLightGray)
+                                        .frame(width: 80, height: 12)
+                                }
+                                Spacer()
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.appLightGray)
+                                    .frame(width: 60, height: 18)
+                            }
+                            .appCardStyle()
+                            .redacted(reason: .placeholder)
+                            .shimmering()
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                         }
-                        .padding(.vertical, 40)
-                        .accessibilityIdentifier("transaction_loading")
                     }
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
+                    .accessibilityIdentifier("transaction_loading")
                 } else if !hasUserSelectedDate && viewModel.searchText.isEmpty {
                     Section {
                         ContentUnavailableView(
@@ -172,7 +189,7 @@ struct TransactionListView: View {
                                         }
                                     }
                             }
-                            .buttonStyle(.plain)
+                            .bouncyButtonStyle()
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
                             .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))

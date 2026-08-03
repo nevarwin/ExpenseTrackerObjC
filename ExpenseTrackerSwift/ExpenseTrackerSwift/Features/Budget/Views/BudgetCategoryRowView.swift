@@ -42,7 +42,7 @@ struct BudgetCategoryRowView: View {
                         .fill(Color.appLightGray)
                         .frame(height: 6)
                     Capsule()
-                        .fill(isOverBudget ? Color.red : Color.appAccent)
+                        .fill(isOverBudget ? Color.red : Color.dynamicAccent)
                         .frame(width: geometry.size.width * min(max(0, usagePercentage), 1.0), height: 6)
                 }
             }
@@ -51,7 +51,7 @@ struct BudgetCategoryRowView: View {
             HStack {
                 Label("\(Int(usagePercentage * 100))% used", systemImage: "chart.bar.fill")
                     .font(.caption)
-                    .foregroundStyle(isOverBudget ? .red : Color.appAccent)
+                    .foregroundStyle(isOverBudget ? .red : Color.dynamicAccent)
                 Spacer()
                 Text("\(transactionsCount) transaction\(transactionsCount == 1 ? "" : "s")")
                     .font(.caption)

@@ -29,5 +29,8 @@ extension Color {
     static var appCardBackground: Color {
         Color(UIColor.secondarySystemGroupedBackground)
     }
-}
 
+    static var dynamicAccent: Color {
+        SharedAppearanceService.instance.selectedAccent.color
+    }
+}

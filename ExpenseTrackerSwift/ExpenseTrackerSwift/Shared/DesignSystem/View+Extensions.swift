@@ -1,25 +1,79 @@
 import SwiftUI
 
 struct AppCardModifier: ViewModifier {
+    @Environment(\.colorScheme) private var colorScheme
+
     func body(content: Content) -> some View {
         content
-            .padding()
+            .padding(AppSpacing.lg)
             .background(Color(UIColor.secondarySystemGroupedBackground))
-            .cornerRadius(16)
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.card))
+            .overlay(
+                RoundedRectangle(cornerRadius: AppRadius.card)
+                    .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.03), lineWidth: 1)
+            )
             .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
     }
 }
 
 struct CardStyle: ViewModifier {
+    @Environment(\.colorScheme) private var colorScheme
     var backgroundColor: Color = .appSurface
-    var padding: CGFloat = 16
+    var padding: CGFloat = AppSpacing.lg
     
     func body(content: Content) -> some View {
         content
             .padding(padding)
             .background(backgroundColor)
-            .cornerRadius(16)
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.card))
+            .overlay(
+                RoundedRectangle(cornerRadius: AppRadius.card)
+                    .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.03), lineWidth: 1)
+            )
             .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
+    }
+}
+
+// MARK: - Bouncy Button Style
+
+struct BouncyButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .opacity(configuration.isPressed ? 0.9 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Shimmer Modifier
+
+struct ShimmerModifier: ViewModifier {
+    @State private var phase: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(
+                GeometryReader { proxy in
+                    let width = proxy.size.width
+                    LinearGradient(
+                        colors: [
+                            Color.clear,
+                            Color.white.opacity(0.25),
+                            Color.clear
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .frame(width: width * 1.5)
+                    .offset(x: -width + (phase * width * 2))
+                }
+            )
+            .mask(content)
+            .onAppear {
+                withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
+                    phase = 1
+                }
+            }
     }
 }
 
@@ -28,7 +82,7 @@ extension View {
         self.modifier(AppCardModifier())
     }
     
-    func cardStyle(backgroundColor: Color = .appSurface, padding: CGFloat = 16) -> some View {
+    func cardStyle(backgroundColor: Color = .appSurface, padding: CGFloat = AppSpacing.lg) -> some View {
         modifier(CardStyle(backgroundColor: backgroundColor, padding: padding))
     }
     
@@ -40,5 +94,13 @@ extension View {
     func subheaderStyle() -> some View {
         self.font(.system(.subheadline, design: .rounded).weight(.medium))
             .foregroundStyle(Color.appSecondary)
+    }
+
+    func bouncyButtonStyle() -> some View {
+        buttonStyle(BouncyButtonStyle())
+    }
+
+    func shimmering() -> some View {
+        modifier(ShimmerModifier())
     }
 }

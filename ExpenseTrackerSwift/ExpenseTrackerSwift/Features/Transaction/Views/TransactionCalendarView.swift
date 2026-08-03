@@ -277,7 +277,7 @@ struct DayCell: View {
                             if isSearchResult {
                                 Circle().stroke(Color.green, lineWidth: 2)
                             } else if selectionState == .none && isToday {
-                                Circle().stroke(Color.appAccent, lineWidth: 1)
+                                Circle().stroke(Color.dynamicAccent, lineWidth: 1)
                             }
                         }
                     )
@@ -302,24 +302,24 @@ struct DayCell: View {
     private var backgroundView: some View {
         switch selectionState {
         case .single:
-            Circle().fill(Color.appAccent)
+            Circle().fill(Color.dynamicAccent)
         case .start:
             HStack(spacing: 0) {
                 Color.clear
-                Color.appAccent
+                Color.dynamicAccent
             }
             .overlay(
-                Circle().fill(Color.appAccent)
+                Circle().fill(Color.dynamicAccent)
             )
         case .middle:
-            Color.appAccent
+            Color.dynamicAccent
         case .end:
              HStack(spacing: 0) {
-                Color.appAccent
+                Color.dynamicAccent
                 Color.clear
             }
             .overlay(
-                Circle().fill(Color.appAccent)
+                Circle().fill(Color.dynamicAccent)
             )
         case .none:
             Color.clear

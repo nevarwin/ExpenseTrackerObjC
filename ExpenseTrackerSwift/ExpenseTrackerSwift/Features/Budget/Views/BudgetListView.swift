@@ -72,7 +72,7 @@ struct HomeContent: View {
                                 .padding(.horizontal)
                                 .id(budget.id)
                         }
-                        .buttonStyle(.plain)
+                        .bouncyButtonStyle()
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
                                 budgetToDelete = budget
@@ -177,6 +177,8 @@ struct BudgetCardView: View {
     @State private var selectedMonthIndex: Int = 0
     private let budgetCalculator: BudgetCalculator
     @EnvironmentObject var currencyManager: SharedCurrencyService
+    @EnvironmentObject var appearanceManager: SharedAppearanceService
+    @ScaledMetric(relativeTo: .body) private var barHeight: CGFloat = 12
     @State private var animatedProgress: Double = 0
     
     init(budget: Budget) {
@@ -292,7 +294,7 @@ struct BudgetCardView: View {
                     ZStack(alignment: .leading) {
                         Capsule()
                             .fill(Color.appLightGray)
-                            .frame(height: 12)
+                            .frame(height: barHeight)
                         
                         let isOverBudget = budgetCalculator.expensesInMonth(date: displayMonth) > budgetCalculator.plannedExpenses(date: displayMonth) && budgetCalculator.plannedExpenses(date: displayMonth) > 0
                         
@@ -300,17 +302,17 @@ struct BudgetCardView: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        isOverBudget ? Color.red : Color.appAccent,
-                                        isOverBudget ? Color.orange : Color.cyan
+                                        isOverBudget ? Color.red : appearanceManager.selectedAccent.color,
+                                        isOverBudget ? Color.orange : appearanceManager.selectedAccent.color.opacity(0.7)
                                     ],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
                             )
-                            .frame(width: max(0, min(geometry.size.width * animatedProgress, geometry.size.width)), height: 12)
+                            .frame(width: max(0, min(geometry.size.width * animatedProgress, geometry.size.width)), height: barHeight)
                     }
                 }
-                .frame(height: 12)
+                .frame(height: barHeight)
                 .accessibilityLabel(String(localized: "Budget Progress"))
                 .accessibilityValue(String(localized: "\(Int(animatedProgress * 100))% spent"))
             }

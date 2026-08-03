@@ -8,21 +8,23 @@ import SwiftUI
 struct TransactionRowView: View {
     let transaction: Transaction
     @EnvironmentObject var currencyManager: SharedCurrencyService
-    
+    @EnvironmentObject var appearanceManager: SharedAppearanceService
+
+    @ScaledMetric(relativeTo: .body) private var iconSize: CGFloat = 40
     @State private var isRevealed: Bool = false
 
     var body: some View {
-        HStack(spacing: 16) {
-            // Icon
+        HStack(spacing: AppSpacing.lg) {
+            // Category Icon Badge
             ZStack {
                 Circle()
                     .fill(Color.appLightGray)
-                    .frame(width: 40, height: 40)
+                    .frame(width: iconSize, height: iconSize)
                 
                 if let category = transaction.category {
                     Image(systemName: category.iconName)
-                        .foregroundStyle(Color.appAccent)
-                        .font(.system(size: 16))
+                        .foregroundStyle(appearanceManager.selectedAccent.color)
+                        .font(.system(size: iconSize * 0.4))
                 } else {
                     Image(systemName: "bag.fill")
                         .foregroundStyle(Color.appSecondary)
@@ -30,7 +32,7 @@ struct TransactionRowView: View {
                 }
             }
             
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: AppSpacing.xs / 2) {
                 Text(transaction.desc)
                     .font(.system(.body, design: .rounded))
                     .fontWeight(.medium)
@@ -51,7 +53,8 @@ struct TransactionRowView: View {
                     .foregroundStyle(transaction.isIncome ? Color.green : Color.appPrimary)
                     .accessibilityIdentifier("transaction_amount_censored")
                     .onTapGesture {
-                        withAnimation {
+                        appearanceManager.triggerHaptic(.light)
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                             isRevealed.toggle()
                         }
                     }
@@ -63,7 +66,8 @@ struct TransactionRowView: View {
                     .accessibilityIdentifier("transaction_amount")
                     .onTapGesture {
                         if transaction.shouldCensorAmount {
-                            withAnimation {
+                            appearanceManager.triggerHaptic(.light)
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                                 isRevealed.toggle()
                             }
                         }

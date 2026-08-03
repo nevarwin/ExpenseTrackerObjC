@@ -128,7 +128,7 @@ struct MonthlyBudgetDetailView: View {
                             Button(action: addInlineCategory) {
                                 Image(systemName: "plus.circle.fill")
                                     .font(.title2)
-                                    .foregroundStyle(Color.appAccent)
+                                    .foregroundStyle(Color.dynamicAccent)
                             }
                             .disabled(newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty || (Decimal(string: newCategoryAmount) ?? 0) <= 0)
                             .buttonStyle(.plain)

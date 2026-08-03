@@ -79,7 +79,7 @@ struct BudgetHistoryView: View {
                                     x: .value("Month", month, unit: .month),
                                     y: .value("Expenses", NSDecimalNumber(decimal: budgetCalculator.expensesInMonth(date: month)).doubleValue)
                                 )
-                                .foregroundStyle(Color.appAccent)
+                                .foregroundStyle(Color.dynamicAccent)
                                 .interpolationMethod(.catmullRom)
                                 
                                 AreaMark(
@@ -88,7 +88,7 @@ struct BudgetHistoryView: View {
                                 )
                                 .foregroundStyle(
                                     LinearGradient(
-                                        colors: [Color.appAccent.opacity(0.3), Color.appAccent.opacity(0.0)],
+                                        colors: [Color.dynamicAccent.opacity(0.3), Color.dynamicAccent.opacity(0.0)],
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )
