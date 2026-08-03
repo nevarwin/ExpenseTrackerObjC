@@ -32,7 +32,7 @@ final class TransactionListUITests: TransactionUITestCase {
         todayButton.tap()
 
         // After tapping today, either transactions or "No Transactions" should appear
-        let list = app.collectionViews["transaction_list"]
+        let list = app.scrollViews["transaction_list"]
         let emptyNoResults = app.staticTexts["No Transactions"]
 
         let appeared = list.waitForExistence(timeout: 5) || emptyNoResults.waitForExistence(timeout: 5)
@@ -102,8 +102,8 @@ final class TransactionListUITests: TransactionUITestCase {
 
         firstRow.swipeLeft()
 
-        // Tap the Delete button that appears in the swipe action
-        let deleteButton = app.buttons["Delete"]
+        // Tap the Delete button revealed by the custom SwipeActionView
+        let deleteButton = app.buttons["swipe_action_delete"]
         assertExists(deleteButton, timeout: 3)
         deleteButton.tap()
 
@@ -127,7 +127,8 @@ final class TransactionListUITests: TransactionUITestCase {
 
         firstRow.swipeLeft()
 
-        let editButton = app.buttons["Edit"]
+        // Tap the Edit button revealed by the custom SwipeActionView
+        let editButton = app.buttons["swipe_action_edit"]
         assertExists(editButton, timeout: 3)
         editButton.tap()
 
@@ -159,7 +160,7 @@ final class TransactionListUITests: TransactionUITestCase {
         searchField.typeText("a") // Generic single character to trigger search
 
         // After search, either results or "No Results" empty state should be visible
-        let listExists = app.collectionViews["transaction_list"].waitForExistence(timeout: 5)
+        let listExists = app.scrollViews["transaction_list"].waitForExistence(timeout: 5)
         let noResultsExists = app.staticTexts["No Results"].waitForExistence(timeout: 5)
         XCTAssertTrue(listExists || noResultsExists, "Expected search results or 'No Results' state")
 

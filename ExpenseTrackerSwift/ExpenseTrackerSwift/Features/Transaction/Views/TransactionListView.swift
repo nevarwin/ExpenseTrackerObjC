@@ -7,12 +7,12 @@ struct TransactionListView: View {
     @State private var showingAddTransaction = false
     @State private var selectedTransaction: Transaction?
     @State private var hasUserSelectedDate = false
-    
+
     @Query(filter: #Predicate<Budget> { $0.isActive == true })
     private var activeBudgets: [Budget]
-    
+
     @Environment(\.verticalSizeClass) private var verticalSizeClass
-    
+
     var body: some View {
         NavigationStack {
             Group {
@@ -24,7 +24,7 @@ struct TransactionListView: View {
                                     calendarContent(viewModel: viewModel)
                                 }
                                 .frame(maxWidth: 350)
-                                
+
                                 transactionListContent(viewModel: viewModel)
                             }
                         } else {
@@ -33,7 +33,7 @@ struct TransactionListView: View {
                     }
                     .onChange(of: viewModel.selectedDate) { _, _ in viewModel.loadTransactions() }
                     .onChange(of: viewModel.selectedDateRange) { _, _ in viewModel.loadTransactions() }
-                    
+
                 } else {
                     ProgressView()
                 }
@@ -88,16 +88,9 @@ struct TransactionListView: View {
             viewModel?.loadTransactions()
         }
     }
-    
-    private func deleteTransactions(at offsets: IndexSet) {
-        guard let viewModel = viewModel else { return }
-        
-        for index in offsets {
-            let transaction = viewModel.transactions[index]
-            try? viewModel.deleteTransaction(transaction)
-        }
-    }
-    
+
+    // MARK: - Calendar Content
+
     @ViewBuilder
     private func calendarContent(viewModel: TransactionViewModel) -> some View {
         TransactionCalendarView(viewModel: viewModel) { hasTransactions in
@@ -108,135 +101,139 @@ struct TransactionListView: View {
         }
         .padding(.bottom, 8)
     }
-    
+
+    // MARK: - Unified Scroll Content (Portrait)
+
     @ViewBuilder
     private func transactionListContent(viewModel: TransactionViewModel) -> some View {
-        VStack(spacing: 0) {
-            if verticalSizeClass != .compact {
-                calendarContent(viewModel: viewModel)
+        ScrollView(.vertical, showsIndicators: false) {
+            LazyVStack(spacing: 0, pinnedViews: []) {
+                // Calendar sits at the top of the unified scroll
+                if verticalSizeClass != .compact {
+                    calendarContent(viewModel: viewModel)
+                }
+
+                // Transaction items
+                transactionItemsContent(viewModel: viewModel)
+                    .padding(.horizontal)
+                    .padding(.bottom, 16)
             }
-            
-            List {
-                if viewModel.isLoading {
-                    Section {
-                        ForEach(0..<4, id: \.self) { _ in
-                            HStack(spacing: AppSpacing.lg) {
-                                Circle()
-                                    .fill(Color.appLightGray)
-                                    .frame(width: 40, height: 40)
-                                VStack(alignment: .leading, spacing: 6) {
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(Color.appLightGray)
-                                        .frame(width: 120, height: 16)
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(Color.appLightGray)
-                                        .frame(width: 80, height: 12)
-                                }
-                                Spacer()
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(Color.appLightGray)
-                                    .frame(width: 60, height: 18)
-                            }
-                            .appCardStyle()
-                            .redacted(reason: .placeholder)
-                            .shimmering()
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                        }
-                    }
-                    .accessibilityIdentifier("transaction_loading")
-                } else if !hasUserSelectedDate && viewModel.searchText.isEmpty {
-                    Section {
-                        ContentUnavailableView(
-                            "Select a Date",
-                            systemImage: "calendar",
-                            description: Text(verticalSizeClass == .compact ? "Tap a date on the calendar to the left to view your transactions." : "Tap a date on the calendar above to view your transactions.")
-                        )
-                        .padding(.vertical, 40)
-                        .accessibilityIdentifier("transaction_empty_select_date")
-                    }
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                } else if viewModel.transactions.isEmpty {
-                    Section {
-                        ContentUnavailableView(
-                            viewModel.searchText.isEmpty ? "No Transactions" : "No Results",
-                            systemImage: viewModel.searchText.isEmpty ? "list.bullet" : "magnifyingglass",
-                            description: Text(viewModel.searchText.isEmpty ? "No transactions found for this period" : "No transactions match '\(viewModel.searchText)'")
-                        )
-                        .padding(.vertical, 40)
-                        .accessibilityIdentifier("transaction_empty_no_results")
-                    }
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                } else {
-                    Section {
-                        ForEach(Array(viewModel.transactions.enumerated()), id: \.element.id) { index, transaction in
-                            Button {
-                                selectedTransaction = transaction
-                            } label: {
-                                TransactionRowView(transaction: transaction)
-                                    .background {
-                                        if index == 0 {
-                                            GeometryReader { proxy in
-                                                Color.clear
-                                                    .preference(
-                                                        key: ScrollOffsetPreferenceKey.self,
-                                                        value: proxy.frame(in: .named("scroll")).minY
-                                                    )
-                                            }
-                                        }
-                                    }
-                            }
-                            .bouncyButtonStyle()
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) {
-                                    try? viewModel.deleteTransaction(transaction)
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
-                                
-                                Button {
-                                    selectedTransaction = transaction
-                                } label: {
-                                    Label("Edit", systemImage: "pencil")
-                                }
-                                .tint(.blue)
-                            }
-                        }
-                    } header: {
-                        EmptyView()
-                    } footer: {
-                        EmptyView()
-                    }
+        }
+        .coordinateSpace(name: "scroll")
+        .accessibilityIdentifier("transaction_list")
+        .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+            guard !viewModel.isLoading else { return }
+            if value < -20 && viewModel.calendarScope == .month {
+                withAnimation(.easeInOut) {
+                    viewModel.calendarScope = .week
+                }
+            } else if value >= 0 && viewModel.calendarScope == .week {
+                withAnimation(.easeInOut) {
+                    viewModel.calendarScope = .month
                 }
             }
-            .listStyle(.insetGrouped)
-            .listSectionSpacing(0)
-            .coordinateSpace(name: "scroll")
-            .accessibilityIdentifier("transaction_list")
-            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
-                guard !viewModel.isLoading else { return }
-                // Collapsing logic
-                // If scrolling down (value goes negative), collapse to week
-                // If scrolling up near top (value goes near 0), expand to month
-                if value < -20 && viewModel.calendarScope == .month {
-                    withAnimation {
-                        viewModel.calendarScope = .week
-                    }
-                } else if value >= 0 && viewModel.calendarScope == .week {
-                    withAnimation {
-                        viewModel.calendarScope = .month
+        }
+    }
+
+    // MARK: - Transaction Items
+
+    @ViewBuilder
+    private func transactionItemsContent(viewModel: TransactionViewModel) -> some View {
+        if viewModel.isLoading {
+            loadingSkeletonView
+                .accessibilityIdentifier("transaction_loading")
+        } else if !hasUserSelectedDate && viewModel.searchText.isEmpty {
+            ContentUnavailableView(
+                "Select a Date",
+                systemImage: "calendar",
+                description: Text(
+                    verticalSizeClass == .compact
+                        ? "Tap a date on the calendar to the left to view your transactions."
+                        : "Tap a date on the calendar above to view your transactions."
+                )
+            )
+            .padding(.vertical, 40)
+            .accessibilityIdentifier("transaction_empty_select_date")
+        } else if viewModel.transactions.isEmpty {
+            ContentUnavailableView(
+                viewModel.searchText.isEmpty ? "No Transactions" : "No Results",
+                systemImage: viewModel.searchText.isEmpty ? "list.bullet" : "magnifyingglass",
+                description: Text(
+                    viewModel.searchText.isEmpty
+                        ? "No transactions found for this period"
+                        : "No transactions match '\(viewModel.searchText)'"
+                )
+            )
+            .padding(.vertical, 40)
+            .accessibilityIdentifier("transaction_empty_no_results")
+        } else {
+            LazyVStack(spacing: 8) {
+                ForEach(Array(viewModel.transactions.enumerated()), id: \.element.id) { index, transaction in
+                    SwipeActionView(
+                        trailingActions: [
+                            SwipeAction(
+                                label: "Delete",
+                                systemImage: "trash",
+                                tint: .red,
+                                role: .destructive
+                            ) {
+                                try? viewModel.deleteTransaction(transaction)
+                            }
+                        ],
+                        onTap: {
+                            selectedTransaction = transaction
+                        }
+                    ) {
+                        TransactionRowView(transaction: transaction)
+                            .background {
+                                if index == 0 {
+                                    GeometryReader { proxy in
+                                        Color.clear
+                                            .preference(
+                                                key: ScrollOffsetPreferenceKey.self,
+                                                value: proxy.frame(in: .named("scroll")).minY
+                                            )
+                                    }
+                                }
+                            }
+                            .accessibilityIdentifier("transaction_row")
                     }
                 }
             }
         }
     }
+
+    // MARK: - Loading Skeleton
+
+    private var loadingSkeletonView: some View {
+        LazyVStack(spacing: 8) {
+            ForEach(0..<4, id: \.self) { _ in
+                HStack(spacing: AppSpacing.lg) {
+                    Circle()
+                        .fill(Color.appLightGray)
+                        .frame(width: 40, height: 40)
+                    VStack(alignment: .leading, spacing: 6) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.appLightGray)
+                            .frame(width: 120, height: 16)
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.appLightGray)
+                            .frame(width: 80, height: 12)
+                    }
+                    Spacer()
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.appLightGray)
+                        .frame(width: 60, height: 18)
+                }
+                .appCardStyle()
+                .redacted(reason: .placeholder)
+                .shimmering()
+            }
+        }
+    }
 }
+
+// MARK: - Scroll Offset Preference Key
 
 private struct ScrollOffsetPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
@@ -244,7 +241,6 @@ private struct ScrollOffsetPreferenceKey: PreferenceKey {
         value = nextValue()
     }
 }
-
 
 #Preview {
     TransactionListView()
