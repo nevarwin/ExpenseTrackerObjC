@@ -28,13 +28,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		0213E257FD2ED0642FBA8CC6 /* Category.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Category.swift; path = ExpenseTrackerSwift/Models/Category.swift; sourceTree = "<group>"; };
-		22211B551B5737A69D6760A5 /* Budget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Budget.swift; path = ExpenseTrackerSwift/Models/Budget.swift; sourceTree = "<group>"; };
+		0213E257FD2ED0642FBA8CC6 /* Category.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Category.swift; path = ExpenseTrackerSwift/Shared/Models/Domain/Category.swift; sourceTree = "<group>"; };
+		22211B551B5737A69D6760A5 /* Budget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Budget.swift; path = ExpenseTrackerSwift/Shared/Models/Domain/Budget.swift; sourceTree = "<group>"; };
 		3E97BF98361D0D837252E411 /* HomeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HomeView.swift; path = ExpenseTrackerSwift/Views/Home/HomeView.swift; sourceTree = "<group>"; };
 		58082728789922605C422983 /* CategoryViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CategoryViewModel.swift; path = ExpenseTrackerSwift/Features/Budget/Views/CategoryViewModel.swift; sourceTree = "<group>"; };
 		61047B87C759C702876D0418 /* BudgetDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BudgetDetailView.swift; path = ExpenseTrackerSwift/Views/Budget/BudgetDetailView.swift; sourceTree = "<group>"; };
 		6AD30949190D5C00763B7477 /* Secrets.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
-		75DF808E69BBAB48A0D4F538 /* Transaction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Transaction.swift; path = ExpenseTrackerSwift/Models/Transaction.swift; sourceTree = "<group>"; };
+		75DF808E69BBAB48A0D4F538 /* Transaction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Transaction.swift; path = ExpenseTrackerSwift/Shared/Models/Domain/Transaction.swift; sourceTree = "<group>"; };
 		79DC7366FAAAE06E81605AF0 /* BudgetViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BudgetViewModel.swift; path = ExpenseTrackerSwift/ViewModels/BudgetViewModel.swift; sourceTree = "<group>"; };
 		973C37EA2F1E74D800CB57BA /* ExpenseMe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExpenseMe.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		973C37F92F1E74DA00CB57BA /* ExpenseTrackerSwiftTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExpenseTrackerSwiftTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
