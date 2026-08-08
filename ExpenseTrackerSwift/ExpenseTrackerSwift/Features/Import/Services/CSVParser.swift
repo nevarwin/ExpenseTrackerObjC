@@ -105,60 +105,76 @@ class CSVParser {
         for row in dataRows {
             let columns = parseCSVRow(row)
             
-            // Expense Column Detection (supports 0-indexed and 1-indexed offsets)
-            var expOffset: Int? = nil
-            if columns.indices.contains(3), parseDate(columns[0]) != nil, parseCurrency(columns[1]) != nil {
-                expOffset = 0
-            } else if columns.indices.contains(4), parseDate(columns[1]) != nil, parseCurrency(columns[2]) != nil {
-                expOffset = 1
-            }
-            
-            if let off = expOffset,
-               let date = parseDate(columns[off]),
-               let amount = parseCurrency(columns[off + 1]) {
-                let rawDesc = columns[off + 2]
-                let category = columns[off + 3]
-                if !category.isEmpty && category.caseInsensitiveCompare("Category") != .orderedSame {
-                    let (idx, total, cleanDesc) = parseInstallmentTag(from: rawDesc)
-                    transactions.append(CSVTransaction(
-                        date: date,
-                        amount: amount,
-                        description: rawDesc,
-                        category: category,
-                        isIncome: false,
-                        installmentIndex: idx,
-                        installmentTotalMonths: total,
-                        cleanDescription: cleanDesc
-                    ))
+            // Determine offset for Left side (Expenses): 0 if column 0 is Date, 1 if column 1 is Date
+            let offset: Int? = {
+                if columns.indices.contains(0), parseDate(columns[0]) != nil {
+                    return 0
+                } else if columns.indices.contains(1), parseDate(columns[1]) != nil {
+                    return 1
                 }
+                return nil
+            }()
+            
+            // Parse Left side (Expenses)
+            let expOffset = offset ?? (columns.indices.contains(0) && !columns[0].isEmpty ? 0 : 1)
+            let expDateIdx = 0 + expOffset
+            let expAmountIdx = 1 + expOffset
+            let expDescIdx = 2 + expOffset
+            let expCatIdx = 3 + expOffset
+            
+            if columns.indices.contains(expCatIdx),
+               let date = parseDate(columns[expDateIdx]),
+               let amount = parseCurrency(columns[expAmountIdx]),
+               !columns[expCatIdx].isEmpty {
+                
+                let rawDesc = columns.indices.contains(expDescIdx) ? columns[expDescIdx] : ""
+                let (idx, total, cleanDesc) = parseInstallmentTag(from: rawDesc)
+                
+                transactions.append(CSVTransaction(
+                    date: date,
+                    amount: amount,
+                    description: rawDesc,
+                    category: columns[expCatIdx],
+                    isIncome: false,
+                    installmentIndex: idx,
+                    installmentTotalMonths: total,
+                    cleanDescription: cleanDesc
+                ))
             }
             
-            // Income Column Detection (supports 5-indexed and 6-indexed offsets)
-            var incOffset: Int? = nil
-            if columns.indices.contains(8), parseDate(columns[5]) != nil, parseCurrency(columns[6]) != nil {
-                incOffset = 5
-            } else if columns.indices.contains(9), parseDate(columns[6]) != nil, parseCurrency(columns[7]) != nil {
-                incOffset = 6
-            }
-            
-            if let off = incOffset,
-               let date = parseDate(columns[off]),
-               let amount = parseCurrency(columns[off + 1]) {
-                let rawDesc = columns[off + 2]
-                let category = columns[off + 3]
-                if !category.isEmpty && category.caseInsensitiveCompare("Category") != .orderedSame {
-                    let (idx, total, cleanDesc) = parseInstallmentTag(from: rawDesc)
-                    transactions.append(CSVTransaction(
-                        date: date,
-                        amount: amount,
-                        description: rawDesc,
-                        category: category,
-                        isIncome: true,
-                        installmentIndex: idx,
-                        installmentTotalMonths: total,
-                        cleanDescription: cleanDesc
-                    ))
+            // Parse Right side (Income)
+            let incOffset = {
+                if columns.indices.contains(5), parseDate(columns[5]) != nil {
+                    return 0
+                } else if columns.indices.contains(6), parseDate(columns[6]) != nil {
+                    return 1
                 }
+                return offset ?? 0
+            }()
+            
+            let incDateIdx = 5 + incOffset
+            let incAmountIdx = 6 + incOffset
+            let incDescIdx = 7 + incOffset
+            let incCatIdx = 8 + incOffset
+            
+            if columns.indices.contains(incCatIdx),
+               let date = parseDate(columns[incDateIdx]),
+               let amount = parseCurrency(columns[incAmountIdx]),
+               !columns[incCatIdx].isEmpty {
+                
+                let rawDesc = columns.indices.contains(incDescIdx) ? columns[incDescIdx] : ""
+                let (idx, total, cleanDesc) = parseInstallmentTag(from: rawDesc)
+                
+                transactions.append(CSVTransaction(
+                    date: date,
+                    amount: amount,
+                    description: rawDesc,
+                    category: columns[incCatIdx],
+                    isIncome: true,
+                    installmentIndex: idx,
+                    installmentTotalMonths: total,
+                    cleanDescription: cleanDesc
+                ))
             }
         }
         
