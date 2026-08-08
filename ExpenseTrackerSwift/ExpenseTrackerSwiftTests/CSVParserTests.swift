@@ -112,4 +112,26 @@ final class CSVParserTests: XCTestCase {
         XCTAssertNotNil(initial)
         XCTAssertEqual(initial?.amount, 13328)
     }
+    
+    // MARK: - Installment Tag Parsing
+    
+    func testParseTransactions_InstallmentTag() throws {
+        let csvString = """
+        ,Header,,,,,,,,
+        ,Expenses,,,,,Income,,,
+        Date,Amount,Description,Category,,Date,Amount,Description,Category
+        7/15/2025,"$100.00","[Installment 13/24] Laptop Purchase",Gadgets,,,,
+        """
+        
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("InstallmentTest.csv")
+        try csvString.write(to: url, atomically: true, encoding: .utf8)
+        
+        let transactions = try parser.parseTransactions(from: url)
+        
+        XCTAssertEqual(transactions.count, 1)
+        let tx = transactions[0]
+        XCTAssertEqual(tx.installmentIndex, 13)
+        XCTAssertEqual(tx.installmentTotalMonths, 24)
+        XCTAssertEqual(tx.cleanDescription, "Laptop Purchase")
+    }
 }

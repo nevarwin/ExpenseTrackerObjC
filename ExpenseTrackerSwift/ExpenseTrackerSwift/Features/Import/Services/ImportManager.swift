@@ -216,15 +216,43 @@ class ImportManager {
                 budget.categories.append(category)
             }
             
+            // Handle Installment auto-linking if tagged
+            var plan: InstallmentPlan? = nil
+            if let totalMonths = csvTx.installmentTotalMonths, totalMonths > 0 {
+                let cleanName = csvTx.cleanDescription
+                let fetchDescriptor = FetchDescriptor<InstallmentPlan>()
+                if let existingPlans = try? modelContext.fetch(fetchDescriptor),
+                   let matched = existingPlans.first(where: { $0.name.caseInsensitiveCompare(cleanName) == .orderedSame && $0.totalMonths == totalMonths }) {
+                    plan = matched
+                } else {
+                    let totalAmt = csvTx.amount * Decimal(totalMonths)
+                    let newPlan = InstallmentPlan(
+                        name: cleanName,
+                        totalAmount: totalAmt,
+                        monthlyAmount: csvTx.amount,
+                        startDate: csvTx.date,
+                        totalMonths: totalMonths
+                    )
+                    modelContext.insert(newPlan)
+                    plan = newPlan
+                }
+            }
+            
             let transaction = Transaction(
                 amount: csvTx.amount,
-                description: csvTx.description,
+                description: csvTx.cleanDescription,
                 date: csvTx.date,
                 budget: budget,
                 category: category,
-                budgetPeriod: budgetPeriod
+                budgetPeriod: budgetPeriod,
+                installmentPlan: plan,
+                installmentIndex: csvTx.installmentIndex,
+                installmentTotalMonths: csvTx.installmentTotalMonths
             )
             modelContext.insert(transaction)
+            if let plan = plan {
+                plan.transactions.append(transaction)
+            }
             
             category.usedAmount += csvTx.amount
             category.updatedAt = Date()

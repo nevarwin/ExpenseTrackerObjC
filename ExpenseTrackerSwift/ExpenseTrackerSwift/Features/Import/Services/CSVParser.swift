@@ -21,6 +21,29 @@ struct CSVTransaction: Identifiable {
     let description: String
     let category: String
     let isIncome: Bool
+    let installmentIndex: Int?
+    let installmentTotalMonths: Int?
+    let cleanDescription: String
+    
+    init(
+        date: Date,
+        amount: Decimal,
+        description: String,
+        category: String,
+        isIncome: Bool,
+        installmentIndex: Int? = nil,
+        installmentTotalMonths: Int? = nil,
+        cleanDescription: String? = nil
+    ) {
+        self.date = date
+        self.amount = amount
+        self.description = description
+        self.category = category
+        self.isIncome = isIncome
+        self.installmentIndex = installmentIndex
+        self.installmentTotalMonths = installmentTotalMonths
+        self.cleanDescription = cleanDescription ?? description
+    }
 }
 
 struct CSVBudget {
@@ -49,6 +72,23 @@ class CSVParser {
         return formatter
     }()
     
+    /// Helper to parse `[Installment 13/24] Laptop` tag pattern from description string
+    private func parseInstallmentTag(from rawDesc: String) -> (index: Int?, total: Int?, cleanDesc: String) {
+        let pattern = #"^\[Installment\s+(\d+)/(\d+)\]\s*(.*)$"#
+        if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
+           let match = regex.firstMatch(in: rawDesc, options: [], range: NSRange(location: 0, length: rawDesc.utf16.count)) {
+            if let idxRange = Range(match.range(at: 1), in: rawDesc),
+               let totalRange = Range(match.range(at: 2), in: rawDesc),
+               let descRange = Range(match.range(at: 3), in: rawDesc),
+               let idx = Int(rawDesc[idxRange]),
+               let total = Int(rawDesc[totalRange]) {
+                let clean = String(rawDesc[descRange]).trimmingCharacters(in: .whitespaces)
+                return (idx, total, clean.isEmpty ? rawDesc : clean)
+            }
+        }
+        return (nil, nil, rawDesc)
+    }
+    
     func parseTransactions(from url: URL) throws -> [CSVTransaction] {
         guard let data = try? String(contentsOf: url, encoding: .utf8) else {
             throw CSVParserError.fileReadFailed
@@ -65,32 +105,60 @@ class CSVParser {
         for row in dataRows {
             let columns = parseCSVRow(row)
             
-            if columns.indices.contains(4),
-               let date = parseDate(columns[1]),
-               let amount = parseCurrency(columns[2]),
-               !columns[4].isEmpty {
-                
-                transactions.append(CSVTransaction(
-                    date: date,
-                    amount: amount,
-                    description: columns[3],
-                    category: columns[4],
-                    isIncome: false
-                ))
+            // Expense Column Detection (supports 0-indexed and 1-indexed offsets)
+            var expOffset: Int? = nil
+            if columns.indices.contains(3), parseDate(columns[0]) != nil, parseCurrency(columns[1]) != nil {
+                expOffset = 0
+            } else if columns.indices.contains(4), parseDate(columns[1]) != nil, parseCurrency(columns[2]) != nil {
+                expOffset = 1
             }
             
-            if columns.indices.contains(9),
-               let date = parseDate(columns[6]),
-               let amount = parseCurrency(columns[7]),
-               !columns[9].isEmpty {
-                
-                transactions.append(CSVTransaction(
-                    date: date,
-                    amount: amount,
-                    description: columns[8],
-                    category: columns[9],
-                    isIncome: true
-                ))
+            if let off = expOffset,
+               let date = parseDate(columns[off]),
+               let amount = parseCurrency(columns[off + 1]) {
+                let rawDesc = columns[off + 2]
+                let category = columns[off + 3]
+                if !category.isEmpty && category.caseInsensitiveCompare("Category") != .orderedSame {
+                    let (idx, total, cleanDesc) = parseInstallmentTag(from: rawDesc)
+                    transactions.append(CSVTransaction(
+                        date: date,
+                        amount: amount,
+                        description: rawDesc,
+                        category: category,
+                        isIncome: false,
+                        installmentIndex: idx,
+                        installmentTotalMonths: total,
+                        cleanDescription: cleanDesc
+                    ))
+                }
+            }
+            
+            // Income Column Detection (supports 5-indexed and 6-indexed offsets)
+            var incOffset: Int? = nil
+            if columns.indices.contains(8), parseDate(columns[5]) != nil, parseCurrency(columns[6]) != nil {
+                incOffset = 5
+            } else if columns.indices.contains(9), parseDate(columns[6]) != nil, parseCurrency(columns[7]) != nil {
+                incOffset = 6
+            }
+            
+            if let off = incOffset,
+               let date = parseDate(columns[off]),
+               let amount = parseCurrency(columns[off + 1]) {
+                let rawDesc = columns[off + 2]
+                let category = columns[off + 3]
+                if !category.isEmpty && category.caseInsensitiveCompare("Category") != .orderedSame {
+                    let (idx, total, cleanDesc) = parseInstallmentTag(from: rawDesc)
+                    transactions.append(CSVTransaction(
+                        date: date,
+                        amount: amount,
+                        description: rawDesc,
+                        category: category,
+                        isIncome: true,
+                        installmentIndex: idx,
+                        installmentTotalMonths: total,
+                        cleanDescription: cleanDesc
+                    ))
+                }
             }
         }
         

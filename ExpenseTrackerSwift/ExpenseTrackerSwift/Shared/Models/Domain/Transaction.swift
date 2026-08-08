@@ -14,6 +14,10 @@ final class Transaction {
     // Relationships
     var budget: Budget?
     var category: Category?
+    var installmentPlan: InstallmentPlan?
+    
+    var installmentIndex: Int?
+    var installmentTotalMonths: Int?
     
     init(
         amount: Decimal,
@@ -21,7 +25,10 @@ final class Transaction {
         date: Date,
         budget: Budget? = nil,
         category: Category? = nil,
-        budgetPeriod: Date? = nil
+        budgetPeriod: Date? = nil,
+        installmentPlan: InstallmentPlan? = nil,
+        installmentIndex: Int? = nil,
+        installmentTotalMonths: Int? = nil
     ) {
         self.amount = amount
         self.desc = description
@@ -31,6 +38,9 @@ final class Transaction {
         self.isActive = true
         self.budget = budget
         self.category = category
+        self.installmentPlan = installmentPlan
+        self.installmentIndex = installmentIndex
+        self.installmentTotalMonths = installmentTotalMonths
         self.createdAt = Date()
         self.updatedAt = Date()
     }
@@ -45,6 +55,14 @@ final class Transaction {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
         return formatter.string(from: date)
+    }
+    
+    /// Formats description for CSV Export: "[Installment 13/24] Description" if linked to an installment
+    var formattedDescriptionForExport: String {
+        if let idx = installmentIndex, let total = installmentTotalMonths {
+            return "[Installment \(idx)/\(total)] \(desc)"
+        }
+        return desc
     }
     
     // MARK: - Business Logic
