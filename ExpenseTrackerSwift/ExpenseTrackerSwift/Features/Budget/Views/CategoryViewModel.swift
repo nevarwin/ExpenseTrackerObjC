@@ -30,7 +30,7 @@ final class CategoryViewModel {
         
         let descriptor = FetchDescriptor<Category>(
             predicate: predicate,
-            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+            sortBy: [SortDescriptor(\.name, order: .forward)]
         )
         
         do {
@@ -49,6 +49,7 @@ final class CategoryViewModel {
                 }
             }
             
+            fetchedCategories.sort { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
             categories = fetchedCategories
         } catch {
             errorMessage = "Failed to load categories: \(error.localizedDescription)"
@@ -73,6 +74,7 @@ final class CategoryViewModel {
         )
         modelContext.insert(category)
         try modelContext.save()
-        categories.insert(category, at: 0)
+        categories.append(category)
+        categories.sort { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 }

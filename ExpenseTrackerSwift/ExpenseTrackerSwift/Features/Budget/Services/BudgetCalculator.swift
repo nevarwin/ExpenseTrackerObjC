@@ -9,6 +9,7 @@ import Foundation
 protocol BudgetCalculatorProtocol: AnyObject {
     func activeBudgetPeriods() -> [Date]
     func transactionsInMonth(date: Date) -> [Transaction]
+    func categoriesInMonth(date: Date) -> [Category]
     func expensesInMonth(date: Date) -> Decimal
     func incomeInMonth(date: Date) -> Decimal
     func remainingInMonth(date: Date) -> Decimal
@@ -69,15 +70,23 @@ extension BudgetCalculator {
         incomeInMonth(date: date) - expensesInMonth(date: date)
     }
     
+    func categoriesInMonth(date: Date) -> [Category] {
+        let bounds = date.monthBounds
+        return categories.filter { category in
+            category.isActive &&
+            category.budgetPeriod.isSameMonth(as: bounds.start)
+        }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+    
     func plannedExpenses(date: Date) -> Decimal {
-        categories
-            .filter { !$0.isIncome && $0.isActive }
+        categoriesInMonth(date: date)
+            .filter { !$0.isIncome }
             .reduce(Decimal.zero) { $0 + $1.allocatedAmount }
     }
     
     func plannedIncome(date: Date) -> Decimal {
-        categories
-            .filter { $0.isIncome && $0.isActive }
+        categoriesInMonth(date: date)
+            .filter { $0.isIncome }
             .reduce(Decimal.zero) { $0 + $1.allocatedAmount }
     }
     

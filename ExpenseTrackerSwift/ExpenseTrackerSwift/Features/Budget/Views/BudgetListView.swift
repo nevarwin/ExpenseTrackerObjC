@@ -52,47 +52,56 @@ struct HomeContent: View {
     @ObservedObject var viewModel: BudgetViewModel
     
     @State private var showingAddBudget = false
+    @State private var showingImport = false
     @State private var budgetToEdit: Budget?
     @State private var showingError = false
     @State private var budgetToDelete: Budget?
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                // Summary Cards
-                if viewModel.budgets.isEmpty {
-                    EmptyBudgetCard(viewModel: viewModel) {
-                        showingAddBudget = true
-                    }
-                    .padding(.horizontal)
-                } else {
-                    ForEach(viewModel.budgets) { budget in
+        List {
+            if viewModel.budgets.isEmpty {
+                EmptyBudgetCard(viewModel: viewModel, onAddBudget: {
+                    showingAddBudget = true
+                }, onImportWorkbook: {
+                    showingImport = true
+                })
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
+            } else {
+                ForEach(viewModel.budgets) { budget in
+                    ZStack {
+                        BudgetCardView(budget: budget)
+                        
                         NavigationLink(destination: BudgetDetailView(budget: budget, viewModel: viewModel)) {
-                            BudgetCardView(budget: budget)
-                                .padding(.horizontal)
-                                .id(budget.id)
+                            EmptyView()
                         }
-                        .bouncyButtonStyle()
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button(role: .destructive) {
-                                budgetToDelete = budget
-                            } label: {
-                                Label(String(localized: "Delete"), systemImage: "trash")
-                            }
-                            
-                            Button {
-                                budgetToEdit = budget
-                                analyticsService.trackEvent("Budget Edit Swiped")
-                            } label: {
-                                Label(String(localized: "Edit"), systemImage: "pencil")
-                            }
-                            .tint(.blue)
+                        .opacity(0)
+                    }
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
+                            budgetToDelete = budget
+                        } label: {
+                            Label(String(localized: "Delete"), systemImage: "trash")
                         }
+                        
+                        Button {
+                            budgetToEdit = budget
+                            analyticsService.trackEvent("Budget Edit Swiped")
+                        } label: {
+                            Label(String(localized: "Edit"), systemImage: "pencil")
+                        }
+                        .tint(.blue)
                     }
                 }
             }
-            .padding(.bottom, 20)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color(uiColor: .systemGroupedBackground))
         .refreshable {
             viewModel.loadBudgets()
         }
@@ -103,6 +112,14 @@ struct HomeContent: View {
             }
         ) {
             BudgetFormView(viewModel: viewModel)
+        }
+        .sheet(
+            isPresented: $showingImport,
+            onDismiss: {
+                viewModel.loadBudgets()
+            }
+        ) {
+            ImportView(initialImportType: .fullWorkbook)
         }
         .sheet(item: $budgetToEdit, onDismiss: {
             viewModel.loadBudgets()
@@ -119,19 +136,19 @@ struct HomeContent: View {
         .onChange(of: viewModel.errorMessage) { _, newValue in
             showingError = newValue != nil
         }
-        .confirmationDialog(
+        .alert(
             String(localized: "Delete Budget"),
             isPresented: Binding(
                 get: { budgetToDelete != nil },
                 set: { if !$0 { budgetToDelete = nil } }
-            ),
-            titleVisibility: .visible
+            )
         ) {
             Button(String(localized: "Delete"), role: .destructive) {
                 if let budget = budgetToDelete {
                     try? viewModel.deleteBudget(budget)
                     analyticsService.trackEvent("Budget Delete Confirmed", properties: ["budget_name": budget.name])
                 }
+                budgetToDelete = nil
             }
             Button(String(localized: "Cancel"), role: .cancel) {
                 budgetToDelete = nil
@@ -159,6 +176,13 @@ struct HomeContent: View {
             analyticsService.trackEvent("Budget Add Button Clicked")
         } label: {
             Label(String(localized: "Add Budget"), systemImage: "plus")
+        }
+        
+        Button {
+            showingImport = true
+            analyticsService.trackEvent("Import Data Button Clicked")
+        } label: {
+            Label(String(localized: "Import Data (.xlsx / CSV)"), systemImage: "square.and.arrow.down")
         }
         
         Divider()
@@ -346,10 +370,11 @@ struct EmptyBudgetCard: View {
     @Environment(\.analyticsService) private var analyticsService
     var viewModel: BudgetViewModel?
     var onAddBudget: (() -> Void)?
+    var onImportWorkbook: (() -> Void)?
     
     var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "plus.circle.fill")
+        VStack(spacing: 20) {
+            Image(systemName: "tablecells.fill.badge.plus")
                 .font(.system(size: 48))
                 .foregroundStyle(Color.appAccent)
                 .padding(.top, 8)
@@ -359,18 +384,22 @@ struct EmptyBudgetCard: View {
                 Text(String(localized: "No Active Budget"))
                     .headerStyle()
                 
-                Text(String(localized: "Create your first budget to start tracking your expenses effectively."))
+                Text(String(localized: "Import your Excel Monthly Budget workbook (.xlsx) or create a new budget to get started."))
                     .font(.body)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(Color.appSecondary)
                     .padding(.horizontal)
             }
             
-            Button(action: {
-                onAddBudget?()
-                analyticsService.trackEvent("Budget Create New Clicked (Empty State)")
-            }) {
-                Text(String(localized: "Create New Budget"))
+            VStack(spacing: 12) {
+                Button(action: {
+                    onImportWorkbook?()
+                    analyticsService.trackEvent("Import Excel Clicked (Empty State)")
+                }) {
+                    HStack {
+                        Image(systemName: "square.and.arrow.down.fill")
+                        Text(String(localized: "Import Excel Workbook (.xlsx)"))
+                    }
                     .font(.headline)
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -378,6 +407,26 @@ struct EmptyBudgetCard: View {
                     .background(Color.appAccent)
                     .cornerRadius(12)
                     .shadow(color: Color.appAccent.opacity(0.3), radius: 8, x: 0, y: 4)
+                }
+                .buttonStyle(.borderless)
+                
+                Button(action: {
+                    onAddBudget?()
+                    analyticsService.trackEvent("Budget Create New Clicked (Empty State)")
+                }) {
+                    HStack {
+                        Image(systemName: "plus")
+                        Text(String(localized: "Create Blank Budget"))
+                    }
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.appPrimary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.appLightGray)
+                    .cornerRadius(10)
+                }
+                .buttonStyle(.borderless)
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 8)

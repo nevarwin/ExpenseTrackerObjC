@@ -15,10 +15,11 @@ struct ImportView: View {
     
     @State private var viewModel: ImportViewModel?
     @State private var showingFileImporter = false
-    @State private var selectedImportType: ImportType = .transactions
+    @State private var selectedImportType: ImportType
     
-    init(targetBudget: Budget? = nil) {
+    init(targetBudget: Budget? = nil, initialImportType: ImportType = .fullWorkbook) {
         self.targetBudget = targetBudget
+        _selectedImportType = State(initialValue: initialImportType)
     }
     
     var body: some View {
@@ -78,6 +79,27 @@ struct ImportView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .padding(.horizontal)
                     
+                    // Excel Installment Formatting Tip Card
+                    if selectedImportType == .fullWorkbook {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "lightbulb.fill")
+                                    .foregroundStyle(Color.orange)
+                                Text("Excel Template Tip")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                            }
+                            
+                            Text("To automatically track an expense as an installment, prefix the category name in your Excel Expenses table with **Installment:** (e.g., **Installment: Midea Aircon**). The app will automatically create and link an installment plan for it upon import.")
+                                .font(.caption)
+                                .foregroundStyle(Color.appSecondary)
+                        }
+                        .padding()
+                        .background(Color.orange.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal)
+                    }
+                    
                     // Import Trigger Card
                     VStack(spacing: 16) {
                         Image(systemName: "doc.badge.plus")
@@ -116,32 +138,9 @@ struct ImportView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                     .padding(.horizontal)
                     
-                    // Status Banners
-                    if let vm = viewModel {
-                        if vm.isImporting {
-                            ProgressView("Processing files...")
-                                .padding()
-                        }
-                        
-                        if let result = vm.importResult {
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Image(systemName: result.success ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                                        .foregroundStyle(result.success ? Color.green : Color.red)
-                                    Text(result.success ? "Import Complete" : "Import Failed")
-                                        .font(.headline)
-                                }
-                                
-                                Text(result.message)
-                                    .font(.subheadline)
-                                    .foregroundStyle(Color.appSecondary)
-                            }
-                            .padding()
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(result.success ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .padding(.horizontal)
-                        } else if let error = vm.errorMessage {
+                    // Status Banners (for standalone errors if any)
+                    if let vm = viewModel, !vm.isImporting {
+                        if let error = vm.errorMessage, vm.currentProgress == nil {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Error")
                                     .font(.headline)
@@ -160,19 +159,22 @@ struct ImportView: View {
                 }
                 .padding(.vertical)
             }
-            .navigationTitle("Import CSV")
+            .navigationTitle("Import Data")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") {
                         dismiss()
                     }
+                    .disabled(viewModel?.isImporting ?? false)
                 }
             }
             .fileImporter(
                 isPresented: $showingFileImporter,
-                allowedContentTypes: [.commaSeparatedText, .plainText],
-                allowsMultipleSelection: true
+                allowedContentTypes: selectedImportType == .fullWorkbook
+                    ? [UTType(filenameExtension: "xlsx") ?? UTType("org.openxmlformats.spreadsheetml.sheet") ?? .data]
+                    : [.commaSeparatedText, .plainText],
+                allowsMultipleSelection: selectedImportType != .fullWorkbook
             ) { result in
                 handleFilePicked(result)
             }
@@ -181,6 +183,23 @@ struct ImportView: View {
                     viewModel = ImportViewModel(modelContext: modelContext)
                 }
             }
+            .overlay {
+                if let vm = viewModel, vm.isImporting, let progress = vm.currentProgress {
+                    ImportLoadingView(
+                        importType: selectedImportType,
+                        progress: progress,
+                        result: vm.importResult,
+                        onCancel: {
+                            vm.cancelImport()
+                        },
+                        onDone: {
+                            vm.dismissLoading()
+                        }
+                    )
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                }
+            }
+            .animation(.easeInOut(duration: 0.25), value: viewModel?.isImporting)
         }
     }
     
@@ -189,7 +208,11 @@ struct ImportView: View {
         
         switch result {
         case .success(let urls):
-            if selectedImportType == .transactions {
+            if selectedImportType == .fullWorkbook {
+                if let url = urls.first {
+                    vm.importWorkbookFile(url: url)
+                }
+            } else if selectedImportType == .transactions {
                 if let budget = targetBudget {
                     vm.importTransactionFiles(urls: urls, into: budget)
                 } else {

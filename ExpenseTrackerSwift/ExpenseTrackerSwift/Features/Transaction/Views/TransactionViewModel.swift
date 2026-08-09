@@ -195,7 +195,7 @@ final class TransactionViewModel {
                 
                 // Check if category is valid for the date
                 return category.isValid(for: transactionDate)
-            }
+            }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         } catch {
             errorMessage = "Failed to load categories: \(error.localizedDescription)"
             availableCategories = []

@@ -41,4 +41,7 @@ class Budget {
         self.updatedAt = Date()
     }
     
+    var sortedCategories: [Category] {
+        categories.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
 }

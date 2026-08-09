@@ -186,14 +186,14 @@ struct BudgetDetailView: View {
                 pickerYear = Calendar.current.component(.year, from: Date())
             }
         }
-        .confirmationDialog("Delete Budget", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
-            Button("Delete", role: .destructive) {
+        .alert(String(localized: "Delete Budget"), isPresented: $showingDeleteConfirmation) {
+            Button(String(localized: "Delete"), role: .destructive) {
                 deleteBudget()
                 analyticsService.trackEvent("Budget Delete Confirmed (Detail)", properties: ["budget_name": budget.name])
             }
-            Button("Cancel", role: .cancel) { }
+            Button(String(localized: "Cancel"), role: .cancel) { }
         } message: {
-            Text("Are you sure you want to delete this budget? All associated categories and transactions will be permanently deleted.")
+            Text(String(localized: "Are you sure you want to delete this budget? All associated categories and transactions will be permanently deleted."))
         }
     }
     

@@ -96,7 +96,7 @@ struct InstallmentFormView: View {
                     Section(header: Text("Expense Category")) {
                         Picker("Category", selection: $selectedCategory) {
                             Text("Select Category").tag(Category?.none)
-                            ForEach(budget.categories.filter { !$0.isIncome }) { category in
+                            ForEach(budget.sortedCategories.filter { !$0.isIncome }) { category in
                                 Text(category.name).tag(Category?.some(category))
                             }
                         }
