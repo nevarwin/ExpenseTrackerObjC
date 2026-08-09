@@ -188,7 +188,7 @@ struct TransactionQuickAddSheet: View {
                         .foregroundColor(.white)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 8)
-                        .background(Color.accentColor)
+                        .background(Color.emeraldPrimary)
                         .clipShape(Capsule())
                 }
                 .accessibilityIdentifier("quickadd_save_button")

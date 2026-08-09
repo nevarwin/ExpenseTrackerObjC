@@ -39,13 +39,13 @@ struct InstallmentDetailView: View {
                             .fontWeight(.semibold)
                             .padding(.horizontal, AppSpacing.sm)
                             .padding(.vertical, 4)
-                            .background(plan.isCompleted ? Color.green.opacity(0.15) : Color.blue.opacity(0.15))
-                            .foregroundColor(plan.isCompleted ? .green : .blue)
+                            .background(Color.emeraldSurface)
+                            .foregroundColor(Color.emeraldPrimary)
                             .clipShape(Capsule())
                     }
                     
                     ProgressView(value: plan.progressPercentage)
-                        .tint(plan.isCompleted ? .green : .blue)
+                        .tint(Color.emeraldPrimary)
                     
                     HStack {
                         VStack(alignment: .leading) {
@@ -88,7 +88,7 @@ struct InstallmentDetailView: View {
                             Spacer()
                         }
                     }
-                    .tint(.blue)
+                    .tint(Color.emeraldPrimary)
                 }
             }
             

@@ -79,7 +79,7 @@ struct InstallmentFormView: View {
                     
                     HStack {
                         Image(systemName: "clock.arrow.circlepath")
-                            .foregroundColor(.blue)
+                            .foregroundColor(Color.emeraldPrimary)
                         VStack(alignment: .leading, spacing: 4) {
                             Text("\(calculatedElapsedMonths) of \(totalMonths) months elapsed")
                                 .font(.subheadline)

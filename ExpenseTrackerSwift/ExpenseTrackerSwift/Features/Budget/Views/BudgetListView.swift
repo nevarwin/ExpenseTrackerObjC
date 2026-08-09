@@ -94,7 +94,7 @@ struct HomeContent: View {
                         } label: {
                             Label(String(localized: "Edit"), systemImage: "pencil")
                         }
-                        .tint(.blue)
+                        .tint(Color.emeraldPrimary)
                     }
                 }
             }
@@ -326,8 +326,8 @@ struct BudgetCardView: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        isOverBudget ? Color.red : appearanceManager.selectedAccent.color,
-                                        isOverBudget ? Color.orange : appearanceManager.selectedAccent.color.opacity(0.7)
+                                        isOverBudget ? Color.red : Color.emeraldPrimary,
+                                        isOverBudget ? Color.orange : Color.emeraldPrimary.opacity(0.7)
                                     ],
                                     startPoint: .leading,
                                     endPoint: .trailing

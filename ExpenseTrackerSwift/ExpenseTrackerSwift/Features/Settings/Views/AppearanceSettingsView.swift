@@ -33,40 +33,6 @@ struct AppearanceSettingsView: View {
                     .accessibilityIdentifier("appearance_option_\(appearance.rawValue)")
                 }
             }
-
-            Section(header: Text("Accent Color")) {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 60))], spacing: AppSpacing.md) {
-                    ForEach(AccentTheme.allCases) { theme in
-                        Button {
-                            appearanceManager.selectedAccent = theme
-                            appearanceManager.triggerHaptic(.medium)
-                            analyticsService.trackEvent("Accent Theme Changed", properties: ["accent": theme.title])
-                        } label: {
-                            VStack(spacing: AppSpacing.xs) {
-                                ZStack {
-                                    Circle()
-                                        .fill(theme.color)
-                                        .frame(width: 44, height: 44)
-                                    
-                                    if appearanceManager.selectedAccent == theme {
-                                        Image(systemName: "checkmark")
-                                            .font(.system(size: 16, weight: .bold))
-                                            .foregroundStyle(.white)
-                                    }
-                                }
-                                
-                                Text(theme.title)
-                                    .font(.caption2)
-                                    .foregroundStyle(Color.appSecondary)
-                                    .lineLimit(1)
-                            }
-                        }
-                        .buttonStyle(BouncyButtonStyle())
-                        .accessibilityIdentifier("accent_option_\(theme.rawValue)")
-                    }
-                }
-                .padding(.vertical, AppSpacing.sm)
-            }
         }
         .accessibilityIdentifier("appearance_list")
         .navigationTitle("Appearance")

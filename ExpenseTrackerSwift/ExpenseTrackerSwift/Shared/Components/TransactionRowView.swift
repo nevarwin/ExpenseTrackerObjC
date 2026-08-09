@@ -23,7 +23,7 @@ struct TransactionRowView: View {
                 
                 if let category = transaction.category {
                     Image(systemName: category.iconName)
-                        .foregroundStyle(appearanceManager.selectedAccent.color)
+                        .foregroundStyle(Color.emeraldPrimary)
                         .font(.system(size: iconSize * 0.4))
                 } else {
                     Image(systemName: "bag.fill")
@@ -50,7 +50,7 @@ struct TransactionRowView: View {
                 Text("****")
                     .font(.system(.body, design: .rounded))
                     .fontWeight(.bold)
-                    .foregroundStyle(transaction.isIncome ? Color.green : Color.appPrimary)
+                    .foregroundStyle(transaction.isIncome ? Color.emeraldPrimary : Color.appPrimary)
                     .accessibilityIdentifier("transaction_amount_censored")
                     .onTapGesture {
                         appearanceManager.triggerHaptic(.light)
@@ -62,7 +62,7 @@ struct TransactionRowView: View {
                 Text(transaction.amount, format: .currency(code: currencyManager.currencyCode))
                     .font(.system(.body, design: .rounded))
                     .fontWeight(.bold)
-                    .foregroundStyle(transaction.isIncome ? Color.green : Color.appPrimary)
+                    .foregroundStyle(transaction.isIncome ? Color.emeraldPrimary : Color.appPrimary)
                     .accessibilityIdentifier("transaction_amount")
                     .onTapGesture {
                         if transaction.shouldCensorAmount {

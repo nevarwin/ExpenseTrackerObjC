@@ -30,7 +30,32 @@ extension Color {
         Color(UIColor.secondarySystemGroupedBackground)
     }
 
+    /// Emerald Green Primary Anchor (#059669 Light / #10B981 Dark)
+    static var emeraldPrimary: Color {
+        Color("appAccent")
+    }
+
+    /// Emerald Gradient for headers, badges, and primary action buttons
+    static var emeraldGradient: LinearGradient {
+        LinearGradient(
+            colors: [Color(hex: "#10B981"), Color(hex: "#059669")],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    /// Subtle Emerald surface tint for chips, badges, and highlights
+    static var emeraldSurface: Color {
+        emeraldPrimary.opacity(0.12)
+    }
+
+    /// Soft Emerald background tint for cards and borders
+    static var emeraldSubtle: Color {
+        emeraldPrimary.opacity(0.06)
+    }
+
     static var dynamicAccent: Color {
-        SharedAppearanceService.instance.selectedAccent.color
+        emeraldPrimary
     }
 }
+

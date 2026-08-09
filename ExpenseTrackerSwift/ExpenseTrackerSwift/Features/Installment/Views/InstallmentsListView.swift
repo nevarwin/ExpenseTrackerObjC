@@ -88,7 +88,7 @@ struct InstallmentRowView: View {
             }
             
             ProgressView(value: plan.progressPercentage)
-                .tint(plan.isCompleted ? .green : .blue)
+                .tint(Color.emeraldPrimary)
                 .padding(.vertical, 2)
             
             HStack {

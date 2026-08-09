@@ -244,7 +244,7 @@ struct ImportLoadingView: View {
         } else if isFailed {
             return .red
         } else if progress.stage == .completed {
-            return .green
+            return Color.emeraldPrimary
         } else {
             return Color.appPrimary
         }
@@ -302,7 +302,7 @@ private struct StageStepView: View {
     
     private var stepCircleBackground: Color {
         if isCompleted {
-            return .green
+            return Color.emeraldPrimary
         } else if isCurrent {
             return Color.appPrimary
         } else {

@@ -275,7 +275,7 @@ struct DayCell: View {
                     .overlay(
                         Group {
                             if isSearchResult {
-                                Circle().stroke(Color.green, lineWidth: 2)
+                                Circle().stroke(Color.emeraldPrimary, lineWidth: 2)
                             } else if selectionState == .none && isToday {
                                 Circle().stroke(Color.dynamicAccent, lineWidth: 1)
                             }

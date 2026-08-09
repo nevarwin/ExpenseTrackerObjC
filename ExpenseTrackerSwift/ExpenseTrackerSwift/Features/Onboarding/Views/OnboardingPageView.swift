@@ -49,6 +49,6 @@ struct OnboardingPageView: View {
         title: "Track Expenses",
         description: "Easily track your expenses on a monthly, daily, or weekly basis.",
         imageName: "chart.bar.fill",
-        imageColor: .blue
+        imageColor: .emeraldPrimary
     )
 }

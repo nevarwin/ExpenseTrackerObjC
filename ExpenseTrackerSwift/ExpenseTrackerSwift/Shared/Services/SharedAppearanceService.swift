@@ -74,10 +74,9 @@ final class SharedAppearanceService: AppearanceServiceProtocol {
         }
     }
 
-    @Published var selectedAccent: AccentTheme = .defaultTeal {
-        didSet {
-            UserDefaults.standard.set(selectedAccent.rawValue, forKey: "selectedAccent")
-        }
+    var selectedAccent: AccentTheme {
+        get { .emerald }
+        set { }
     }
 
     @Published var isAnalyticsEnabled: Bool = true {
@@ -90,11 +89,6 @@ final class SharedAppearanceService: AppearanceServiceProtocol {
         if let savedValue = UserDefaults.standard.string(forKey: "userAppearance"),
            let appearance = Appearance(rawValue: savedValue) {
             self.userAppearance = appearance
-        }
-
-        if let savedAccent = UserDefaults.standard.string(forKey: "selectedAccent"),
-           let accent = AccentTheme(rawValue: savedAccent) {
-            self.selectedAccent = accent
         }
 
         if UserDefaults.standard.object(forKey: "isAnalyticsEnabled") == nil {
