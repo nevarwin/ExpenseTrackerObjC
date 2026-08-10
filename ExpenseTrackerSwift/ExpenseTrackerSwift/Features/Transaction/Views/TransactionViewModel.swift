@@ -24,10 +24,25 @@ final class TransactionViewModel {
     var isRangeMode: Bool = false
     var calendarScope: CalendarScope = .month
     var transactionDates: Set<Date> = []
+    var incomeTransactionDates: Set<Date> = []
+    var expenseTransactionDates: Set<Date> = []
     
     // Search State
     var searchText: String = ""
     var searchHighlightDates: Set<Date> = []
+    
+    // Financial Metrics for Active Selection
+    var totalIncome: Decimal {
+        transactions.filter { $0.isIncome }.reduce(0) { $0 + $1.amount }
+    }
+    
+    var totalExpense: Decimal {
+        transactions.filter { !$0.isIncome }.reduce(0) { $0 + $1.amount }
+    }
+    
+    var netBalance: Decimal {
+        totalIncome - totalExpense
+    }
     
     // Derived Calendar Properties
     var currentYear: Int {
@@ -114,53 +129,32 @@ final class TransactionViewModel {
         var components = Calendar.current.dateComponents([.year, .month, .day], from: selectedDate)
         components.year = year
         components.month = month
-        // Try to keep the day, but clamp it if needed (e.g. Jan 31 -> Feb 28)
-        // Calendar.date(from:) usually handles overflow by moving to next month, which we might want to avoid.
-        // Better to set day = 1 if we are just switching months, OR handle it carefully.
-        // For simple navigation, resetting to day 1 is safer, but user might find it annoying if they were on the 15th.
-        // Let's try to keep the day, but use validDate check?
-        // Actually, let's just create the date and let Calendar handle it, but maybe verify we are in the target month.
         
         if let newDate = Calendar.current.date(from: components) {
             selectedDate = newDate
         } else {
-            // Fallback: Day 1
             components.day = 1
             if let newDate = Calendar.current.date(from: components) {
                 selectedDate = newDate
             }
         }
         
-        // If single mode, this updates the view.
-        // If range mode, we might just be navigating the calendar view without changing selection yet?
-        // For now, let's assume navigating updates the focus.
         if !isRangeMode {
-            loadTransactions() // Reload for the new date
+            loadTransactions()
         }
+        loadTransactionDates()
     }
     
     func selectDate(_ date: Date) {
         if isRangeMode {
             if let range = selectedDateRange {
-                // If we already have a range, are we starting a new one?
-                // Or extending? Let's say: if we have a full range, reset. If we have partial?
-                // Let's simplify: Range Selection typically involves Tap 1 (Start), Tap 2 (End).
-                // But `selectedDateRange` is closed.
-                // Let's implement a simple logic:
-                // If we assume the user is building a range:
-                // 1. If currently nil, set both to date.
-                // 2. If we have a range where start == end (effectively one day selected), update end to new date.
-                // 3. If we have a different range, reset to new start.
-                
                 if range.lowerBound == range.upperBound {
-                    // Extending
                     if date < range.lowerBound {
                          selectedDateRange = date...range.upperBound
                     } else {
                          selectedDateRange = range.lowerBound...date
                     }
                 } else {
-                    // Resetting
                     selectedDateRange = date...date
                 }
             } else {
@@ -177,24 +171,19 @@ final class TransactionViewModel {
         budget: Budget,
         excluding: Transaction? = nil
     ) {
+        let budgetID = budget.id
         let descriptor = FetchDescriptor<Category>(
             predicate: #Predicate<Category> { category in
-                category.isActive == true
+                category.isActive == true &&
+                category.budget?.id == budgetID
             }
         )
         
         do {
-            let allCategories = try modelContext.fetch(descriptor)
+            let categories = try modelContext.fetch(descriptor)
             
-            // Filter by budget and validation rules
-            availableCategories = allCategories.filter { category in
-                // Must belong to the same budget
-                guard category.budget?.id == budget.id else { return false }
-                
-
-                
-                // Check if category is valid for the date
-                return category.isValid(for: transactionDate)
+            availableCategories = categories.filter { category in
+                category.isValid(for: transactionDate)
             }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         } catch {
             errorMessage = "Failed to load categories: \(error.localizedDescription)"
@@ -209,12 +198,10 @@ final class TransactionViewModel {
         category: Category,
         existing: Transaction? = nil
     ) -> Bool {
-        // Skip overflow check for income categories
         guard !category.isIncome else { return false }
         
         var currentUsed = category.usedAmountInMonth(date)
         
-        // If editing, subtract the previous amount from the usage
         if let existing = existing, let oldCategory = existing.category, oldCategory.id == category.id {
             currentUsed -= existing.amount
         }
@@ -232,7 +219,6 @@ final class TransactionViewModel {
         budgetPeriod: Date,
         existing: Transaction? = nil
     ) throws {
-        // Update old category if editing and category changed
         if let existing = existing, 
            let oldCategory = existing.category, 
            oldCategory.id != category.id {
@@ -240,8 +226,6 @@ final class TransactionViewModel {
             oldCategory.updatedAt = Date()
         }
         
-        // Prepare new category usage
-        // Note: If we are editing in the SAME category, we need to adjust for the diff
         var newUsage = category.usedAmount
         if let existing = existing, 
            let oldCategory = existing.category, 
@@ -250,11 +234,9 @@ final class TransactionViewModel {
         }
         newUsage += amount
         
-        // Update category
         category.usedAmount = newUsage
         category.updatedAt = Date()
         
-        // Create or update transaction
         if let existing = existing {
             existing.amount = amount
             existing.desc = description
@@ -278,25 +260,22 @@ final class TransactionViewModel {
             analyticsService.trackEvent("Transaction Added")
         }
         
-        // Update budget remaining amount
         let budgetCalculator = BudgetCalculator(budget: budget)
         budgetCalculator.updateRemainingAmount()
         
         try modelContext.save()
         loadTransactions(for: budget)
+        loadTransactionDates(for: budget)
     }
     
     func deleteTransaction(_ transaction: Transaction) throws {
-        // Store budget reference before deletion
         let budget = transaction.budget
         
-        // Update category used amount
         if let category = transaction.category {
             category.usedAmount -= transaction.amount
             category.updatedAt = Date()
         }
         
-        // Update budget
         if let budget = budget {
             let budgetCalculator = BudgetCalculator(budget: budget)
             budgetCalculator.updateRemainingAmount()
@@ -307,35 +286,59 @@ final class TransactionViewModel {
         
         analyticsService.trackEvent("Transaction Deleted")
         
-        // Reload transactions from database instead of manually manipulating array
         loadTransactions(for: budget)
+        loadTransactionDates(for: budget)
     }
     
     // MARK: - Calendar Data
     
     func loadTransactionDates(for budget: Budget? = nil) {
-        // Optimize: verify if we need to fetch all or just for the current month/view
-        // For indicators, fetching for the current month is usually enough.
-        // Let's fetch for the current viewed month.
-        
         let calendar = Calendar.current
         guard let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: selectedDate)),
               let monthEnd = calendar.date(byAdding: .month, value: 1, to: monthStart) else {
             return
         }
         
-        let descriptor = FetchDescriptor<Transaction>(
-            predicate: #Predicate<Transaction> { transaction in
-                transaction.isActive == true &&
-                transaction.date >= monthStart &&
-                transaction.date < monthEnd
-            }
-        )
+        let budgetID = budget?.id
+        let descriptor: FetchDescriptor<Transaction>
+        if let budgetID {
+            descriptor = FetchDescriptor<Transaction>(
+                predicate: #Predicate<Transaction> { transaction in
+                    transaction.isActive == true &&
+                    transaction.budget?.id == budgetID &&
+                    transaction.date >= monthStart &&
+                    transaction.date < monthEnd
+                }
+            )
+        } else {
+            descriptor = FetchDescriptor<Transaction>(
+                predicate: #Predicate<Transaction> { transaction in
+                    transaction.isActive == true &&
+                    transaction.date >= monthStart &&
+                    transaction.date < monthEnd
+                }
+            )
+        }
         
         do {
             let fetchedTransactions = try modelContext.fetch(descriptor)
-            let dates = fetchedTransactions.map { calendar.startOfDay(for: $0.date) }
-            transactionDates = Set(dates)
+            var allDates = Set<Date>()
+            var incDates = Set<Date>()
+            var expDates = Set<Date>()
+            
+            for tx in fetchedTransactions {
+                let day = calendar.startOfDay(for: tx.date)
+                allDates.insert(day)
+                if tx.isIncome {
+                    incDates.insert(day)
+                } else {
+                    expDates.insert(day)
+                }
+            }
+            
+            transactionDates = allDates
+            incomeTransactionDates = incDates
+            expenseTransactionDates = expDates
         } catch {
             print("Failed to load transaction dates: \(error)")
         }
@@ -377,7 +380,6 @@ final class TransactionViewModel {
             return days
             
         case .week:
-            // Find start of the week for baseDate
             guard let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: baseDate)) else {
                 return []
             }
@@ -391,6 +393,7 @@ final class TransactionViewModel {
             return days
         }
     }
+    
     func nextPage() {
         let calendar = Calendar.current
         let component: Calendar.Component = calendarScope == .month ? .month : .weekOfYear
@@ -400,7 +403,7 @@ final class TransactionViewModel {
             if !isRangeMode {
                 loadTransactions()
             }
-            loadTransactionDates() // Reload indicators for new month/week
+            loadTransactionDates()
         }
     }
     
@@ -410,7 +413,7 @@ final class TransactionViewModel {
         
         if let newDate = calendar.date(byAdding: component, value: -1, to: selectedDate) {
             selectedDate = newDate
-             if !isRangeMode {
+            if !isRangeMode {
                 loadTransactions()
             }
             loadTransactionDates()

@@ -3,10 +3,11 @@ import SwiftData
 
 struct TransactionListView: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var currencyManager: SharedCurrencyService
     @State private var viewModel: TransactionViewModel?
     @State private var showingAddTransaction = false
     @State private var selectedTransaction: Transaction?
-    @State private var hasUserSelectedDate = false
+    @State private var hasUserSelectedDate = true
 
     @Query(filter: #Predicate<Budget> { $0.isActive == true })
     private var activeBudgets: [Budget]
@@ -113,6 +114,23 @@ struct TransactionListView: View {
                     calendarContent(viewModel: viewModel)
                 }
 
+                // Scroll Offset Anchor
+                Color.clear
+                    .frame(height: 0)
+                    .background {
+                        GeometryReader { proxy in
+                            Color.clear
+                                .preference(
+                                    key: ScrollOffsetPreferenceKey.self,
+                                    value: proxy.frame(in: .named("scroll")).minY
+                                )
+                        }
+                    }
+
+                // Financial Summary Header
+                transactionSummaryHeader(viewModel: viewModel)
+                    .padding(.horizontal)
+
                 // Transaction items
                 transactionItemsContent(viewModel: viewModel)
                     .padding(.horizontal)
@@ -132,6 +150,51 @@ struct TransactionListView: View {
                     viewModel.calendarScope = .month
                 }
             }
+        }
+    }
+
+    // MARK: - Financial Summary Header
+
+    @ViewBuilder
+    private func transactionSummaryHeader(viewModel: TransactionViewModel) -> some View {
+        if !viewModel.transactions.isEmpty {
+            HStack {
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                    Text("Income")
+                        .font(.caption2)
+                        .foregroundStyle(Color.appSecondary)
+                    Text(viewModel.totalIncome, format: .currency(code: currencyManager.currencyCode))
+                        .font(.system(.subheadline, design: .rounded))
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.emeraldPrimary)
+                }
+
+                Spacer()
+
+                VStack(alignment: .center, spacing: AppSpacing.xs) {
+                    Text("Expense")
+                        .font(.caption2)
+                        .foregroundStyle(Color.appSecondary)
+                    Text(viewModel.totalExpense, format: .currency(code: currencyManager.currencyCode))
+                        .font(.system(.subheadline, design: .rounded))
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.appPrimary)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: AppSpacing.xs) {
+                    Text("Net")
+                        .font(.caption2)
+                        .foregroundStyle(Color.appSecondary)
+                    Text(viewModel.netBalance, format: .currency(code: currencyManager.currencyCode))
+                        .font(.system(.subheadline, design: .rounded))
+                        .fontWeight(.bold)
+                        .foregroundStyle(viewModel.netBalance >= 0 ? Color.emeraldPrimary : Color.red)
+                }
+            }
+            .appCardStyle()
+            .padding(.bottom, AppSpacing.sm)
         }
     }
 
@@ -168,7 +231,7 @@ struct TransactionListView: View {
             .accessibilityIdentifier("transaction_empty_no_results")
         } else {
             LazyVStack(spacing: 8) {
-                ForEach(Array(viewModel.transactions.enumerated()), id: \.element.id) { index, transaction in
+                ForEach(viewModel.transactions, id: \.id) { transaction in
                     SwipeActionView(
                         trailingActions: [
                             SwipeAction(
@@ -185,17 +248,6 @@ struct TransactionListView: View {
                         }
                     ) {
                         TransactionRowView(transaction: transaction)
-                            .background {
-                                if index == 0 {
-                                    GeometryReader { proxy in
-                                        Color.clear
-                                            .preference(
-                                                key: ScrollOffsetPreferenceKey.self,
-                                                value: proxy.frame(in: .named("scroll")).minY
-                                            )
-                                    }
-                                }
-                            }
                             .accessibilityIdentifier("transaction_row")
                     }
                 }

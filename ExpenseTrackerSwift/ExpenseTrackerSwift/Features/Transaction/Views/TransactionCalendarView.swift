@@ -105,7 +105,7 @@ struct TransactionCalendarView: View {
                                 
                                 Picker("Year", selection: $selectedYear) {
                                     ForEach((viewModel.currentYear - 10)...(viewModel.currentYear + 10), id: \.self) { year in
-                                        Text(String(year).replacingOccurrences(of: ",", with: "")).tag(year)
+                                        Text(verbatim: "\(year)").tag(year)
                                     }
                                 }
                                 .pickerStyle(.wheel)
@@ -116,8 +116,6 @@ struct TransactionCalendarView: View {
                                 swipeDirection = selectedMonth > viewModel.currentMonth || selectedYear > viewModel.currentYear ? .trailing : .leading
                                 withAnimation {
                                     viewModel.updateMonth(year: selectedYear, month: selectedMonth)
-                                    viewModel.loadTransactions()
-                                    viewModel.loadTransactionDates()
                                 }
                                 showingDatePicker = false
                             }
@@ -169,7 +167,6 @@ struct TransactionCalendarView: View {
                             DayCell(date: date, viewModel: viewModel) {
                                 viewModel.selectDate(date)
                                 
-                                // Call closure and pass whether there is a transaction on this date
                                 let hasTx = viewModel.transactionDates.contains(Calendar.current.startOfDay(for: date))
                                 onDateTapped?(hasTx)
                             }
@@ -203,9 +200,6 @@ struct TransactionCalendarView: View {
         .onAppear {
             viewModel.loadTransactionDates()
         }
-        .onChange(of: viewModel.selectedDate) { _, _ in
-            viewModel.loadTransactionDates()
-        }
     }
     
     private var monthYearString: String {
@@ -232,17 +226,17 @@ struct DayCell: View {
         if viewModel.isRangeMode, let range = viewModel.selectedDateRange {
             if range.contains(date) {
                 if range.lowerBound == range.upperBound {
-                    return .single // Single day range
+                    return .single
                 } else if Calendar.current.isDate(date, inSameDayAs: range.lowerBound) {
-                    return .start // Start of range
+                    return .start
                 } else if Calendar.current.isDate(date, inSameDayAs: range.upperBound) {
-                    return .end // End of range
+                    return .end
                 } else {
-                    return .middle // Middle of range
+                    return .middle
                 }
             }
         } else if Calendar.current.isDate(date, inSameDayAs: viewModel.selectedDate) && !viewModel.isRangeMode {
-            return .single // Single selection mode
+            return .single
         }
         return .none
     }
@@ -251,8 +245,12 @@ struct DayCell: View {
         Calendar.current.isDateInToday(date)
     }
     
-    private var hasTransaction: Bool {
-        viewModel.transactionDates.contains(Calendar.current.startOfDay(for: date))
+    private var hasIncome: Bool {
+        viewModel.incomeTransactionDates.contains(Calendar.current.startOfDay(for: date))
+    }
+    
+    private var hasExpense: Bool {
+        viewModel.expenseTransactionDates.contains(Calendar.current.startOfDay(for: date))
     }
     
     private var isSearchResult: Bool {
@@ -271,7 +269,7 @@ struct DayCell: View {
                     .fontWeight(selectionState != .none ? .semibold : .regular)
                     .frame(maxWidth: .infinity, minHeight: 32)
                     .background(backgroundView)
-                    .foregroundStyle(selectionState != .none ? .white : .primary)
+                    .foregroundStyle(selectionState == .single || selectionState == .start || selectionState == .end ? Color.white : Color.appPrimary)
                     .overlay(
                         Group {
                             if isSearchResult {
@@ -282,20 +280,28 @@ struct DayCell: View {
                         }
                     )
                 
-                // Transaction Indicator (Heatmap approach can be expanded here but keep it simple red dot for now)
-                if hasTransaction {
-                    Circle()
-                        .fill(Color.red)
-                        .frame(width: 4, height: 4)
-                } else {
-                    Circle()
-                        .fill(Color.clear)
-                        .frame(width: 4, height: 4)
+                // Income & Expense Indicator Dots
+                HStack(spacing: 2) {
+                    if hasIncome {
+                        Circle()
+                            .fill(Color.emeraldPrimary)
+                            .frame(width: 4, height: 4)
+                    }
+                    if hasExpense {
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 4, height: 4)
+                    }
+                    if !hasIncome && !hasExpense {
+                        Circle()
+                            .fill(Color.clear)
+                            .frame(width: 4, height: 4)
+                    }
                 }
             }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Text("\(date.formatted(.dateTime.month().day())) \(hasTransaction ? "Has transactions" : "No transactions")"))
+        .accessibilityLabel(Text("\(date.formatted(.dateTime.month().day())) \((hasIncome || hasExpense) ? "Has transactions" : "No transactions")"))
     }
     
     @ViewBuilder
@@ -306,16 +312,16 @@ struct DayCell: View {
         case .start:
             HStack(spacing: 0) {
                 Color.clear
-                Color.dynamicAccent
+                Color.emeraldSurface
             }
             .overlay(
                 Circle().fill(Color.dynamicAccent)
             )
         case .middle:
-            Color.dynamicAccent
+            Rectangle().fill(Color.emeraldSurface)
         case .end:
              HStack(spacing: 0) {
-                Color.dynamicAccent
+                Color.emeraldSurface
                 Color.clear
             }
             .overlay(

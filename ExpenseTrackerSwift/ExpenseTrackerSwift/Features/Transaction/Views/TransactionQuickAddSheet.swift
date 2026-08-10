@@ -49,8 +49,9 @@ struct TransactionQuickAddSheet: View {
                         viewModel: viewModel
                     )
                 } else {
-                    VStack(spacing: 16) {
+                    VStack(spacing: 12) {
                         amountDescriptionRow
+                        quickAmountChips
                         
                         VStack(spacing: 12) {
                             categorySelectionSection
@@ -70,7 +71,7 @@ struct TransactionQuickAddSheet: View {
                 }
             }
         }
-        .presentationDetents(showFullForm ? [.large] : [.height(300)])
+        .presentationDetents(showFullForm ? [.large] : [.height(340)])
         .presentationDragIndicator(.visible)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -142,6 +143,27 @@ struct TransactionQuickAddSheet: View {
         }
         .padding(.horizontal)
         .padding(.top, 8)
+    }
+    
+    private var quickAmountChips: some View {
+        HStack(spacing: AppSpacing.sm) {
+            ForEach([5, 10, 25, 50], id: \.self) { val in
+                Button("+\(val)") {
+                    let current = Decimal(string: amount) ?? 0
+                    let newAmount = current + Decimal(val)
+                    amount = "\(newAmount)"
+                }
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(Color.emeraldPrimary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(Color.emeraldSurface)
+                .clipShape(Capsule())
+            }
+            Spacer()
+        }
+        .padding(.horizontal)
     }
     
     private var categorySelectionSection: some View {
