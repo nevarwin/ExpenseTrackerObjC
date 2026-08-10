@@ -174,7 +174,7 @@ struct ImportLoadingView: View {
                                 .fontWeight(.bold)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
-                                .background(Color.appPrimary)
+                                .background(Color.emeraldPrimary)
                                 .foregroundStyle(.white)
                                 .clipShape(RoundedRectangle(cornerRadius: 10))
                         }
@@ -304,7 +304,7 @@ private struct StageStepView: View {
         if isCompleted {
             return Color.emeraldPrimary
         } else if isCurrent {
-            return Color.appPrimary
+            return Color.emeraldPrimary
         } else {
             return Color.appSecondary.opacity(0.2)
         }

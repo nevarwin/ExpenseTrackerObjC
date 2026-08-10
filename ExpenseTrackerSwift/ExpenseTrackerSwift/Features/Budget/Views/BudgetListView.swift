@@ -271,7 +271,7 @@ struct BudgetCardView: View {
                     Text(displayMonth.monthYearString)
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundStyle(Color.appSecondary)
+                        .foregroundStyle(Color.appPrimary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
                         .background(Color.appLightGray)

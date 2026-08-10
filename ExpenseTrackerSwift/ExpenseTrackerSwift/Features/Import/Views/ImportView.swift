@@ -126,7 +126,7 @@ struct ImportView: View {
                             .fontWeight(.semibold)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.appPrimary)
+                            .background(Color.emeraldPrimary)
                             .foregroundStyle(.white)
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                         }

@@ -31,7 +31,7 @@ struct MonthlyBudgetDetailView: View {
                 LabeledContent("Planned Expenses", value: pExpense.formatted(.currency(code: currencyManager.currencyCode)))
                 LabeledContent("Actual Expenses", value: aExpense.formatted(.currency(code: currencyManager.currencyCode)))
                 LabeledContent("Difference", value: dExpense.formatted(.currency(code: currencyManager.currencyCode)))
-                    .foregroundStyle(dExpense >= 0 ? .green : .red)
+                    .foregroundStyle(dExpense >= 0 ? Color.emeraldPrimary : .red)
             }
             
             Section("Income Overview") {
@@ -42,14 +42,14 @@ struct MonthlyBudgetDetailView: View {
                 LabeledContent("Planned Income", value: pIncome.formatted(.currency(code: currencyManager.currencyCode)))
                 LabeledContent("Actual Income", value: aIncome.formatted(.currency(code: currencyManager.currencyCode)))
                 LabeledContent("Difference", value: dIncome.formatted(.currency(code: currencyManager.currencyCode)))
-                    .foregroundStyle(dIncome >= 0 ? .green : .red)
+                    .foregroundStyle(dIncome >= 0 ? Color.emeraldPrimary : .red)
             }
             
             Section("Net Savings") {
                 let savings = budgetCalculator.remainingInMonth(date: month)
                 LabeledContent("Savings") {
                     Text(savings, format: .currency(code: currencyManager.currencyCode))
-                        .foregroundStyle(savings >= 0 ? .green : .red)
+                        .foregroundStyle(savings >= 0 ? Color.emeraldPrimary : .red)
                         .fontWeight(.semibold)
                 }
             }
