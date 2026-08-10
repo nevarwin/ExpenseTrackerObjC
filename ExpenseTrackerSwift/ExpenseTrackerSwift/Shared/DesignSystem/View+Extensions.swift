@@ -10,9 +10,8 @@ struct AppCardModifier: ViewModifier {
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.card))
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.card)
-                    .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.03), lineWidth: 1)
+                    .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.04), lineWidth: 1)
             )
-            .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
     }
 }
 
@@ -28,9 +27,8 @@ struct CardStyle: ViewModifier {
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.card))
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.card)
-                    .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.03), lineWidth: 1)
+                    .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.04), lineWidth: 1)
             )
-            .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
     }
 }
 

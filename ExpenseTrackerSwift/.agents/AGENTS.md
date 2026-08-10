@@ -30,4 +30,6 @@
 - **Progress Bars:** Standardize list and card progress indicators using `AppProgressBar` with a fixed `8pt` capsule height (`AppRow.progressBarHeight`).
 - **Typography & Font Weight:** Use rounded font design `.font(.system(..., design: .rounded))` with `.fontWeight(.bold)` or `.fontWeight(.medium)` for card headers, category names, and currency amounts.
 - **Currency & Theme Tokens:** NEVER hardcode currency symbols (e.g. `$`). Always format currency using `currencyManager.currencyCode` and use `Color.emeraldPrimary` for positive financial indicators instead of raw `.green`.
+- **Flat Card Surface & No Drop Shadows:** Standard cards use crisp, subtle border stroke overlays (`lineWidth: 1`) on flat surfaces. Do NOT use heavy drop shadows (`.shadow(...)`) on list cards or toolbar items.
+
 

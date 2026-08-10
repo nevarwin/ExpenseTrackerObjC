@@ -48,7 +48,7 @@ struct CategoryTransactionsView: View {
                         .buttonStyle(.plain)
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
                                 try? transactionViewModel?.deleteTransaction(transaction)
@@ -67,26 +67,32 @@ struct CategoryTransactionsView: View {
                 }
             } header: {
                 Text("Transactions")
+                    .font(.system(.subheadline, design: .rounded))
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.appSecondary)
+                    .textCase(nil)
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle(category.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                HStack(spacing: 16) {
-                    Button {
-                        showingEditCategory = true
-                    } label: {
-                        Image(systemName: "pencil")
-                    }
-                    
-                    Button {
-                        showingAddTransaction = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .disabled(activeBudgets.isEmpty)
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showingEditCategory = true
+                } label: {
+                    Image(systemName: "pencil")
                 }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showingAddTransaction = true
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .disabled(activeBudgets.isEmpty)
             }
         }
         .sheet(item: $selectedTransaction) { transaction in
