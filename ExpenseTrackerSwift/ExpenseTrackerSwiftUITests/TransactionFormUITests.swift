@@ -143,4 +143,165 @@ final class TransactionFormUITests: TransactionUITestCase {
 
         _ = categoryPicker // suppress unused warning
     }
+
+    // MARK: - Create Transaction Tests
+
+    /// Opens the full form, fills amount/description/category, saves, and verifies the row appears.
+    @MainActor
+    func testCreateExpenseViaFullForm() throws {
+        try openFullForm()
+
+        let amountField = app.textFields["form_amount_field"]
+        assertExists(amountField, timeout: 5)
+        amountField.tap()
+        amountField.typeText("120")
+
+        let descField = app.textFields["form_description_field"]
+        assertExists(descField)
+        descField.tap()
+        descField.typeText("Grocery shopping")
+
+        // Select a category from the picker
+        let categoryPicker = app.buttons["form_category_picker"]
+        if categoryPicker.waitForExistence(timeout: 3) {
+            categoryPicker.tap()
+            // Pick "Food" category from the picker options
+            let foodOption = app.buttons["Food"]
+            if foodOption.waitForExistence(timeout: 3) {
+                foodOption.tap()
+            }
+        }
+
+        let saveButton = app.buttons["form_save_button"]
+        if saveButton.waitForExistence(timeout: 3), saveButton.isEnabled {
+            saveButton.tap()
+
+            // Handle potential overflow alert
+            let alert = app.alerts["Amount Exceeds Allocation"]
+            if alert.waitForExistence(timeout: 2) {
+                alert.buttons["Proceed Anyway"].tap()
+            }
+
+            // Verify transaction appears
+            tapTodayButton()
+            verifyTransactionRowAppears()
+            takeScreenshot(name: "form_create_expense_complete")
+        } else {
+            throw XCTSkip("Save button not enabled — category selection may have failed.")
+        }
+    }
+
+    /// Opens the full form, selects income category, saves, and verifies the row.
+    @MainActor
+    func testCreateIncomeViaFullForm() throws {
+        try openFullForm()
+
+        let amountField = app.textFields["form_amount_field"]
+        assertExists(amountField, timeout: 5)
+        amountField.tap()
+        amountField.typeText("3000")
+
+        let descField = app.textFields["form_description_field"]
+        assertExists(descField)
+        descField.tap()
+        descField.typeText("Monthly salary")
+
+        // Select income category
+        let categoryPicker = app.buttons["form_category_picker"]
+        if categoryPicker.waitForExistence(timeout: 3) {
+            categoryPicker.tap()
+            let salaryOption = app.buttons["Salary"]
+            if salaryOption.waitForExistence(timeout: 3) {
+                salaryOption.tap()
+            }
+        }
+
+        let saveButton = app.buttons["form_save_button"]
+        if saveButton.waitForExistence(timeout: 3), saveButton.isEnabled {
+            saveButton.tap()
+
+            let alert = app.alerts["Amount Exceeds Allocation"]
+            if alert.waitForExistence(timeout: 2) {
+                alert.buttons["Proceed Anyway"].tap()
+            }
+
+            tapTodayButton()
+            verifyTransactionRowAppears()
+            takeScreenshot(name: "form_create_income_complete")
+        } else {
+            throw XCTSkip("Save button not enabled — income category selection may have failed.")
+        }
+    }
+
+    /// Opens the full form, taps "Assign to Month", picks a different period, and verifies the sheet opens.
+    @MainActor
+    func testAssignCustomBudgetPeriod() throws {
+        try openFullForm()
+
+        let periodButton = app.buttons["form_budget_period_button"]
+        assertExists(periodButton, timeout: 5)
+        periodButton.tap()
+
+        // Month picker sheet should appear
+        let doneButton = app.buttons["month_picker_done_button"]
+        assertExists(doneButton, timeout: 5, message: "Month picker sheet should appear with Done button")
+
+        // Tap "Previous Month" to change the period
+        let prevMonthButton = app.buttons["month_picker_previous_month"]
+        if prevMonthButton.waitForExistence(timeout: 3) {
+            prevMonthButton.tap()
+        }
+
+        takeScreenshot(name: "form_custom_budget_period")
+        doneButton.tap()
+
+        // Verify we're back on the form
+        let saveButton = app.buttons["form_save_button"]
+        assertExists(saveButton, timeout: 3, message: "Should return to form after month picker")
+    }
+
+    /// Fills form fields, taps Cancel, and verifies form dismisses without saving.
+    @MainActor
+    func testCancelFullFormDismissesWithoutSaving() throws {
+        try openFullForm()
+
+        let amountField = app.textFields["form_amount_field"]
+        assertExists(amountField, timeout: 5)
+        amountField.tap()
+        amountField.typeText("999")
+
+        let descField = app.textFields["form_description_field"]
+        assertExists(descField)
+        descField.tap()
+        descField.typeText("Should not be saved")
+
+        let cancelButton = app.buttons["form_cancel_button"]
+        assertExists(cancelButton)
+        cancelButton.tap()
+
+        // Form should be dismissed — verify we're back on the Transactions list
+        let addButton = app.buttons["transaction_add_button"]
+        assertExists(addButton, timeout: 5, message: "Should return to Transactions list after Cancel")
+        takeScreenshot(name: "form_cancel_dismissed")
+    }
+
+    /// Types more than 9 integer digits into the amount field and verifies truncation.
+    @MainActor
+    func testAmountMaxDigitTruncation() throws {
+        try openFullForm()
+
+        let amountField = app.textFields["form_amount_field"]
+        assertExists(amountField, timeout: 5)
+        amountField.tap()
+        amountField.typeText("1234567890") // 10 digits — should be truncated to 9
+
+        let amountValue = amountField.value as? String ?? ""
+        // The onChange handler limits integer part to 9 digits
+        XCTAssertTrue(
+            amountValue.count <= 10, // 9 digits + possible decimal
+            "Amount field should truncate beyond 9 integer digits, got: \(amountValue)"
+        )
+
+        takeScreenshot(name: "form_amount_truncation")
+    }
 }

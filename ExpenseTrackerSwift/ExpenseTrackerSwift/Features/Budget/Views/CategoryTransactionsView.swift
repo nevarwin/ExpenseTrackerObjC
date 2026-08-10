@@ -38,6 +38,7 @@ struct CategoryTransactionsView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 24)
+                    .accessibilityIdentifier("category_transactions_empty")
                 } else {
                     ForEach(transactions) { transaction in
                         Button {
@@ -45,6 +46,7 @@ struct CategoryTransactionsView: View {
                         } label: {
                             TransactionRowView(transaction: transaction)
                         }
+                        .accessibilityIdentifier("category_transaction_row")
                         .buttonStyle(.plain)
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
@@ -85,6 +87,7 @@ struct CategoryTransactionsView: View {
                 } label: {
                     Image(systemName: "pencil")
                 }
+                .accessibilityIdentifier("category_edit_button")
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -93,6 +96,7 @@ struct CategoryTransactionsView: View {
                     Image(systemName: "plus")
                 }
                 .disabled(activeBudgets.isEmpty)
+                .accessibilityIdentifier("category_add_transaction_button")
             }
         }
         .sheet(item: $selectedTransaction) { transaction in

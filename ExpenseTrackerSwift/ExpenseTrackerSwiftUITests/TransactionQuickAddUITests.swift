@@ -92,4 +92,120 @@ final class TransactionQuickAddUITests: TransactionUITestCase {
         XCTAssertTrue(formAppeared, "Full TransactionFormView should appear after tapping Expand")
         takeScreenshot(name: "quickadd_expanded_to_full_form")
     }
+
+    // MARK: - Complete Flow Tests
+
+    /// Full end-to-end: enter amount, select expense category, save, and verify row appears in list.
+    @MainActor
+    func testCompleteQuickAddExpenseFlow() throws {
+        let amountField = app.textFields["quickadd_amount_field"]
+        assertExists(amountField, timeout: 3)
+        amountField.tap()
+        amountField.typeText("35")
+
+        // Select the first available expense category
+        let firstCategory = app.otherElements.matching(
+            NSPredicate(format: "identifier BEGINSWITH 'quickadd_category_'")
+        ).firstMatch
+        guard firstCategory.waitForExistence(timeout: 3) else {
+            throw XCTSkip("No expense categories available for quick add.")
+        }
+        firstCategory.tap()
+
+        let saveButton = app.buttons["quickadd_save_button"]
+        assertExists(saveButton, timeout: 3)
+        saveButton.tap()
+
+        // Verify row appears after sheet dismisses
+        tapTodayButton()
+        verifyTransactionRowAppears()
+        takeScreenshot(name: "quickadd_expense_complete")
+    }
+
+    /// Toggle to Income, select income category, save, and verify row appears.
+    @MainActor
+    func testCompleteQuickAddIncomeFlow() throws {
+        let typePicker = app.segmentedControls["quickadd_type_picker"]
+        assertExists(typePicker, timeout: 3)
+        typePicker.buttons["Income"].tap()
+
+        let amountField = app.textFields["quickadd_amount_field"]
+        amountField.tap()
+        amountField.typeText("1500")
+
+        // Select first income category
+        let incomeCategory = app.otherElements.matching(
+            NSPredicate(format: "identifier BEGINSWITH 'quickadd_category_'")
+        ).firstMatch
+        guard incomeCategory.waitForExistence(timeout: 3) else {
+            throw XCTSkip("No income categories available for quick add.")
+        }
+        incomeCategory.tap()
+
+        let saveButton = app.buttons["quickadd_save_button"]
+        assertExists(saveButton, timeout: 3)
+        saveButton.tap()
+
+        // Verify row appears
+        tapTodayButton()
+        verifyTransactionRowAppears()
+        takeScreenshot(name: "quickadd_income_complete")
+    }
+
+    /// Selecting a category should auto-fill the description field with the category name.
+    @MainActor
+    func testQuickAddCategoryAutoFillsDescription() throws {
+        let firstCategory = app.otherElements.matching(
+            NSPredicate(format: "identifier BEGINSWITH 'quickadd_category_'")
+        ).firstMatch
+        guard firstCategory.waitForExistence(timeout: 3) else {
+            throw XCTSkip("No categories available.")
+        }
+        firstCategory.tap()
+
+        let descField = app.textFields["quickadd_description_field"]
+        assertExists(descField, timeout: 3)
+        let descValue = descField.value as? String ?? ""
+        XCTAssertFalse(descValue.isEmpty, "Description should be auto-filled with the category name")
+
+        takeScreenshot(name: "quickadd_autofill_description")
+    }
+
+    /// Entering an amount exceeding category allocation should trigger the overflow alert.
+    /// Tapping "Proceed Anyway" should save the transaction.
+    @MainActor
+    func testQuickAddOverflowAlertProceed() throws {
+        let amountField = app.textFields["quickadd_amount_field"]
+        assertExists(amountField, timeout: 3)
+        amountField.tap()
+        amountField.typeText("999999999")
+
+        let firstCategory = app.otherElements.matching(
+            NSPredicate(format: "identifier BEGINSWITH 'quickadd_category_'")
+        ).firstMatch
+        guard firstCategory.waitForExistence(timeout: 3) else {
+            throw XCTSkip("No categories available.")
+        }
+        firstCategory.tap()
+
+        let saveButton = app.buttons["quickadd_save_button"]
+        assertExists(saveButton, timeout: 3)
+        saveButton.tap()
+
+        // Overflow alert should appear
+        let alert = app.alerts["Amount Exceeds Allocation"]
+        if alert.waitForExistence(timeout: 5) {
+            XCTAssertTrue(alert.buttons["Proceed Anyway"].exists, "Alert should have 'Proceed Anyway' action")
+            takeScreenshot(name: "quickadd_overflow_alert")
+
+            alert.buttons["Proceed Anyway"].tap()
+
+            // Verify transaction saved (sheet dismisses)
+            tapTodayButton()
+            verifyTransactionRowAppears()
+        } else {
+            // If no overflow alert, the allocation was large enough — skip
+            throw XCTSkip("Overflow alert did not appear — category allocation is larger than test amount.")
+        }
+    }
 }

@@ -220,6 +220,128 @@ final class TransactionListUITests: TransactionUITestCase {
         XCTAssertEqual(initialLabel, restoredLabel, "Month/year label should return to initial after tapping prev")
         takeScreenshot(name: "calendar_prev_month")
     }
+
+    // MARK: - Search Tests (Extended)
+
+    /// Adds a transaction with a specific description, searches for it, and verifies only matching rows appear.
+    @MainActor
+    func testSearchTransactionExactMatch() throws {
+        navigateToTransactions()
+
+        // The seed data includes "Lunch at cafe" — search for it
+        let searchField = app.searchFields.firstMatch
+        assertExists(searchField, timeout: 3)
+        searchField.tap()
+        searchField.typeText("Lunch")
+
+        // Wait for filtered results
+        let transactionRow = app.otherElements["transaction_row"].firstMatch
+        let appeared = transactionRow.waitForExistence(timeout: 5)
+        XCTAssertTrue(appeared, "Should find the seeded 'Lunch at cafe' transaction")
+
+        takeScreenshot(name: "search_exact_match")
+    }
+
+    /// Searches for a non-existent term and verifies "No Results" unavailable view appears.
+    @MainActor
+    func testSearchTransactionNoResults() throws {
+        navigateToTransactions()
+
+        let searchField = app.searchFields.firstMatch
+        assertExists(searchField, timeout: 3)
+        searchField.tap()
+        searchField.typeText("zzz_nonexistent_query_zzz")
+
+        // "No Results" ContentUnavailableView should appear
+        let noResults = app.staticTexts["No Results"]
+        let appeared = noResults.waitForExistence(timeout: 5)
+        XCTAssertTrue(appeared, "Expected 'No Results' state for non-matching query")
+
+        takeScreenshot(name: "search_no_results")
+    }
+
+    // MARK: - Swipe Action Tests (Extended)
+
+    /// Full end-to-end: tap today, swipe a transaction, delete it, and verify it disappears.
+    @MainActor
+    func testSwipeToDeleteTransactionEndToEnd() throws {
+        navigateToTransactions()
+        tapTodayButton()
+
+        let firstRow = app.otherElements["transaction_row"].firstMatch
+        guard firstRow.waitForExistence(timeout: 5) else {
+            throw XCTSkip("No transactions present for today — seed data may not include today's transactions.")
+        }
+
+        let initialRowCount = app.otherElements.matching(
+            NSPredicate(format: "identifier == 'transaction_row'")
+        ).count
+
+        firstRow.swipeLeft()
+
+        let deleteButton = app.buttons["swipe_action_delete"]
+        assertExists(deleteButton, timeout: 3)
+        deleteButton.tap()
+
+        // Wait and verify count decreased
+        sleep(1)
+        let newRowCount = app.otherElements.matching(
+            NSPredicate(format: "identifier == 'transaction_row'")
+        ).count
+
+        XCTAssertTrue(
+            newRowCount < initialRowCount,
+            "Transaction count should decrease after delete (was \(initialRowCount), now \(newRowCount))"
+        )
+        takeScreenshot(name: "delete_e2e_complete")
+    }
+
+    /// Full end-to-end: swipe to edit, modify the description, save, verify updated row in list.
+    @MainActor
+    func testSwipeToEditTransactionEndToEnd() throws {
+        navigateToTransactions()
+        tapTodayButton()
+
+        let firstRow = app.otherElements["transaction_row"].firstMatch
+        guard firstRow.waitForExistence(timeout: 5) else {
+            throw XCTSkip("No transactions present for today.")
+        }
+
+        // Tap the row to open the edit form (since TransactionListView uses onTap for edit)
+        firstRow.tap()
+
+        // Verify edit form appears
+        let cancelButton = app.buttons["form_cancel_button"]
+        assertExists(cancelButton, timeout: 5, message: "Edit form should appear after tapping row")
+
+        // Modify description
+        let descField = app.textFields["form_description_field"]
+        assertExists(descField)
+        descField.tap()
+
+        // Clear existing text and type new description
+        if let currentText = descField.value as? String, !currentText.isEmpty {
+            let deleteString = String(repeating: XCUIKeyboardKey.delete.rawValue, count: currentText.count)
+            descField.typeText(deleteString)
+        }
+        descField.typeText("Updated description")
+
+        // Save
+        let saveButton = app.buttons["form_save_button"]
+        if saveButton.waitForExistence(timeout: 3), saveButton.isEnabled {
+            saveButton.tap()
+
+            // Handle potential overflow alert
+            let alert = app.alerts["Amount Exceeds Allocation"]
+            if alert.waitForExistence(timeout: 2) {
+                alert.buttons["Proceed Anyway"].tap()
+            }
+        }
+
+        // Verify we're back on the list with updated data
+        verifyTransactionRowAppears()
+        takeScreenshot(name: "edit_e2e_complete")
+    }
 }
 
 // MARK: - XCUIElement Helpers
