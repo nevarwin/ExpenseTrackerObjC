@@ -74,13 +74,13 @@ struct SwipeActionView<Content: View>: View {
         }
         .contentShape(Rectangle())
         .simultaneousGesture(
-            DragGesture(minimumDistance: 10, coordinateSpace: .local)
+            DragGesture(minimumDistance: 20, coordinateSpace: .local)
                 .onChanged { value in
                     let horizontalDrag = value.translation.width
                     let verticalDrag = value.translation.height
 
-                    // Only respond to predominantly horizontal drags
-                    guard abs(horizontalDrag) > abs(verticalDrag) else { return }
+                    // Only respond if drag is predominantly horizontal
+                    guard abs(horizontalDrag) > abs(verticalDrag) * 1.5 else { return }
 
                     let translation = horizontalDrag + dragStartOffset
                     if translation < 0 {
@@ -91,6 +91,12 @@ struct SwipeActionView<Content: View>: View {
                     }
                 }
                 .onEnded { value in
+                    let horizontalDrag = value.translation.width
+                    let verticalDrag = value.translation.height
+                    
+                    // Ignore vertical drag releases when row was not swiped open
+                    guard abs(horizontalDrag) > abs(verticalDrag) || offset != 0 else { return }
+
                     let velocity = value.predictedEndTranslation.width - value.translation.width
                     let draggedPastThreshold = (-offset) >= (totalActionWidth * snapThreshold)
                     let isQuickSwipe = velocity < -300 && value.translation.width < -10

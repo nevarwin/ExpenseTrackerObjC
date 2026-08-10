@@ -7,7 +7,7 @@ struct TransactionListView: View {
     @State private var viewModel: TransactionViewModel?
     @State private var showingAddTransaction = false
     @State private var selectedTransaction: Transaction?
-    @State private var hasUserSelectedDate = true
+    @State private var hasUserSelectedDate = false
 
     @Query(filter: #Predicate<Budget> { $0.isActive == true })
     private var activeBudgets: [Budget]
@@ -141,11 +141,11 @@ struct TransactionListView: View {
         .accessibilityIdentifier("transaction_list")
         .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
             guard !viewModel.isLoading else { return }
-            if value < -20 && viewModel.calendarScope == .month {
+            if value < -60 && viewModel.calendarScope == .month {
                 withAnimation(.easeInOut) {
                     viewModel.calendarScope = .week
                 }
-            } else if value >= 0 && viewModel.calendarScope == .week {
+            } else if value >= 10 && viewModel.calendarScope == .week {
                 withAnimation(.easeInOut) {
                     viewModel.calendarScope = .month
                 }

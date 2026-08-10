@@ -180,13 +180,17 @@ struct TransactionCalendarView: View {
                 .id(calendarScopeID)
                 .transition(.push(from: swipeDirection))
             }
-            .gesture(
-                DragGesture()
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 15, coordinateSpace: .local)
                     .onEnded { value in
-                        if value.translation.width < -50 {
+                        let horizontal = value.translation.width
+                        let vertical = value.translation.height
+                        guard abs(horizontal) > abs(vertical) else { return }
+                        
+                        if horizontal < -50 {
                             swipeDirection = .trailing
                             withAnimation { viewModel.nextPage() }
-                        } else if value.translation.width > 50 {
+                        } else if horizontal > 50 {
                             swipeDirection = .leading
                             withAnimation { viewModel.previousPage() }
                         }
