@@ -192,7 +192,7 @@ struct MonthSummaryRow: View {
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .background(Color.appAccent)
-                        .cornerRadius(6)
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.small))
                 }
                 
                 Spacer()
@@ -202,20 +202,21 @@ struct MonthSummaryRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Income")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appSecondary)
                     Text(budgetCalculator.incomeInMonth(date: month), format: .currency(code: currencyManager.currencyCode))
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.green)
+                        .font(.system(.subheadline, design: .rounded))
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.emeraldPrimary)
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Spent")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appSecondary)
                     Text(budgetCalculator.expensesInMonth(date: month), format: .currency(code: currencyManager.currencyCode))
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
+                        .font(.system(.subheadline, design: .rounded))
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.appPrimary)
                 }
                 
                 Spacer()
@@ -223,11 +224,11 @@ struct MonthSummaryRow: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("Remaining")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appSecondary)
                     Text(budgetCalculator.remainingInMonth(date: month), format: .currency(code: currencyManager.currencyCode))
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(budgetCalculator.remainingInMonth(date: month) >= 0 ? .green : .red)
+                        .font(.system(.subheadline, design: .rounded))
+                        .fontWeight(.bold)
+                        .foregroundStyle(budgetCalculator.remainingInMonth(date: month) >= 0 ? Color.emeraldPrimary : .red)
                 }
             }
         }

@@ -202,7 +202,7 @@ struct BudgetCardView: View {
     private let budgetCalculator: BudgetCalculator
     @EnvironmentObject var currencyManager: SharedCurrencyService
     @EnvironmentObject var appearanceManager: SharedAppearanceService
-    @ScaledMetric(relativeTo: .body) private var barHeight: CGFloat = 12
+    @ScaledMetric(relativeTo: .body) private var barHeight: CGFloat = AppRow.progressBarHeight
     @State private var animatedProgress: Double = 0
     
     init(budget: Budget) {
@@ -405,7 +405,7 @@ struct EmptyBudgetCard: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.appAccent)
-                    .cornerRadius(12)
+                    .clipShape(RoundedRectangle(cornerRadius: AppRadius.medium))
                     .shadow(color: Color.appAccent.opacity(0.3), radius: 8, x: 0, y: 4)
                 }
                 .buttonStyle(.borderless)
@@ -424,7 +424,7 @@ struct EmptyBudgetCard: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
                     .background(Color.appLightGray)
-                    .cornerRadius(10)
+                    .clipShape(RoundedRectangle(cornerRadius: AppRadius.small))
                 }
                 .buttonStyle(.borderless)
             }

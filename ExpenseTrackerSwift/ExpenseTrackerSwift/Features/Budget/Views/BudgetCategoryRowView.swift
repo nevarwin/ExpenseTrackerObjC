@@ -10,15 +10,19 @@ struct BudgetCategoryRowView: View {
     private var allTransactions: [Transaction]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: AppSpacing.md) {
+            HStack(spacing: AppSpacing.md) {
+                CategoryIconBadge(iconName: category.iconName)
+
+                VStack(alignment: .leading, spacing: AppSpacing.xs / 2) {
                     Text(category.name)
-                        .font(.headline)
+                        .font(.system(.body, design: .rounded))
+                        .fontWeight(.medium)
+                        .foregroundStyle(Color.appPrimary)
                     if let month = month {
                         Text(month.monthYearString)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.appSecondary)
                     }
                 }
                 
@@ -27,39 +31,27 @@ struct BudgetCategoryRowView: View {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(spentAmount, format: .currency(code: currencyManager.currencyCode))
                         .font(.system(.headline, design: .rounded))
-                        .fontWeight(.semibold)
+                        .fontWeight(.bold)
                         .foregroundStyle(isOverBudget ? .red : Color.appPrimary)
                     Text("of \(formatCurrency(category.allocatedAmount))")
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appSecondary)
                 }
             }
             
-            // Progress bar
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Color.appLightGray)
-                        .frame(height: 6)
-                    Capsule()
-                        .fill(isOverBudget ? Color.red : Color.dynamicAccent)
-                        .frame(width: geometry.size.width * min(max(0, usagePercentage), 1.0), height: 6)
-                }
-            }
-            .frame(height: 6)
+            // Standardized Progress bar
+            AppProgressBar(progress: usagePercentage, isOverBudget: isOverBudget)
             
             HStack {
                 Label("\(Int(usagePercentage * 100))% used", systemImage: "chart.bar.fill")
                     .font(.caption)
-                    .foregroundStyle(isOverBudget ? .red : Color.dynamicAccent)
+                    .foregroundStyle(isOverBudget ? .red : Color.emeraldPrimary)
                 Spacer()
                 Text("\(transactionsCount) transaction\(transactionsCount == 1 ? "" : "s")")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appSecondary)
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
         .appCardStyle()
     }
     

@@ -22,3 +22,12 @@
 
 ### 4. Secondary Surfaces & Badges
 - Text displayed over `Color.appLightGray` (`#F4F4F5` Light / `#27272A` Dark) MUST use `Color.appPrimary` to maintain readable contrast (≥ 4.5:1). Avoid using `Color.appSecondary` on `Color.appLightGray`.
+
+### 5. Component & List Layout Uniformity Rules
+- **Card Corner Radius Standard:** All list row items, summary cards, and content containers MUST use `AppRadius.card` (`16pt`) via `.appCardStyle()` or `RoundedRectangle(cornerRadius: AppRadius.card)` for visual consistency.
+- **Card Padding Protocol:** `.appCardStyle()` automatically applies `AppSpacing.lg` (`16pt`) internal padding. NEVER apply extra `.padding(...)` before calling `.appCardStyle()` on a card component (prevents double-padding bugs).
+- **Category & Row Icon Badges:** Use `CategoryIconBadge` (`40x40pt` circular container filled with `Color.appLightGray`) for all list item leading icons.
+- **Progress Bars:** Standardize list and card progress indicators using `AppProgressBar` with a fixed `8pt` capsule height (`AppRow.progressBarHeight`).
+- **Typography & Font Weight:** Use rounded font design `.font(.system(..., design: .rounded))` with `.fontWeight(.bold)` or `.fontWeight(.medium)` for card headers, category names, and currency amounts.
+- **Currency & Theme Tokens:** NEVER hardcode currency symbols (e.g. `$`). Always format currency using `currencyManager.currencyCode` and use `Color.emeraldPrimary` for positive financial indicators instead of raw `.green`.
+

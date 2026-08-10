@@ -76,7 +76,7 @@ struct ImportView: View {
                     }
                     .padding()
                     .background(Color.appCardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: AppRadius.medium))
                     .padding(.horizontal)
                     
                     // Excel Installment Formatting Tip Card
@@ -96,7 +96,7 @@ struct ImportView: View {
                         }
                         .padding()
                         .background(Color.orange.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.medium))
                         .padding(.horizontal)
                     }
                     
@@ -128,14 +128,14 @@ struct ImportView: View {
                             .padding()
                             .background(Color.emeraldPrimary)
                             .foregroundStyle(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .clipShape(RoundedRectangle(cornerRadius: AppRadius.small))
                         }
                         .padding(.horizontal)
                         .disabled(viewModel?.isImporting ?? false)
                     }
                     .padding(.vertical, 24)
                     .background(Color.appCardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .clipShape(RoundedRectangle(cornerRadius: AppRadius.card))
                     .padding(.horizontal)
                     
                     // Status Banners (for standalone errors if any)

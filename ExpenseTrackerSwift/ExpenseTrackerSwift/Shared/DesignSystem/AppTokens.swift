@@ -33,6 +33,16 @@ enum AppRadius {
     static let pill: CGFloat = 999
 }
 
+// MARK: - Row & Component Tokens
+
+enum AppRow {
+    /// 40pt
+    static let iconSize: CGFloat = 40
+    /// 8pt
+    static let progressBarHeight: CGFloat = 8
+}
+
+
 // MARK: - Accent Theme Tokens
 
 enum AccentTheme: String, CaseIterable, Identifiable, Codable {

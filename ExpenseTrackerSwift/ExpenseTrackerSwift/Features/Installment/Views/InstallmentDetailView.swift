@@ -9,6 +9,7 @@ import SwiftData
 struct InstallmentDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var currencyManager: SharedCurrencyService
     
     let plan: InstallmentPlan
     
@@ -27,11 +28,12 @@ struct InstallmentDetailView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(plan.name)
-                                .font(.title2)
+                                .font(.system(.title2, design: .rounded))
                                 .fontWeight(.bold)
+                                .foregroundStyle(Color.appPrimary)
                             Text("Started \(plan.startDate.formatted(date: .abbreviated, time: .omitted))")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(Color.appSecondary)
                         }
                         Spacer()
                         Text(plan.isCompleted ? "Completed" : "Active")
@@ -40,31 +42,31 @@ struct InstallmentDetailView: View {
                             .padding(.horizontal, AppSpacing.sm)
                             .padding(.vertical, 4)
                             .background(Color.emeraldSurface)
-                            .foregroundColor(Color.emeraldPrimary)
+                            .foregroundStyle(Color.emeraldPrimary)
                             .clipShape(Capsule())
                     }
                     
-                    ProgressView(value: plan.progressPercentage)
-                        .tint(Color.emeraldPrimary)
+                    AppProgressBar(progress: plan.progressPercentage)
                     
                     HStack {
                         VStack(alignment: .leading) {
                             Text("Elapsed")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(Color.appSecondary)
                             Text("\(plan.elapsedMonths()) / \(plan.totalMonths) Months")
-                                .font(.subheadline)
+                                .font(.system(.subheadline, design: .rounded))
                                 .fontWeight(.semibold)
+                                .foregroundStyle(Color.appPrimary)
                         }
                         Spacer()
                         VStack(alignment: .trailing) {
                             Text("Remaining Balance")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text("$\(NSDecimalNumber(decimal: plan.remainingBalance).stringValue)")
-                                .font(.subheadline)
+                                .foregroundStyle(Color.appSecondary)
+                            Text(plan.remainingBalance, format: .currency(code: currencyManager.currencyCode))
+                                .font(.system(.subheadline, design: .rounded))
                                 .fontWeight(.bold)
-                                .foregroundColor(plan.isCompleted ? .primary : .red)
+                                .foregroundStyle(plan.isCompleted ? Color.emeraldPrimary : .red)
                         }
                     }
                 }
@@ -72,9 +74,9 @@ struct InstallmentDetailView: View {
             }
             
             Section(header: Text("Financial Overview")) {
-                LabeledContent("Total Amount", value: "$\(NSDecimalNumber(decimal: plan.totalAmount).stringValue)")
-                LabeledContent("Monthly Amount", value: "$\(NSDecimalNumber(decimal: plan.monthlyAmount).stringValue)")
-                LabeledContent("Total Paid", value: "$\(NSDecimalNumber(decimal: plan.totalPaidAmount).stringValue)")
+                LabeledContent("Total Amount", value: plan.totalAmount.formatted(.currency(code: currencyManager.currencyCode)))
+                LabeledContent("Monthly Amount", value: plan.monthlyAmount.formatted(.currency(code: currencyManager.currencyCode)))
+                LabeledContent("Total Paid", value: plan.totalPaidAmount.formatted(.currency(code: currencyManager.currencyCode)))
                 LabeledContent("Remaining Months", value: "\(plan.remainingMonthsCount)")
             }
             
@@ -95,23 +97,25 @@ struct InstallmentDetailView: View {
             Section(header: Text("Generated Transactions (\(plan.transactions.count))")) {
                 if plan.transactions.isEmpty {
                     Text("No transactions logged yet.")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(Color.appSecondary)
                         .font(.subheadline)
                 } else {
                     ForEach(plan.transactions.sorted(by: { $0.date > $1.date })) { tx in
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(tx.formattedDescriptionForExport)
-                                    .font(.subheadline)
+                                    .font(.system(.subheadline, design: .rounded))
                                     .fontWeight(.medium)
+                                    .foregroundStyle(Color.appPrimary)
                                 Text(tx.date.formatted(date: .abbreviated, time: .omitted))
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(Color.appSecondary)
                             }
                             Spacer()
-                            Text("$\(NSDecimalNumber(decimal: tx.amount).stringValue)")
-                                .font(.subheadline)
+                            Text(tx.amount, format: .currency(code: currencyManager.currencyCode))
+                                .font(.system(.subheadline, design: .rounded))
                                 .fontWeight(.semibold)
+                                .foregroundStyle(Color.appPrimary)
                         }
                     }
                 }
@@ -125,7 +129,7 @@ struct InstallmentDetailView: View {
                 payOffEarly()
             }
         } message: {
-            Text("This will log a final transaction of $\(NSDecimalNumber(decimal: plan.remainingBalance).stringValue) for the remaining balance and mark this installment plan as completed.")
+            Text("This will log a final transaction of \(plan.remainingBalance.formatted(.currency(code: currencyManager.currencyCode))) for the remaining balance and mark this installment plan as completed.")
         }
     }
     
@@ -139,5 +143,12 @@ struct InstallmentDetailView: View {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+}
+
+#Preview {
+    NavigationStack {
+        InstallmentDetailView(plan: InstallmentPlan(name: "Sample Plan", totalAmount: 1200, monthlyAmount: 100, startDate: Date(), totalMonths: 12))
+            .environmentObject(SharedCurrencyService())
     }
 }

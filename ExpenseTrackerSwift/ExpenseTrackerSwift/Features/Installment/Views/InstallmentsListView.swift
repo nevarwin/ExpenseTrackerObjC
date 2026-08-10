@@ -9,6 +9,7 @@ import SwiftData
 struct InstallmentsListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \InstallmentPlan.createdAt, order: .reverse) private var installmentPlans: [InstallmentPlan]
+    @EnvironmentObject var currencyManager: SharedCurrencyService
     
     @State private var showingAddSheet = false
     
@@ -19,12 +20,12 @@ struct InstallmentsListView: View {
                     VStack(spacing: AppSpacing.md) {
                         Image(systemName: "creditcard.and.123")
                             .font(.system(size: 48))
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(Color.appSecondary)
                         Text("No Active Installments")
-                            .font(.headline)
+                            .headerStyle()
                         Text("Add installment plans (such as a 2-year purchase) to track monthly elapsed payments and remaining balances.")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .font(.body)
+                            .foregroundStyle(Color.appSecondary)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, AppSpacing.xl)
                         
@@ -34,19 +35,31 @@ struct InstallmentsListView: View {
                                 .fontWeight(.semibold)
                         }
                         .buttonStyle(.borderedProminent)
+                        .tint(Color.emeraldPrimary)
                         .padding(.top, AppSpacing.sm)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(UIColor.systemGroupedBackground))
+                    .background(Color(uiColor: .systemGroupedBackground))
                 } else {
                     List {
                         ForEach(installmentPlans) { plan in
-                            NavigationLink(destination: InstallmentDetailView(plan: plan)) {
+                            ZStack {
                                 InstallmentRowView(plan: plan)
+                                
+                                NavigationLink(destination: InstallmentDetailView(plan: plan)) {
+                                    EmptyView()
+                                }
+                                .opacity(0)
                             }
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                         }
                         .onDelete(perform: deleteInstallments)
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .background(Color(uiColor: .systemGroupedBackground))
                 }
             }
             .navigationTitle("Installments")
@@ -74,33 +87,44 @@ struct InstallmentsListView: View {
 
 struct InstallmentRowView: View {
     let plan: InstallmentPlan
+    @EnvironmentObject var currencyManager: SharedCurrencyService
     
     var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.xs) {
-            HStack {
-                Text(plan.name)
-                    .font(.headline)
+        VStack(alignment: .leading, spacing: AppSpacing.md) {
+            HStack(spacing: AppSpacing.md) {
+                CategoryIconBadge(iconName: "creditcard.fill")
+                
+                VStack(alignment: .leading, spacing: AppSpacing.xs / 2) {
+                    Text(plan.name)
+                        .font(.system(.body, design: .rounded))
+                        .fontWeight(.medium)
+                        .foregroundStyle(Color.appPrimary)
+                    Text("Month \(plan.elapsedMonths()) of \(plan.totalMonths)")
+                        .font(.caption)
+                        .foregroundStyle(Color.appSecondary)
+                }
+                
                 Spacer()
-                Text("$\(NSDecimalNumber(decimal: plan.remainingBalance).stringValue) left")
-                    .font(.subheadline)
-                    .fontWeight(.bold)
-                    .foregroundColor(plan.isCompleted ? .green : .primary)
+                
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(plan.remainingBalance, format: .currency(code: currencyManager.currencyCode))
+                        .font(.system(.headline, design: .rounded))
+                        .fontWeight(.bold)
+                        .foregroundStyle(plan.isCompleted ? Color.emeraldPrimary : Color.appPrimary)
+                    Text("\(plan.monthlyAmount.formatted(.currency(code: currencyManager.currencyCode)))/mo")
+                        .font(.caption2)
+                        .foregroundStyle(Color.appSecondary)
+                }
             }
             
-            ProgressView(value: plan.progressPercentage)
-                .tint(Color.emeraldPrimary)
-                .padding(.vertical, 2)
-            
-            HStack {
-                Text("Month \(plan.elapsedMonths()) of \(plan.totalMonths)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Spacer()
-                Text("$\(NSDecimalNumber(decimal: plan.monthlyAmount).stringValue)/mo")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
+            AppProgressBar(progress: plan.progressPercentage)
         }
-        .padding(.vertical, AppSpacing.xs)
+        .appCardStyle()
     }
+}
+
+#Preview {
+    InstallmentsListView()
+        .modelContainer(for: [InstallmentPlan.self, Transaction.self, Budget.self])
+        .environmentObject(SharedCurrencyService())
 }
