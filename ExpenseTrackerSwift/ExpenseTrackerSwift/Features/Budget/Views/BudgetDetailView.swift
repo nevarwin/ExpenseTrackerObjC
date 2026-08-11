@@ -44,6 +44,7 @@ struct BudgetDetailView: View {
                         .fontWeight(.medium)
                         .foregroundStyle(Color.dynamicAccent)
                 }
+                .accessibilityIdentifier("budget_add_month_button")
             }
             
             // List of months
@@ -97,6 +98,7 @@ struct BudgetDetailView: View {
                     } label: {
                         Label("Delete Budget", systemImage: "trash")
                     }
+                    .accessibilityIdentifier("budget_delete_menu_item")
                     
                     Divider()
                     
@@ -106,6 +108,7 @@ struct BudgetDetailView: View {
                     } label: {
                         Label("Edit Budget", systemImage: "pencil")
                     }
+                    .accessibilityIdentifier("budget_edit_menu_item")
                     
                     Divider()
 
@@ -115,6 +118,7 @@ struct BudgetDetailView: View {
                     } label: {
                         Label("Import CSV Data", systemImage: "square.and.arrow.down")
                     }
+                    .accessibilityIdentifier("budget_import_csv_menu_item")
                     
                     Divider()
 
@@ -123,9 +127,11 @@ struct BudgetDetailView: View {
                     } label: {
                         Label("View History", systemImage: "chart.line.uptrend.xyaxis")
                     }
+                    .accessibilityIdentifier("budget_history_menu_item")
                     
                 } label: {
                     Image(systemName: "ellipsis.circle")
+                        .accessibilityIdentifier("budget_detail_menu_button")
                 }
             }
         }

@@ -108,11 +108,13 @@ struct MonthlyBudgetDetailView: View {
                         HStack(spacing: 12) {
                             TextField("Name", text: $newCategoryName)
                                 .textFieldStyle(.roundedBorder)
+                                .accessibilityIdentifier("quickadd_category_name_field")
                             
                             TextField("Amount", text: $newCategoryAmount)
                                 .keyboardType(.decimalPad)
                                 .textFieldStyle(.roundedBorder)
                                 .frame(width: 100)
+                                .accessibilityIdentifier("quickadd_category_amount_field")
                         }
                         
                         HStack {
@@ -122,6 +124,7 @@ struct MonthlyBudgetDetailView: View {
                             }
                             .pickerStyle(.segmented)
                             .frame(maxWidth: 160)
+                            .accessibilityIdentifier("quickadd_category_type_picker")
                             
                             Spacer()
                             
@@ -132,6 +135,7 @@ struct MonthlyBudgetDetailView: View {
                             }
                             .disabled(newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty || (Decimal(string: newCategoryAmount) ?? 0) <= 0)
                             .buttonStyle(.plain)
+                            .accessibilityIdentifier("quickadd_category_save_button")
                         }
                     }
                     .padding(.vertical, 8)

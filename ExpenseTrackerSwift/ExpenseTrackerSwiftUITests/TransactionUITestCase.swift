@@ -165,6 +165,90 @@ class TransactionUITestCase: XCTestCase {
         }
     }
 
+    // MARK: - Budget Helpers
+
+    /// Opens the budget menu from the toolbar and taps "Add Budget".
+    func openAddBudgetForm() {
+        let menuButton = app.buttons["budget_menu_button"]
+        assertExists(menuButton, message: "Budget menu button not found")
+        menuButton.tap()
+
+        let addItem = app.buttons["budget_add_menu_item"]
+        assertExists(addItem, timeout: 3, message: "Add Budget menu item not found")
+        addItem.tap()
+    }
+
+    /// Creates a new budget by filling BudgetFormView with the given name.
+    func createBudget(name: String) {
+        openAddBudgetForm()
+
+        let nameField = app.textFields["budget_name_field"]
+        assertExists(nameField, timeout: 5, message: "Budget name field not found")
+        nameField.tap()
+        nameField.typeText(name)
+
+        let saveButton = app.buttons["budget_save_button"]
+        assertExists(saveButton, message: "Budget save button not found")
+        saveButton.tap()
+    }
+
+    /// Taps the budget card with the given name to navigate to BudgetDetailView.
+    func openBudgetDetail(named name: String) {
+        let card = app.otherElements["budget_card_\(name)"].firstMatch
+        if card.waitForExistence(timeout: 5) {
+            card.tap()
+        } else {
+            // Fallback: tap first budget cell
+            app.cells.firstMatch.tap()
+        }
+    }
+
+    /// Navigates through Budget → BudgetDetail → first month row → MonthlyBudgetDetailView.
+    /// Returns false if navigation could not be completed.
+    @discardableResult
+    func openFirstBudgetPeriod() -> Bool {
+        navigateToBudget()
+        sleep(1)
+
+        let firstCard = app.cells.firstMatch
+        guard firstCard.waitForExistence(timeout: 5) else { return false }
+        firstCard.tap()
+
+        // In BudgetDetailView, tap the first period row (skip the Add Month button cell)
+        let periodRow = app.cells.element(boundBy: 1)
+        guard periodRow.waitForExistence(timeout: 5) else { return false }
+        periodRow.tap()
+
+        // Confirm we landed on MonthlyBudgetDetailView by finding the searchable field or a known section
+        return app.otherElements["quickadd_category_name_field"].waitForExistence(timeout: 5)
+            || app.staticTexts["Expense Overview"].waitForExistence(timeout: 5)
+    }
+
+    /// Quick-adds a category using MonthlyBudgetDetailView's inline form.
+    /// Precondition: Must already be on MonthlyBudgetDetailView.
+    func quickAddCategory(name: String, amount: String, isIncome: Bool = false) {
+        let nameField = app.textFields["quickadd_category_name_field"]
+        assertExists(nameField, timeout: 5, message: "Category name field not found")
+        nameField.tap()
+        nameField.typeText(name)
+
+        let amountField = app.textFields["quickadd_category_amount_field"]
+        assertExists(amountField, message: "Category amount field not found")
+        amountField.tap()
+        amountField.typeText(amount)
+
+        if isIncome {
+            let typePicker = app.segmentedControls["quickadd_category_type_picker"]
+            if typePicker.waitForExistence(timeout: 3) {
+                typePicker.buttons["Income"].tap()
+            }
+        }
+
+        let saveButton = app.buttons["quickadd_category_save_button"]
+        assertExists(saveButton, message: "Category save button not found")
+        saveButton.tap()
+    }
+
     // MARK: - Screenshot Helper
 
     func takeScreenshot(name: String) {

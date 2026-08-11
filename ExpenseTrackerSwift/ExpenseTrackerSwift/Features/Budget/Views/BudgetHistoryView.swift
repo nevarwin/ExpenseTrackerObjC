@@ -58,6 +58,7 @@ struct BudgetHistoryView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .accessibilityIdentifier("budget_history_range_picker")
                 .onChange(of: selectedRange) { _, newValue in
                     analyticsService.trackEvent("View History Range Changed", properties: ["range": newValue.rawValue])
                 }
@@ -153,6 +154,7 @@ struct BudgetHistoryView: View {
                 } else {
                     ForEach(monthsToShow.reversed(), id: \.self) { month in
                         MonthSummaryRow(budget: budget, month: month)
+                            .accessibilityIdentifier("budget_history_row_\(month.monthYearString)")
                     }
                 }
             }

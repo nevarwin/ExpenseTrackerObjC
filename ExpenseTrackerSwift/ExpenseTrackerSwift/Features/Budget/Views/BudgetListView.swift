@@ -78,6 +78,7 @@ struct HomeContent: View {
                         }
                         .opacity(0)
                     }
+                    .accessibilityIdentifier("budget_card_\(budget.name)")
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
@@ -177,6 +178,7 @@ struct HomeContent: View {
         } label: {
             Label(String(localized: "Add Budget"), systemImage: "plus")
         }
+        .accessibilityIdentifier("budget_add_menu_item")
         
         Button {
             showingImport = true
@@ -184,6 +186,7 @@ struct HomeContent: View {
         } label: {
             Label(String(localized: "Import Data (.xlsx / CSV)"), systemImage: "square.and.arrow.down")
         }
+        .accessibilityIdentifier("budget_import_menu_item")
         
         Divider()
         
@@ -409,6 +412,7 @@ struct EmptyBudgetCard: View {
                     .shadow(color: Color.appAccent.opacity(0.3), radius: 8, x: 0, y: 4)
                 }
                 .buttonStyle(.borderless)
+                .accessibilityIdentifier("empty_budget_import_button")
                 
                 Button(action: {
                     onAddBudget?()
@@ -427,6 +431,7 @@ struct EmptyBudgetCard: View {
                     .clipShape(RoundedRectangle(cornerRadius: AppRadius.small))
                 }
                 .buttonStyle(.borderless)
+                .accessibilityIdentifier("empty_budget_create_button")
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 8)

@@ -34,6 +34,7 @@ struct BudgetFormView: View {
             Form {
                 Section {
                     TextField("Budget Name", text: $name)
+                        .accessibilityIdentifier("budget_name_field")
                         .overlay(alignment: .trailing) {
                             if name.trimmingCharacters(in: .whitespaces).isEmpty {
                                 Text("Required")
@@ -53,6 +54,7 @@ struct BudgetFormView: View {
                         } label: {
                             Label("Delete Budget", systemImage: "trash")
                         }
+                        .accessibilityIdentifier("budget_delete_button")
                     }
                 }
             }
@@ -61,10 +63,12 @@ struct BudgetFormView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .accessibilityIdentifier("budget_cancel_button")
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { saveBudget() }
                         .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .accessibilityIdentifier("budget_save_button")
                 }
             }
             .alert("Error", isPresented: $showingError) {
