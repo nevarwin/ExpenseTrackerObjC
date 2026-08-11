@@ -13,6 +13,9 @@ struct ExpenseMeApp: App {
     }
 
     init() {
+        // 0. Apply any UI test overrides (e.g. -resetOnboarding)
+        ContentView.applyUITestOverrides()
+
         // 1. Configure services
         SharedAppearanceService.configure()
         SharedAnalyticsService.configure()

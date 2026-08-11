@@ -12,6 +12,7 @@ struct OnboardingView: View {
     
     var body: some View {
         ZStack {
+
             // Background gradient for an Emerald glass feel
             LinearGradient(
                 colors: [Color.emeraldPrimary.opacity(0.15), Color.emeraldPrimary.opacity(0.05)],
@@ -48,6 +49,7 @@ struct OnboardingView: View {
                 }
                 .tabViewStyle(.page(indexDisplayMode: .always))
                 .animation(.easeInOut, value: viewModel.currentPage)
+                .accessibilityIdentifier("onboarding_tab_view")
                 
                 Button(action: {
                     viewModel.nextPage()
@@ -64,10 +66,12 @@ struct OnboardingView: View {
                 .buttonStyle(.plain)
                 .padding(.horizontal, 32)
                 .padding(.bottom, 50)
+                .accessibilityIdentifier("onboarding_next_button")
             }
         }
+        .accessibilityIdentifier("onboarding_view")
     }
-    
+
     // Abstracting the background view for readability and Liquid Glass fallback
     @ViewBuilder
     private var glassBackground: some View {

@@ -30,12 +30,14 @@ struct OnboardingPageView: View {
                     .font(.title)
                     .fontWeight(.bold)
                     .multilineTextAlignment(.center)
+                    .accessibilityIdentifier("onboarding_page_title")
                 
                 Text(description)
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
+                    .accessibilityIdentifier("onboarding_page_description")
             }
             
             Spacer()

@@ -24,6 +24,18 @@ class TransactionUITestCase: XCTestCase {
         app = nil
     }
 
+    // MARK: - Launch Variants
+
+    /// Launches the app for onboarding tests.
+    /// - Does NOT pass `-skipOnboarding` so `ContentView` shows `OnboardingView`.
+    /// - Passes `-resetOnboarding` so `ContentView.applyUITestOverrides()` clears
+    ///   `hasCompletedOnboarding` before SwiftUI renders.
+    func launchForOnboarding() {
+        app = XCUIApplication()
+        app.launchArguments = ["-resetOnboarding", "-UITestMode"]
+        app.launch()
+    }
+
     // MARK: - Navigation Helpers
 
     /// Taps the Transactions tab to ensure we're on the right screen.
