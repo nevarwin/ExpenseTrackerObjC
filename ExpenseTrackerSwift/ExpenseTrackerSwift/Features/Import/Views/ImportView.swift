@@ -24,6 +24,7 @@ struct ImportView: View {
     
     var body: some View {
         NavigationStack {
+            // NB: NavigationStack itself is not directly identifiable; access via inner scroll
             ScrollView {
                 VStack(spacing: 24) {
                     // Header / Import Type Selector
@@ -38,6 +39,7 @@ struct ImportView: View {
                             }
                         }
                         .pickerStyle(.segmented)
+                        .accessibilityIdentifier("import_type_picker")
                     }
                     .padding(.horizontal)
                     
@@ -98,6 +100,7 @@ struct ImportView: View {
                         .background(Color.orange.opacity(0.1))
                         .clipShape(RoundedRectangle(cornerRadius: AppRadius.medium))
                         .padding(.horizontal)
+                        .accessibilityIdentifier("import_tip_card")
                     }
                     
                     // Import Trigger Card
@@ -132,6 +135,7 @@ struct ImportView: View {
                         }
                         .padding(.horizontal)
                         .disabled(viewModel?.isImporting ?? false)
+                        .accessibilityIdentifier("import_browse_files_button")
                     }
                     .padding(.vertical, 24)
                     .background(Color.appCardBackground)
@@ -154,6 +158,7 @@ struct ImportView: View {
                             .background(Color.red.opacity(0.1))
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .padding(.horizontal)
+                            .accessibilityIdentifier("import_error_banner")
                         }
                     }
                 }
@@ -167,6 +172,7 @@ struct ImportView: View {
                         dismiss()
                     }
                     .disabled(viewModel?.isImporting ?? false)
+                    .accessibilityIdentifier("import_done_button")
                 }
             }
             .fileImporter(

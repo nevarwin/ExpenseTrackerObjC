@@ -52,6 +52,7 @@ struct ImportLoadingView: View {
                         .font(.title3)
                         .fontWeight(.bold)
                         .multilineTextAlignment(.center)
+                        .accessibilityIdentifier("import_loading_header_title")
                     
                     if let filename = progress.currentFileName, !filename.isEmpty {
                         Text(filename)
@@ -179,6 +180,7 @@ struct ImportLoadingView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 10))
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("import_loading_done_button")
                     } else {
                         Button {
                             onCancel()
@@ -197,6 +199,7 @@ struct ImportLoadingView: View {
                         }
                         .buttonStyle(.plain)
                         .disabled(!progress.canCancel)
+                        .accessibilityIdentifier("import_loading_cancel_button")
                     }
                 }
             }
@@ -209,6 +212,7 @@ struct ImportLoadingView: View {
             .padding(.horizontal, 32)
             .accessibilityElement(children: .combine)
             .accessibilityLabel(accessibilityText)
+            .accessibilityIdentifier("import_loading_overlay")
         }
     }
     
