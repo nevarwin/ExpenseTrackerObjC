@@ -16,7 +16,7 @@ final class ImportManagerTests: XCTestCase {
         importManager = ImportManager(modelContext: context)
     }
     
-    func testCategoryInheritance() throws {
+    func testCategoryInheritance() async throws {
         // 1. Setup: Create a budget for Dec 25 with a "Dining" category
         let decDate = Calendar.current.date(from: DateComponents(year: 2025, month: 12, day: 1))!
         let decBudget = Budget(name: "Dec25", startDate: decDate, totalAmount: 1000)
@@ -49,7 +49,7 @@ final class ImportManagerTests: XCTestCase {
             isIncome: false
         )
         
-        let count = try importManager.importTransactions(from: [csvTx], into: janBudget, filename: "Jan26.csv")
+        let count = try await importManager.importTransactions(from: [csvTx], into: janBudget, filename: "Jan26.csv")
         
         // 3. Verify
         XCTAssertEqual(count, 1)
@@ -77,7 +77,7 @@ final class ImportManagerTests: XCTestCase {
             isIncome: false
         )
         
-        _ = try importManager.importTransactions(from: [febTx], into: febBudget, filename: "Feb26.csv")
+        _ = try await importManager.importTransactions(from: [febTx], into: febBudget, filename: "Feb26.csv")
         
         // 6. Verify Inheritance from Jan 26
         let febDining = febBudget.categories.first { $0.name == "Dining" }

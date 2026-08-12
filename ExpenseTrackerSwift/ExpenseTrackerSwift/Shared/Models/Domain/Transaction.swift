@@ -52,9 +52,7 @@ final class Transaction {
     }
     
     var monthYear: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM yyyy"
-        return formatter.string(from: date)
+        date.formatted(.dateTime.month(.wide).year())
     }
     
     /// Formats description for CSV Export: "[Installment 13/24] Description" if linked to an installment

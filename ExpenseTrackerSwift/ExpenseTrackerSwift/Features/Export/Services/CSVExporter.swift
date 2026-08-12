@@ -76,10 +76,15 @@ final class CSVExporter {
     }
     
     private func escapeCSVField(_ text: String) -> String {
-        if text.contains(",") || text.contains("\"") || text.contains("\n") {
-            let escaped = text.replacingOccurrences(of: "\"", with: "\"\"")
+        var sanitized = text
+        // Prevent CSV Formula Injection (=, +, -, @)
+        if let firstChar = sanitized.first, ["=", "+", "-", "@"].contains(firstChar) {
+            sanitized = "'\(sanitized)"
+        }
+        if sanitized.contains(",") || sanitized.contains("\"") || sanitized.contains("\n") {
+            let escaped = sanitized.replacingOccurrences(of: "\"", with: "\"\"")
             return "\"\(escaped)\""
         }
-        return text
+        return sanitized
     }
 }

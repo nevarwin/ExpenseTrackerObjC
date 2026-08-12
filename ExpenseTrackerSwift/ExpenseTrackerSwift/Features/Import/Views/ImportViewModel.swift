@@ -164,7 +164,7 @@ final class ImportViewModel {
                 }
                 
                 let manager = ImportManager(modelContext: self.modelContext)
-                let totalCount = try manager.importBatchTransactions(files: processedFiles, into: budget)
+                let totalCount = try await manager.importBatchTransactions(files: processedFiles, into: budget)
                 
                 if Task.isCancelled {
                     self.modelContext.rollback()

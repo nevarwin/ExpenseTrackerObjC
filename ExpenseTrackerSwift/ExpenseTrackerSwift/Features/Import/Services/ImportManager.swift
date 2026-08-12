@@ -174,15 +174,15 @@ class ImportManager {
         return nil
     }
     
-    func importBatchTransactions(files: [(filename: String, transactions: [CSVTransaction])], into budget: Budget) throws -> Int {
+    func importBatchTransactions(files: [(filename: String, transactions: [CSVTransaction])], into budget: Budget) async throws -> Int {
         var totalImported = 0
         for file in files {
-            totalImported += try importTransactions(from: file.transactions, into: budget, filename: file.filename)
+            totalImported += try await importTransactions(from: file.transactions, into: budget, filename: file.filename)
         }
         return totalImported
     }
     
-    func importTransactions(from csvTransactions: [CSVTransaction], into budget: Budget, filename: String) throws -> Int {
+    func importTransactions(from csvTransactions: [CSVTransaction], into budget: Budget, filename: String) async throws -> Int {
         let budgetCalculator = BudgetCalculator(budget: budget)
         var count = 0
         
@@ -192,6 +192,10 @@ class ImportManager {
         let budgetPeriod: Date = parsedPeriod
         
         for csvTx in csvTransactions {
+            if count % 100 == 0 && count > 0 {
+                await Task.yield()
+            }
+            
             let categoryName = csvTx.category
             
             let category: Category
