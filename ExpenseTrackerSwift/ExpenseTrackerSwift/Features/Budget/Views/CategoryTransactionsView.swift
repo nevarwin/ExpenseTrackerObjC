@@ -55,8 +55,9 @@ struct CategoryTransactionsView: View {
                             Button(role: .destructive) {
                                 try? transactionViewModel?.deleteTransaction(transaction)
                             } label: {
-                                Label("Delete", systemImage: "trash")
+                                Label(String(localized: "Delete"), systemImage: "trash")
                             }
+                            .accessibilityIdentifier("category_transaction_delete_button")
                             
                             Button {
                                 selectedTransaction = transaction

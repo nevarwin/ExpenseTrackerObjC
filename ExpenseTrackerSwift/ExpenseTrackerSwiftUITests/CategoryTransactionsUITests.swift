@@ -100,7 +100,7 @@ final class CategoryTransactionsUITests: TransactionUITestCase {
         // Swipe to reveal delete action (native swipeActions)
         transactionRow.swipeLeft()
 
-        let deleteButton = app.buttons["Delete"]
+        let deleteButton = app.buttons["category_transaction_delete_button"]
         if deleteButton.waitForExistence(timeout: 3) {
             deleteButton.tap()
 

@@ -235,7 +235,7 @@ struct TransactionListView: View {
                     SwipeActionView(
                         trailingActions: [
                             SwipeAction(
-                                label: "Delete",
+                                label: String(localized: "Delete"),
                                 systemImage: "trash",
                                 tint: .red,
                                 role: .destructive

@@ -12,6 +12,7 @@ struct InstallmentsListView: View {
     @EnvironmentObject var currencyManager: SharedCurrencyService
     
     @State private var showingAddSheet = false
+    @State private var installmentToDelete: InstallmentPlan?
     
     var body: some View {
         NavigationStack {
@@ -54,8 +55,15 @@ struct InstallmentsListView: View {
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
                             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    installmentToDelete = plan
+                                } label: {
+                                    Label(String(localized: "Delete"), systemImage: "trash")
+                                }
+                                .accessibilityIdentifier("installment_delete_button")
+                            }
                         }
-                        .onDelete(perform: deleteInstallments)
                     }
                     .listStyle(.plain)
                     .scrollContentBackground(.hidden)
@@ -73,15 +81,31 @@ struct InstallmentsListView: View {
             .sheet(isPresented: $showingAddSheet) {
                 InstallmentFormView()
             }
+            .alert(
+                String(localized: "Delete Installment"),
+                isPresented: Binding(
+                    get: { installmentToDelete != nil },
+                    set: { if !$0 { installmentToDelete = nil } }
+                )
+            ) {
+                Button(String(localized: "Delete"), role: .destructive) {
+                    if let plan = installmentToDelete {
+                        deleteInstallment(plan)
+                    }
+                    installmentToDelete = nil
+                }
+                Button(String(localized: "Cancel"), role: .cancel) {
+                    installmentToDelete = nil
+                }
+            } message: {
+                Text(String(localized: "Are you sure you want to delete this installment plan? All associated transactions will be permanently deleted."))
+            }
         }
     }
     
-    private func deleteInstallments(offsets: IndexSet) {
+    private func deleteInstallment(_ plan: InstallmentPlan) {
         let service = InstallmentService(modelContext: modelContext)
-        for index in offsets {
-            let plan = installmentPlans[index]
-            try? service.deleteInstallmentPlan(plan)
-        }
+        try? service.deleteInstallmentPlan(plan)
     }
 }
 

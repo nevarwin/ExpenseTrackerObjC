@@ -11,6 +11,7 @@ struct CategoryEditFormView: View {
     @State private var name: String = ""
     @State private var allocatedAmount: String = ""
     @State private var isIncome: Bool = false
+    @State private var showingDeleteConfirmation = false
     
     init(category: Category) {
         self.category = category
@@ -48,10 +49,11 @@ struct CategoryEditFormView: View {
                 
                 Section {
                     Button(role: .destructive) {
-                        deleteCategory()
+                        showingDeleteConfirmation = true
                     } label: {
-                        Label("Delete Category", systemImage: "trash")
+                        Label(String(localized: "Delete Category"), systemImage: "trash")
                     }
+                    .accessibilityIdentifier("category_delete_button")
                 }
             }
             .navigationTitle("Edit Category")
@@ -64,6 +66,14 @@ struct CategoryEditFormView: View {
                     Button("Save") { saveCategory() }
                         .disabled(!isValid)
                 }
+            }
+            .alert(String(localized: "Delete Category"), isPresented: $showingDeleteConfirmation) {
+                Button(String(localized: "Delete"), role: .destructive) {
+                    deleteCategory()
+                }
+                Button(String(localized: "Cancel"), role: .cancel) { }
+            } message: {
+                Text(String(localized: "Are you sure you want to delete this category? It will be removed from this budget."))
             }
         }
     }

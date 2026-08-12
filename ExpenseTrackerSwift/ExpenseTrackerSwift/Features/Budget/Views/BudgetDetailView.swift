@@ -96,7 +96,7 @@ struct BudgetDetailView: View {
                     Button(role: .destructive) {
                         showingDeleteConfirmation = true
                     } label: {
-                        Label("Delete Budget", systemImage: "trash")
+                        Label(String(localized: "Delete Budget"), systemImage: "trash")
                     }
                     .accessibilityIdentifier("budget_delete_menu_item")
                     
@@ -106,7 +106,7 @@ struct BudgetDetailView: View {
                         showingEditSheet = true
                         analyticsService.trackEvent("Budget Edit Clicked (Detail)")
                     } label: {
-                        Label("Edit Budget", systemImage: "pencil")
+                        Label(String(localized: "Edit Budget"), systemImage: "pencil")
                     }
                     .accessibilityIdentifier("budget_edit_menu_item")
                     

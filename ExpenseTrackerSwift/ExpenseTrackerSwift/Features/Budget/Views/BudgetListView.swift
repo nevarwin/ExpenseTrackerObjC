@@ -88,6 +88,7 @@ struct HomeContent: View {
                         } label: {
                             Label(String(localized: "Delete"), systemImage: "trash")
                         }
+                        .accessibilityIdentifier("budget_list_delete_button")
                         
                         Button {
                             budgetToEdit = budget

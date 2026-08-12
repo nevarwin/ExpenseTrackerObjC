@@ -17,6 +17,7 @@ struct BudgetFormView: View {
     @State private var name: String = ""
     @State private var showingError = false
     @State private var errorMessage = ""
+    @State private var showingDeleteConfirmation = false
     
     let existingBudget: Budget?
 
@@ -50,11 +51,11 @@ struct BudgetFormView: View {
                 if existingBudget != nil {
                     Section {
                         Button(role: .destructive) {
-                            deleteBudget()
+                            showingDeleteConfirmation = true
                         } label: {
-                            Label("Delete Budget", systemImage: "trash")
+                            Label(String(localized: "Delete Budget"), systemImage: "trash")
                         }
-                        .accessibilityIdentifier("budget_delete_button")
+                        .accessibilityIdentifier("budget_form_delete_button")
                     }
                 }
             }
@@ -70,6 +71,14 @@ struct BudgetFormView: View {
                         .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                         .accessibilityIdentifier("budget_save_button")
                 }
+            }
+            .alert(String(localized: "Delete Budget"), isPresented: $showingDeleteConfirmation) {
+                Button(String(localized: "Delete"), role: .destructive) {
+                    deleteBudget()
+                }
+                Button(String(localized: "Cancel"), role: .cancel) { }
+            } message: {
+                Text(String(localized: "Are you sure you want to delete this budget? All associated categories and transactions will be permanently deleted."))
             }
             .alert("Error", isPresented: $showingError) {
                 Button("OK") { }
