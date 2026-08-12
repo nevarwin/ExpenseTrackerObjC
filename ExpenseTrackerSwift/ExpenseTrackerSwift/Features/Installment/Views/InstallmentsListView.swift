@@ -37,6 +37,7 @@ struct InstallmentsListView: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(Color.emeraldPrimary)
+                        .bouncyButtonStyle()
                         .padding(.top, AppSpacing.sm)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

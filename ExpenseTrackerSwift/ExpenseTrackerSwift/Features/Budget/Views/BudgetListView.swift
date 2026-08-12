@@ -266,20 +266,22 @@ struct BudgetCardView: View {
                                 .font(.caption2)
                         }
                         .foregroundStyle(Color.appPrimary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
                         .background(Color.appLightGray)
                         .clipShape(Capsule())
+                        .minTouchTarget()
                     }
                 } else {
                     Text(displayMonth.monthYearString)
                         .font(.caption)
                         .fontWeight(.semibold)
                         .foregroundStyle(Color.appPrimary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
                         .background(Color.appLightGray)
                         .clipShape(Capsule())
+                        .minTouchTarget()
                 }
             }
             
@@ -318,31 +320,9 @@ struct BudgetCardView: View {
                 }
                 
                 // Progress Bar (Expense vs Planned)
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(Color.appLightGray)
-                            .frame(height: barHeight)
-                        
-                        let isOverBudget = budgetCalculator.expensesInMonth(date: displayMonth) > budgetCalculator.plannedExpenses(date: displayMonth) && budgetCalculator.plannedExpenses(date: displayMonth) > 0
-                        
-                        Capsule()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        isOverBudget ? Color.red : Color.emeraldPrimary,
-                                        isOverBudget ? Color.orange : Color.emeraldPrimary.opacity(0.7)
-                                    ],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .frame(width: max(0, min(geometry.size.width * animatedProgress, geometry.size.width)), height: barHeight)
-                    }
-                }
-                .frame(height: barHeight)
-                .accessibilityLabel(String(localized: "Budget Progress"))
-                .accessibilityValue(String(localized: "\(Int(animatedProgress * 100))% spent"))
+                AppProgressBar(progress: animatedProgress)
+                    .accessibilityLabel(String(localized: "Budget Progress"))
+                    .accessibilityValue(String(localized: "\(Int(animatedProgress * 100))% spent"))
             }
         }
         .appCardStyle()
@@ -380,7 +360,7 @@ struct EmptyBudgetCard: View {
         VStack(spacing: 20) {
             Image(systemName: "tablecells.fill.badge.plus")
                 .font(.system(size: 48))
-                .foregroundStyle(Color.appAccent)
+                .foregroundStyle(Color.emeraldPrimary)
                 .padding(.top, 8)
                 .accessibilityHidden(true)
             
@@ -408,11 +388,10 @@ struct EmptyBudgetCard: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.appAccent)
+                    .background(Color.emeraldPrimary)
                     .clipShape(RoundedRectangle(cornerRadius: AppRadius.medium))
-                    .shadow(color: Color.appAccent.opacity(0.3), radius: 8, x: 0, y: 4)
                 }
-                .buttonStyle(.borderless)
+                .bouncyButtonStyle()
                 .accessibilityIdentifier("empty_budget_import_button")
                 
                 Button(action: {
@@ -429,9 +408,9 @@ struct EmptyBudgetCard: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
                     .background(Color.appLightGray)
-                    .clipShape(RoundedRectangle(cornerRadius: AppRadius.small))
+                    .clipShape(RoundedRectangle(cornerRadius: AppRadius.medium))
                 }
-                .buttonStyle(.borderless)
+                .bouncyButtonStyle()
                 .accessibilityIdentifier("empty_budget_create_button")
             }
             .padding(.horizontal, 20)

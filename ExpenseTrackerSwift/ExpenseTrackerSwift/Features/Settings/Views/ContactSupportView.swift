@@ -46,7 +46,6 @@ struct ContactSupportView: View {
                                 RoundedRectangle(cornerRadius: 12)
                                     .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
                             )
-                            .shadow(radius: 5)
                         
                         Button(role: .destructive) {
                             withAnimation {
@@ -61,7 +60,7 @@ struct ContactSupportView: View {
                             VStack(spacing: 12) {
                                 Image(systemName: "photo.badge.plus")
                                     .font(.system(size: 40))
-                                    .foregroundStyle(.accent)
+                                    .foregroundStyle(Color.emeraldPrimary)
                                 
                                 Text(String(localized: "Attach a Photo or Screenshot"))
                                     .font(.subheadline)
@@ -108,7 +107,7 @@ struct ContactSupportView: View {
                     }
                 }
                 .accessibilityIdentifier("contact_support_send_email_button")
-                .listRowBackground(Color.accentColor)
+                .listRowBackground(Color.emeraldPrimary)
                 .foregroundStyle(.white)
             }
         }

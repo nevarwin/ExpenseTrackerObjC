@@ -37,12 +37,12 @@ struct InstallmentDetailView: View {
                         }
                         Spacer()
                         Text(plan.isCompleted ? "Completed" : "Active")
-                            .font(.caption)
+                            .font(.system(.caption, design: .rounded))
                             .fontWeight(.semibold)
                             .padding(.horizontal, AppSpacing.sm)
                             .padding(.vertical, 4)
-                            .background(Color.emeraldSurface)
-                            .foregroundStyle(Color.emeraldPrimary)
+                            .background(plan.isCompleted ? Color.emeraldSurface : Color.appLightGray)
+                            .foregroundStyle(plan.isCompleted ? Color.emeraldPrimary : Color.appPrimary)
                             .clipShape(Capsule())
                     }
                     

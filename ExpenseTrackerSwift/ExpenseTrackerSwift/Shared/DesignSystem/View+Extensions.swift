@@ -101,4 +101,9 @@ extension View {
     func shimmering() -> some View {
         modifier(ShimmerModifier())
     }
+
+    func minTouchTarget(minSize: CGFloat = 44) -> some View {
+        frame(minWidth: minSize, minHeight: minSize)
+            .contentShape(Rectangle())
+    }
 }

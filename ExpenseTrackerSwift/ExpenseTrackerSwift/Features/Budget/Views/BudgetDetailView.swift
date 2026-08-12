@@ -75,12 +75,12 @@ struct BudgetDetailView: View {
                                 // Progress pill
                                 let remaining = budgetCalculator.remainingInMonth(date: month)
                                 Text(remaining >= 0 ? "Under" : "Over")
-                                    .font(.caption2)
+                                    .font(.system(.caption2, design: .rounded))
                                     .fontWeight(.bold)
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, 8)
+                                    .padding(.horizontal, AppSpacing.sm)
                                     .padding(.vertical, 4)
-                                    .background(remaining >= 0 ? Color.green : Color.red)
+                                    .background(remaining >= 0 ? Color.emeraldSurface : Color.red.opacity(0.12))
+                                    .foregroundStyle(remaining >= 0 ? Color.emeraldPrimary : Color.red)
                                     .clipShape(Capsule())
                             }
                             .padding(.vertical, 4)

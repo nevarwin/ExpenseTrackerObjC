@@ -64,6 +64,7 @@ struct OnboardingView: View {
                         )
                 }
                 .buttonStyle(.plain)
+                .bouncyButtonStyle()
                 .padding(.horizontal, 32)
                 .padding(.bottom, 50)
                 .accessibilityIdentifier("onboarding_next_button")
@@ -81,7 +82,6 @@ struct OnboardingView: View {
         } else {
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color.emeraldPrimary)
-                .shadow(radius: 5)
         }
     }
 }

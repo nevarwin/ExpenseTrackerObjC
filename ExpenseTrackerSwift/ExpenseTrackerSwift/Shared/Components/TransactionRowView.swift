@@ -16,21 +16,10 @@ struct TransactionRowView: View {
     var body: some View {
         HStack(spacing: AppSpacing.lg) {
             // Category Icon Badge
-            ZStack {
-                Circle()
-                    .fill(Color.appLightGray)
-                    .frame(width: iconSize, height: iconSize)
-                
-                if let category = transaction.category {
-                    Image(systemName: category.iconName)
-                        .foregroundStyle(Color.emeraldPrimary)
-                        .font(.system(size: iconSize * 0.4))
-                } else {
-                    Image(systemName: "bag.fill")
-                        .foregroundStyle(Color.appSecondary)
-                        .font(.caption)
-                }
-            }
+            CategoryIconBadge(
+                iconName: transaction.category?.iconName ?? "bag.fill",
+                tintColor: transaction.category != nil ? Color.emeraldPrimary : Color.appSecondary
+            )
             
             VStack(alignment: .leading, spacing: AppSpacing.xs / 2) {
                 Text(transaction.desc)

@@ -65,10 +65,11 @@ struct TransactionCalendarView: View {
                     }) {
                         Image(systemName: "chevron.left")
                             .font(.caption)
-                            .padding(8)
+                            .padding(10)
                             .background(Color.secondary.opacity(0.1))
                             .clipShape(Circle())
                             .foregroundStyle(.primary)
+                            .minTouchTarget()
                     }
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("calendar_prev_button")
@@ -77,7 +78,7 @@ struct TransactionCalendarView: View {
                     Button(action: { showingDatePicker = true }) {
                         HStack(spacing: 4) {
                             Text(monthYearString)
-                                .font(.headline)
+                                .font(.system(.headline, design: .rounded))
                                 .fontWeight(.bold)
                             Image(systemName: "chevron.down")
                                 .font(.caption)
@@ -86,6 +87,7 @@ struct TransactionCalendarView: View {
                         .background(Color.secondary.opacity(0.1))
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                         .foregroundStyle(.primary)
+                        .minTouchTarget()
                     }
                     .accessibilityIdentifier("calendar_month_year_button")
                     .sheet(isPresented: $showingDatePicker) {
@@ -120,6 +122,7 @@ struct TransactionCalendarView: View {
                                 showingDatePicker = false
                             }
                             .buttonStyle(.borderedProminent)
+                            .tint(Color.emeraldPrimary)
                             .padding(.bottom)
                         }
                         .presentationDetents([.height(300)])
@@ -137,10 +140,11 @@ struct TransactionCalendarView: View {
                     }) {
                         Image(systemName: "chevron.right")
                             .font(.caption)
-                            .padding(8)
+                            .padding(10)
                             .background(Color.secondary.opacity(0.1))
                             .clipShape(Circle())
                             .foregroundStyle(.primary)
+                            .minTouchTarget()
                     }
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("calendar_next_button")

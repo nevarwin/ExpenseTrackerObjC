@@ -91,7 +91,7 @@ struct ImportLoadingView: View {
                                         .frame(height: 8)
                                     
                                     RoundedRectangle(cornerRadius: 6)
-                                        .fill(Color.appPrimary)
+                                        .fill(Color.emeraldPrimary)
                                         .frame(width: max(0, geometry.size.width * CGFloat(progress.fractionCompleted)), height: 8)
                                         .animation(.easeInOut(duration: 0.3), value: progress.fractionCompleted)
                                 }
@@ -207,7 +207,10 @@ struct ImportLoadingView: View {
             .background(
                 RoundedRectangle(cornerRadius: 20)
                     .fill(Color.appCardBackground)
-                    .shadow(color: Color.black.opacity(0.2), radius: 16, x: 0, y: 8)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
             )
             .padding(.horizontal, 32)
             .accessibilityElement(children: .combine)
