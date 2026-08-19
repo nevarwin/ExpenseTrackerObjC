@@ -13,8 +13,10 @@ struct InstallmentFormView: View {
     
     let planToEdit: InstallmentPlan?
     
-    @Query(sort: \Budget.startDate, order: .reverse) private var budgets: [Budget]
+    @Query(filter: #Predicate<Budget> { $0.isActive == true }, sort: \Budget.startDate, order: .reverse)
+    private var activeBudgets: [Budget]
     
+    @State private var selectedBudget: Budget?
     @State private var name: String
     @State private var totalAmountString: String
     @State private var monthlyAmountString: String
@@ -24,6 +26,7 @@ struct InstallmentFormView: View {
     @State private var selectedCategory: Category?
     @State private var notes: String
     @State private var errorMessage: String?
+    @State private var showingDeleteConfirmation: Bool = false
     
     private let presetMonths: [Int] = [3, 6, 12, 18, 24, 36, 48, 60]
     
@@ -38,6 +41,7 @@ struct InstallmentFormView: View {
             _totalMonthsString = State(initialValue: "\(plan.totalMonths)")
             _startDate = State(initialValue: plan.startDate)
             _selectedCategory = State(initialValue: plan.transactions.first?.category)
+            _selectedBudget = State(initialValue: plan.transactions.first?.budget)
             _notes = State(initialValue: plan.notes)
         } else {
             _name = State(initialValue: "")
@@ -48,16 +52,17 @@ struct InstallmentFormView: View {
             let defaultStart = Calendar.current.date(byAdding: .month, value: -13, to: Date()) ?? Date()
             _startDate = State(initialValue: defaultStart)
             _selectedCategory = State(initialValue: nil)
+            _selectedBudget = State(initialValue: nil)
             _notes = State(initialValue: "")
         }
     }
     
-    private var activeBudget: Budget? {
-        budgets.first
-    }
-    
     private var isEditing: Bool {
         planToEdit != nil
+    }
+    
+    private var currentBudget: Budget? {
+        selectedBudget ?? activeBudgets.first
     }
     
     private var calculatedMonthly: Decimal {
@@ -85,6 +90,7 @@ struct InstallmentFormView: View {
             Form {
                 Section(header: Text("Installment Plan Details")) {
                     TextField("Name (e.g. Laptop Purchase)", text: $name)
+                        .accessibilityIdentifier("installment_name_field")
                     
                     HStack {
                         Text("Total Amount (\(currencyManager.currencyCode))")
@@ -92,6 +98,7 @@ struct InstallmentFormView: View {
                         TextField("2400.00", text: $totalAmountString)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
+                            .accessibilityIdentifier("installment_amount_field")
                             .onChange(of: totalAmountString) { oldValue, newValue in
                                 if monthlyAmountString.isEmpty || oldValue != newValue {
                                     recalculateMonthly()
@@ -105,6 +112,7 @@ struct InstallmentFormView: View {
                         TextField("100.00", text: $monthlyAmountString)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
+                            .accessibilityIdentifier("installment_monthly_field")
                     }
                 }
                 
@@ -141,6 +149,7 @@ struct InstallmentFormView: View {
                             .multilineTextAlignment(.trailing)
                             .frame(width: 60)
                             .textFieldStyle(.roundedBorder)
+                            .accessibilityIdentifier("installment_months_field")
                             .onChange(of: totalMonthsString) { _, newValue in
                                 if let parsed = Int(newValue), parsed > 0 {
                                     let clamped = min(max(1, parsed), 240)
@@ -163,6 +172,7 @@ struct InstallmentFormView: View {
                 
                 Section(header: Text("Timeline & Schedule")) {
                     DatePicker("Start Date", selection: $startDate, displayedComponents: [.date])
+                        .accessibilityIdentifier("installment_date_picker")
                     
                     HStack(spacing: AppSpacing.md) {
                         Image(systemName: "clock.arrow.circlepath")
@@ -189,26 +199,49 @@ struct InstallmentFormView: View {
                     .padding(.vertical, AppSpacing.xs)
                 }
                 
-                if let budget = activeBudget {
-                    Section(header: Text("Expense Category")) {
+                Section(header: Text("Budget & Category")) {
+                    if activeBudgets.count > 1 {
+                        Picker("Budget", selection: $selectedBudget) {
+                            ForEach(activeBudgets) { budget in
+                                Text(budget.name).tag(Budget?.some(budget))
+                            }
+                        }
+                        .accessibilityIdentifier("installment_budget_picker")
+                        .onChange(of: selectedBudget) { _, newBudget in
+                            if let b = newBudget {
+                                selectedCategory = b.categories.first(where: { !$0.isIncome })
+                            }
+                        }
+                    }
+                    
+                    if let budget = currentBudget {
                         Picker("Category", selection: $selectedCategory) {
                             Text("Select Category").tag(Category?.none)
                             ForEach(budget.sortedCategories.filter { !$0.isIncome }) { category in
                                 Text(category.name).tag(Category?.some(category))
                             }
                         }
+                        .accessibilityIdentifier("installment_category_picker")
+                    } else {
+                        Text("No active budget available. Please create a budget first.")
+                            .font(.caption)
+                            .foregroundStyle(Color.appSecondary)
                     }
                 }
                 
                 Section(header: Text("Notes")) {
                     TextField("Optional notes or reference #", text: $notes)
+                        .accessibilityIdentifier("installment_notes_field")
                 }
                 
-                if let error = errorMessage {
+                if isEditing {
                     Section {
-                        Text(error)
-                            .font(.caption)
-                            .foregroundColor(.red)
+                        Button(role: .destructive) {
+                            showingDeleteConfirmation = true
+                        } label: {
+                            Label(String(localized: "Delete Installment Plan"), systemImage: "trash")
+                        }
+                        .accessibilityIdentifier("installment_form_delete_button")
                     }
                 }
             }
@@ -219,18 +252,41 @@ struct InstallmentFormView: View {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .accessibilityIdentifier("installment_cancel_button")
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         saveInstallmentPlan()
                     }
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || totalAmountString.isEmpty || totalMonths < 1)
+                    .accessibilityIdentifier("installment_save_button")
                 }
             }
             .onAppear {
-                if selectedCategory == nil, let firstCategory = activeBudget?.categories.first(where: { !$0.isIncome }) {
+                if selectedBudget == nil {
+                    selectedBudget = activeBudgets.first
+                }
+                if selectedCategory == nil, let firstCategory = currentBudget?.categories.first(where: { !$0.isIncome }) {
                     selectedCategory = firstCategory
                 }
+            }
+            .alert(String(localized: "Delete Installment Plan"), isPresented: $showingDeleteConfirmation) {
+                Button(String(localized: "Delete"), role: .destructive) {
+                    deleteInstallment()
+                }
+                Button(String(localized: "Cancel"), role: .cancel) {}
+            } message: {
+                Text(String(localized: "Are you sure you want to delete this installment plan? All associated transactions will be permanently deleted."))
+            }
+            .alert(String(localized: "Error"), isPresented: Binding(
+                get: { errorMessage != nil },
+                set: { if !$0 { errorMessage = nil } }
+            )) {
+                Button(String(localized: "OK")) {
+                    errorMessage = nil
+                }
+            } message: {
+                Text(errorMessage ?? String(localized: "An error occurred"))
             }
         }
     }
@@ -250,7 +306,7 @@ struct InstallmentFormView: View {
     }
     
     private func saveInstallmentPlan() {
-        guard let budget = activeBudget else {
+        guard let budget = currentBudget else {
             errorMessage = "No active budget found."
             return
         }
@@ -293,6 +349,17 @@ struct InstallmentFormView: View {
             dismiss()
         } catch {
             errorMessage = "Failed to save installment: \(error.localizedDescription)"
+        }
+    }
+    
+    private func deleteInstallment() {
+        guard let plan = planToEdit else { return }
+        let service = InstallmentService(modelContext: modelContext)
+        do {
+            try service.deleteInstallmentPlan(plan)
+            dismiss()
+        } catch {
+            errorMessage = "Failed to delete plan: \(error.localizedDescription)"
         }
     }
 }
