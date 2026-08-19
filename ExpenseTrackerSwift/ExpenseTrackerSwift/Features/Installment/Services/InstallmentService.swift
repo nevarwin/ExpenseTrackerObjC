@@ -95,6 +95,46 @@ final class InstallmentService {
         try modelContext.save()
     }
     
+    /// Updates an existing InstallmentPlan's properties and cascades tenure / totalMonths changes to linked transactions.
+    func updateInstallmentPlan(
+        _ plan: InstallmentPlan,
+        name: String,
+        totalAmount: Decimal,
+        monthlyAmount: Decimal,
+        startDate: Date,
+        totalMonths: Int,
+        category: Category? = nil,
+        notes: String = ""
+    ) throws {
+        let oldName = plan.name
+        let safeTotalMonths = max(1, totalMonths)
+        
+        plan.name = name
+        plan.totalAmount = totalAmount
+        plan.monthlyAmount = monthlyAmount
+        plan.startDate = startDate
+        plan.totalMonths = safeTotalMonths
+        plan.notes = notes
+        plan.updatedAt = Date()
+        
+        for tx in plan.transactions {
+            tx.installmentTotalMonths = safeTotalMonths
+            if tx.desc == oldName {
+                tx.desc = name
+            }
+            if let newCategory = category, let currentCat = tx.category, currentCat.id != newCategory.id {
+                currentCat.usedAmount = max(0, currentCat.usedAmount - tx.amount)
+                currentCat.updatedAt = Date()
+                tx.category = newCategory
+                newCategory.usedAmount += tx.amount
+                newCategory.updatedAt = Date()
+            }
+            tx.updatedAt = Date()
+        }
+        
+        try modelContext.save()
+    }
+    
     /// Deletes an installment plan and its associated transactions.
     func deleteInstallmentPlan(_ plan: InstallmentPlan) throws {
         for tx in plan.transactions {

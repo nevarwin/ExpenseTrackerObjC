@@ -13,6 +13,7 @@ struct InstallmentsListView: View {
     
     @State private var showingAddSheet = false
     @State private var installmentToDelete: InstallmentPlan?
+    @State private var installmentToEdit: InstallmentPlan?
     
     var body: some View {
         NavigationStack {
@@ -63,6 +64,14 @@ struct InstallmentsListView: View {
                                     Label(String(localized: "Delete"), systemImage: "trash")
                                 }
                                 .accessibilityIdentifier("installment_delete_button")
+                                
+                                Button {
+                                    installmentToEdit = plan
+                                } label: {
+                                    Label(String(localized: "Edit"), systemImage: "pencil")
+                                }
+                                .tint(Color.emeraldPrimary)
+                                .accessibilityIdentifier("installment_edit_button")
                             }
                         }
                     }
@@ -81,6 +90,9 @@ struct InstallmentsListView: View {
             }
             .sheet(isPresented: $showingAddSheet) {
                 InstallmentFormView()
+            }
+            .sheet(item: $installmentToEdit) { plan in
+                InstallmentFormView(planToEdit: plan)
             }
             .alert(
                 String(localized: "Delete Installment"),

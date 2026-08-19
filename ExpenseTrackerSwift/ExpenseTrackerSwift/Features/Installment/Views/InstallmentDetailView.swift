@@ -15,6 +15,7 @@ struct InstallmentDetailView: View {
     
     @Query(sort: \Budget.startDate, order: .reverse) private var budgets: [Budget]
     @State private var showingPayOffAlert = false
+    @State private var showingEditSheet = false
     @State private var errorMessage: String?
     
     private var activeBudget: Budget? {
@@ -123,6 +124,17 @@ struct InstallmentDetailView: View {
         }
         .navigationTitle("Installment Details")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Edit") {
+                    showingEditSheet = true
+                }
+                .accessibilityIdentifier("installment_detail_edit_button")
+            }
+        }
+        .sheet(isPresented: $showingEditSheet) {
+            InstallmentFormView(planToEdit: plan)
+        }
         .alert("Pay Off Early?", isPresented: $showingPayOffAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Confirm Pay Off", role: .destructive) {
