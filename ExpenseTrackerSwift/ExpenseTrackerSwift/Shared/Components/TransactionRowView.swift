@@ -10,17 +10,10 @@ struct TransactionRowView: View {
     @EnvironmentObject var currencyManager: SharedCurrencyService
     @EnvironmentObject var appearanceManager: SharedAppearanceService
 
-    @ScaledMetric(relativeTo: .body) private var iconSize: CGFloat = 40
     @State private var isRevealed: Bool = false
 
     var body: some View {
         HStack(spacing: AppSpacing.lg) {
-            // Category Icon Badge
-            CategoryIconBadge(
-                iconName: transaction.category?.iconName ?? "bag.fill",
-                tintColor: transaction.category != nil ? Color.emeraldPrimary : Color.appSecondary
-            )
-            
             VStack(alignment: .leading, spacing: AppSpacing.xs / 2) {
                 Text(transaction.desc)
                     .font(.system(.body, design: .rounded))

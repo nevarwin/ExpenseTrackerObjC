@@ -174,7 +174,6 @@ final class TransactionViewModel {
         let budgetID = budget.id
         let descriptor = FetchDescriptor<Category>(
             predicate: #Predicate<Category> { category in
-                category.isActive == true &&
                 category.budget?.id == budgetID
             }
         )
@@ -182,9 +181,19 @@ final class TransactionViewModel {
         do {
             let categories = try modelContext.fetch(descriptor)
             
-            availableCategories = categories.filter { category in
+            var validCategories = categories.filter { category in
                 category.isValid(for: transactionDate)
-            }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            }
+            
+            // If editing an existing transaction, retain its category even if inactive
+            if let existingCategory = excluding?.category,
+               existingCategory.budget?.id == budgetID,
+               existingCategory.budgetPeriod.isSameMonth(as: transactionDate.monthBounds.start),
+               !validCategories.contains(where: { $0.id == existingCategory.id }) {
+                validCategories.append(existingCategory)
+            }
+            
+            availableCategories = validCategories.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         } catch {
             errorMessage = "Failed to load categories: \(error.localizedDescription)"
             availableCategories = []

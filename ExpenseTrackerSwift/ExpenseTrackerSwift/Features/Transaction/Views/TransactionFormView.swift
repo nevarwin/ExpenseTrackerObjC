@@ -97,23 +97,38 @@ struct TransactionFormView: View {
                     .accessibilityIdentifier("form_budget_period_button")
                 }
                 
-                Section("Category") {
+                Section {
                     Picker("Category", selection: $selectedCategory) {
                         Text("Select Category").tag(nil as Category?)
                         
-                        Section("Income") {
-                            ForEach(viewModel.availableCategories.filter { $0.isIncome }) { category in
-                                Text(category.name).tag(category as Category?)
+                        let incomeCats = viewModel.availableCategories.filter { $0.isIncome }
+                        if !incomeCats.isEmpty {
+                            Section("Income") {
+                                ForEach(incomeCats) { category in
+                                    Text(category.name + (category.isActive ? "" : " (Inactive)"))
+                                        .tag(category as Category?)
+                                }
                             }
                         }
                         
-                        Section("Expense") {
-                            ForEach(viewModel.availableCategories.filter { !$0.isIncome }) { category in
-                                Text(category.name).tag(category as Category?)
+                        let expenseCats = viewModel.availableCategories.filter { !$0.isIncome }
+                        if !expenseCats.isEmpty {
+                            Section("Expense") {
+                                ForEach(expenseCats) { category in
+                                    Text(category.name + (category.isActive ? "" : " (Inactive)"))
+                                        .tag(category as Category?)
+                                }
                             }
                         }
                     }
                     .accessibilityIdentifier("form_category_picker")
+                } header: {
+                    Text("Category")
+                } footer: {
+                    if viewModel.availableCategories.isEmpty {
+                        Text("No categories found for this budget period.")
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             .navigationTitle(existingTransaction == nil ? "New Transaction" : "Edit Transaction")
@@ -156,6 +171,9 @@ struct TransactionFormView: View {
             selectedBudgetPeriod = newDate.monthBounds.start
             loadCategories()
         }
+        .onChange(of: selectedBudgetPeriod) { _, _ in
+            loadCategories()
+        }
         .onChange(of: selectedBudget) { _, _ in
             selectedCategory = nil
             loadCategories()
@@ -175,10 +193,13 @@ struct TransactionFormView: View {
     
     private func loadCategories() {
         viewModel.loadAvailableCategories(
-            transactionDate: date,
+            transactionDate: selectedBudgetPeriod,
             budget: selectedBudget,
             excluding: existingTransaction
         )
+        if let current = selectedCategory, !viewModel.availableCategories.contains(where: { $0.id == current.id }) {
+            selectedCategory = nil
+        }
     }
     
     private func saveTransaction() {

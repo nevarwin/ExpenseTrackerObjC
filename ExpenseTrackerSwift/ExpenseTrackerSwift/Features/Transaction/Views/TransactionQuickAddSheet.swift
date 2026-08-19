@@ -168,7 +168,7 @@ struct TransactionQuickAddSheet: View {
     
     private var categorySelectionSection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .top, spacing: 12) {
+            HStack(spacing: AppSpacing.sm) {
                 ForEach(filteredCategories) { category in
                     CompactCategoryButton(
                         category: category,
@@ -186,7 +186,7 @@ struct TransactionQuickAddSheet: View {
             }
             .padding(.horizontal)
         }
-        .frame(height: 96)
+        .frame(height: 48)
     }
     
     private var typeAndSaveRow: some View {
@@ -277,21 +277,15 @@ struct CompactCategoryButton: View {
     let isSelected: Bool
     
     var body: some View {
-        VStack(alignment: .center, spacing: 4) {
-            Image(systemName: category.iconName)
-                .font(.subheadline)
-                .foregroundColor(isSelected ? .white : Color.appSecondary)
-                .frame(width: 44, height: 44)
-                .background(isSelected ? Color.dynamicAccent : Color.appLightGray)
-                .clipShape(Circle())
-            
-            Text(category.name)
-                .font(.caption2)
-                .foregroundStyle(isSelected ? .primary : .secondary)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-        }
-        .frame(width: 60)
-        .accessibilityIdentifier("quickadd_category_\(category.name)")
+        Text(category.name)
+            .font(.system(.subheadline, design: .rounded))
+            .fontWeight(isSelected ? .semibold : .medium)
+            .foregroundStyle(isSelected ? Color.white : Color.appPrimary)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(isSelected ? Color.emeraldPrimary : Color.appLightGray)
+            .clipShape(Capsule())
+            .accessibilityIdentifier("quickadd_category_\(category.name)")
     }
 }
+

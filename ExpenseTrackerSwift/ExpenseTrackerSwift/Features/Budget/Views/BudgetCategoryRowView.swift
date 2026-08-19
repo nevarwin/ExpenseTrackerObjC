@@ -12,8 +12,6 @@ struct BudgetCategoryRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             HStack(spacing: AppSpacing.md) {
-                CategoryIconBadge(iconName: category.iconName)
-
                 VStack(alignment: .leading, spacing: AppSpacing.xs / 2) {
                     Text(category.name)
                         .font(.system(.body, design: .rounded))
