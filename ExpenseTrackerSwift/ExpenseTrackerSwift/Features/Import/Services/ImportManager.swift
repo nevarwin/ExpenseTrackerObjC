@@ -196,7 +196,8 @@ class ImportManager {
                 await Task.yield()
             }
             
-            let categoryName = csvTx.category
+            let (isInstallmentCategory, cleanCatName) = parseInstallmentCategoryName(from: csvTx.category)
+            let categoryName = cleanCatName.isEmpty ? csvTx.category : cleanCatName
             
             let category: Category
             if let existing = budget.categories.first(where: {
@@ -219,13 +220,19 @@ class ImportManager {
                 budget.categories.append(category)
             }
             
-            // Handle Installment auto-linking if tagged
+            // Handle Installment auto-linking if tagged or category is installment
             var plan: InstallmentPlan? = nil
-            if let totalMonths = csvTx.installmentTotalMonths, totalMonths > 0 {
+            var idx = csvTx.installmentIndex
+            var total = csvTx.installmentTotalMonths
+            
+            if let totalMonths = total, totalMonths > 0 {
                 let cleanName = csvTx.cleanDescription
                 let fetchDescriptor = FetchDescriptor<InstallmentPlan>()
                 if let existingPlans = try? modelContext.fetch(fetchDescriptor),
                    let matched = existingPlans.first(where: { $0.name.caseInsensitiveCompare(cleanName) == .orderedSame && $0.totalMonths == totalMonths }) {
+                    if budgetPeriod < matched.startDate {
+                        matched.startDate = budgetPeriod
+                    }
                     plan = matched
                 } else {
                     let totalAmt = csvTx.amount * Decimal(totalMonths)
@@ -233,11 +240,28 @@ class ImportManager {
                         name: cleanName,
                         totalAmount: totalAmt,
                         monthlyAmount: csvTx.amount,
-                        startDate: csvTx.date,
+                        startDate: budgetPeriod,
                         totalMonths: totalMonths
                     )
                     modelContext.insert(newPlan)
                     plan = newPlan
+                }
+            } else if isInstallmentCategory {
+                plan = ensureInstallmentPlanExists(name: categoryName, monthlyAmount: csvTx.amount, startDate: budgetPeriod)
+                if let p = plan {
+                    idx = p.elapsedMonths(asOf: budgetPeriod)
+                    total = p.totalMonths
+                }
+            } else {
+                let fetchDescriptor = FetchDescriptor<InstallmentPlan>()
+                if let existingPlans = try? modelContext.fetch(fetchDescriptor),
+                   let matched = existingPlans.first(where: {
+                       $0.name.caseInsensitiveCompare(categoryName) == .orderedSame ||
+                       $0.name.caseInsensitiveCompare(csvTx.cleanDescription) == .orderedSame
+                   }) {
+                    plan = matched
+                    idx = matched.elapsedMonths(asOf: budgetPeriod)
+                    total = matched.totalMonths
                 }
             }
             
@@ -249,8 +273,8 @@ class ImportManager {
                 category: category,
                 budgetPeriod: budgetPeriod,
                 installmentPlan: plan,
-                installmentIndex: csvTx.installmentIndex,
-                installmentTotalMonths: csvTx.installmentTotalMonths
+                installmentIndex: idx,
+                installmentTotalMonths: total
             )
             modelContext.insert(transaction)
             if let plan = plan {
@@ -279,7 +303,8 @@ class ImportManager {
         let normalizedMonth = month.monthBounds.start
         
         for item in csvBudget.items {
-            let categoryName = item.categoryName
+            let (isInstallment, cleanName) = parseInstallmentCategoryName(from: item.categoryName)
+            let categoryName = cleanName.isEmpty ? item.categoryName : cleanName
             
             if let existingCategory = budget.categories.first(where: {
                 $0.name.caseInsensitiveCompare(categoryName) == .orderedSame &&
@@ -299,6 +324,10 @@ class ImportManager {
                 )
                 modelContext.insert(category)
                 budget.categories.append(category)
+            }
+            
+            if isInstallment && item.plannedAmount > 0 {
+                ensureInstallmentPlanExists(name: categoryName, monthlyAmount: item.plannedAmount, startDate: normalizedMonth)
             }
         }
         
@@ -482,6 +511,12 @@ class ImportManager {
         let fetchDescriptor = FetchDescriptor<InstallmentPlan>()
         if let existingPlans = try? modelContext.fetch(fetchDescriptor),
            let matched = existingPlans.first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) {
+            if startDate < matched.startDate {
+                matched.startDate = startDate
+            }
+            if matched.monthlyAmount == 0 && monthlyAmount > 0 {
+                matched.monthlyAmount = monthlyAmount
+            }
             return matched
         }
         
@@ -510,7 +545,18 @@ class ImportManager {
                 
                 let date = sheet.cell(row: r, column: 2)?.dateValue ?? defaultPeriod
                 let rawDesc = sheet.cell(row: r, column: 4)?.value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                let catName = sheet.cell(row: r, column: 5)?.value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Uncategorized"
+                let rawCat = sheet.cell(row: r, column: 5)?.value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                
+                // Skip unallocated note rows or purchase total notes that shouldn't duplicate actual installments
+                if rawCat.isEmpty {
+                    let lowerDesc = rawDesc.lowercased()
+                    if lowerDesc.contains("where do we allocate") ||
+                       (lowerDesc.contains("aircon") && amount >= 10000) {
+                        continue
+                    }
+                }
+                
+                let catName = rawCat.isEmpty ? "Uncategorized" : rawCat
                 
                 if !catName.isEmpty && catName.caseInsensitiveCompare("Totals") != .orderedSame {
                     importSingleXLSXTransaction(
@@ -531,7 +577,8 @@ class ImportManager {
                 
                 let date = sheet.cell(row: r, column: 7)?.dateValue ?? defaultPeriod
                 let rawDesc = sheet.cell(row: r, column: 9)?.value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                let catName = sheet.cell(row: r, column: 10)?.value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Income"
+                let rawCat = sheet.cell(row: r, column: 10)?.value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                let catName = rawCat.isEmpty ? "Income" : rawCat
                 
                 if !catName.isEmpty && catName.caseInsensitiveCompare("Totals") != .orderedSame {
                     importSingleXLSXTransaction(
@@ -591,6 +638,9 @@ class ImportManager {
             let fetchDescriptor = FetchDescriptor<InstallmentPlan>()
             if let existingPlans = try? modelContext.fetch(fetchDescriptor),
                let matched = existingPlans.first(where: { $0.name.caseInsensitiveCompare(cleanDesc) == .orderedSame && $0.totalMonths == totalMonths }) {
+                if budgetPeriod < matched.startDate {
+                    matched.startDate = budgetPeriod
+                }
                 plan = matched
             } else {
                 let totalAmt = amount * Decimal(totalMonths)
@@ -598,16 +648,16 @@ class ImportManager {
                     name: cleanDesc,
                     totalAmount: totalAmt,
                     monthlyAmount: amount,
-                    startDate: date,
+                    startDate: budgetPeriod,
                     totalMonths: totalMonths
                 )
                 modelContext.insert(newPlan)
                 plan = newPlan
             }
         } else if isInstallmentCategory {
-            plan = ensureInstallmentPlanExists(name: resolvedCategoryName, monthlyAmount: amount, startDate: date)
+            plan = ensureInstallmentPlanExists(name: resolvedCategoryName, monthlyAmount: amount, startDate: budgetPeriod)
             if let p = plan {
-                idx = p.elapsedMonths(asOf: date)
+                idx = p.elapsedMonths(asOf: budgetPeriod)
                 total = p.totalMonths
             }
         } else {
@@ -618,7 +668,7 @@ class ImportManager {
                    $0.name.caseInsensitiveCompare(cleanDesc) == .orderedSame
                }) {
                 plan = matched
-                idx = matched.elapsedMonths(asOf: date)
+                idx = matched.elapsedMonths(asOf: budgetPeriod)
                 total = matched.totalMonths
             }
         }

@@ -28,9 +28,25 @@ struct TransactionRowView: View {
                     .foregroundStyle(Color.appPrimary)
                     .accessibilityIdentifier("transaction_desc")
                 
-                Text(transaction.date, style: .date)
-                    .font(.caption)
-                    .foregroundStyle(Color.appSecondary)
+                HStack(spacing: AppSpacing.xs) {
+                    Text(transaction.date, style: .date)
+                        .font(.caption)
+                        .foregroundStyle(Color.appSecondary)
+                    
+                    if let idx = transaction.installmentIndex, let total = transaction.installmentTotalMonths {
+                        Text("•")
+                            .font(.caption)
+                            .foregroundStyle(Color.appSecondary)
+                        
+                        Text("Month \(idx)/\(total)")
+                            .font(.system(size: 10, weight: .semibold, design: .rounded))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.appLightGray)
+                            .foregroundStyle(Color.appPrimary)
+                            .clipShape(Capsule())
+                    }
+                }
             }
             
             Spacer()

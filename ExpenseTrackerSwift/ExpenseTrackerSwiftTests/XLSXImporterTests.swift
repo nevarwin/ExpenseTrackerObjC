@@ -8,6 +8,7 @@ final class XLSXImporterTests: XCTestCase {
     var context: ModelContext!
     var importManager: ImportManager!
     let candidateFileURLs = [
+        URL(fileURLWithPath: "/Users/raven/Downloads/Legit Monthly budget.xlsx"),
         URL(fileURLWithPath: "/Users/raven/Downloads/Monthly budget (1).xlsx"),
         URL(fileURLWithPath: "/Users/raven/Downloads/Monthly budget.xlsx")
     ]
@@ -123,6 +124,45 @@ final class XLSXImporterTests: XCTestCase {
             }
         }
         print("=================================================================\n")
+    }
+    
+    func testInspectImportedInstallmentsFromRealWorkbook() throws {
+        guard let url = fileURL else {
+            throw XCTSkip("Sample workbook file not found")
+        }
+        
+        let result = try importManager.importFullXLSXWorkbook(from: url)
+        XCTAssertTrue(result.success)
+        
+        let planFetch = FetchDescriptor<InstallmentPlan>()
+        let plans = try context.fetch(planFetch)
+        print("\n--- IMPORTED INSTALLMENT PLANS (\(plans.count)) ---")
+        for plan in plans {
+            print("Plan: \(plan.name)")
+            print("  Total Amount: \(plan.totalAmount), Monthly: \(plan.monthlyAmount), Tenure: \(plan.totalMonths)")
+            print("  Start Date: \(plan.startDate)")
+            print("  Elapsed Months (today): \(plan.elapsedMonths())")
+            print("  Remaining Months: \(plan.remainingMonthsCount)")
+            print("  Total Paid: \(plan.totalPaidAmount)")
+            print("  Remaining Balance: \(plan.remainingBalance)")
+            print("  Transactions Count: \(plan.transactions.count)")
+        }
+        XCTAssertFalse(plans.isEmpty, "Should have at least 1 installment plan created")
+        if let mideaPlan = plans.first(where: { $0.name.caseInsensitiveCompare("Midea Aircon") == .orderedSame }) {
+            XCTAssertEqual(mideaPlan.monthlyAmount, 2775)
+            XCTAssertEqual(mideaPlan.transactions.count, 4, "Should have 4 monthly transactions linked")
+            
+            // Check indices for each month
+            let mayTx = mideaPlan.transactions.first(where: { Calendar.current.component(.month, from: $0.budgetPeriod) == 5 })
+            let juneTx = mideaPlan.transactions.first(where: { Calendar.current.component(.month, from: $0.budgetPeriod) == 6 })
+            let julyTx = mideaPlan.transactions.first(where: { Calendar.current.component(.month, from: $0.budgetPeriod) == 7 })
+            let augTx = mideaPlan.transactions.first(where: { Calendar.current.component(.month, from: $0.budgetPeriod) == 8 })
+            
+            XCTAssertEqual(mayTx?.installmentIndex, 1, "May transaction should have index 1")
+            XCTAssertEqual(juneTx?.installmentIndex, 2, "June transaction should have index 2")
+            XCTAssertEqual(julyTx?.installmentIndex, 3, "July transaction should have index 3")
+            XCTAssertEqual(augTx?.installmentIndex, 4, "August transaction should have index 4")
+        }
     }
     
     func testImportCategoryWithInstallmentPrefixCreatesInstallmentPlan() throws {

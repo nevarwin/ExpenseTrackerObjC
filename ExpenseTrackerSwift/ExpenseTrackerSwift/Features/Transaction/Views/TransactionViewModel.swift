@@ -237,6 +237,17 @@ final class TransactionViewModel {
         category.usedAmount = newUsage
         category.updatedAt = Date()
         
+        let planFetch = FetchDescriptor<InstallmentPlan>()
+        let plans = (try? modelContext.fetch(planFetch)) ?? []
+        let matchedPlan = plans.first(where: {
+            $0.name.caseInsensitiveCompare(category.name) == .orderedSame ||
+            $0.name.caseInsensitiveCompare(description) == .orderedSame
+        })
+        
+        let plan = existing?.installmentPlan ?? matchedPlan
+        let idx = existing?.installmentIndex ?? plan?.elapsedMonths(asOf: budgetPeriod)
+        let total = existing?.installmentTotalMonths ?? plan?.totalMonths
+        
         if let existing = existing {
             existing.amount = amount
             existing.desc = description
@@ -244,6 +255,9 @@ final class TransactionViewModel {
             existing.budgetPeriod = budgetPeriod
             existing.budget = budget
             existing.category = category
+            existing.installmentPlan = plan
+            existing.installmentIndex = idx
+            existing.installmentTotalMonths = total
             existing.updatedAt = Date()
             analyticsService.trackEvent("Transaction Updated")
         } else {
@@ -253,9 +267,15 @@ final class TransactionViewModel {
                 date: date,
                 budget: budget,
                 category: category,
-                budgetPeriod: budgetPeriod
+                budgetPeriod: budgetPeriod,
+                installmentPlan: plan,
+                installmentIndex: idx,
+                installmentTotalMonths: total
             )
             modelContext.insert(transaction)
+            if let plan = plan, !plan.transactions.contains(where: { $0.id == transaction.id }) {
+                plan.transactions.append(transaction)
+            }
             transactions.insert(transaction, at: 0)
             analyticsService.trackEvent("Transaction Added")
         }

@@ -28,6 +28,11 @@ struct MainTabView: View {
                         .tabItem {
                             Label(String(localized: "Budget"), systemImage: "creditcard.fill")
                         }
+                    
+                    InstallmentsListView()
+                        .tabItem {
+                            Label(String(localized: "Installments"), systemImage: "calendar.badge.clock")
+                        }
                 }
             } else {
                 ProgressView()
@@ -62,5 +67,5 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView()
-        .modelContainer(for: [Budget.self, Category.self, Transaction.self])
+        .modelContainer(for: [Budget.self, Category.self, Transaction.self, InstallmentPlan.self])
 }
