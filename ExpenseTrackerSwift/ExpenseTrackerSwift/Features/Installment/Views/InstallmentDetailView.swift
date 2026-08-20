@@ -88,13 +88,14 @@ struct InstallmentDetailView: View {
             }
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
-            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 4, trailing: 16))
+            .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 4, trailing: 0))
             
-            // Financial Breakdown
-            Section(header: Text("Financial Overview")) {
+            // Financial Overview Section (Matching Expense Overview in MonthlyBudgetDetailView)
+            Section("Financial Overview") {
                 LabeledContent("Total Amount", value: plan.totalAmount.formatted(.currency(code: currencyManager.currencyCode)))
                 LabeledContent("Monthly Payment", value: plan.monthlyAmount.formatted(.currency(code: currencyManager.currencyCode)))
                 LabeledContent("Total Paid", value: plan.totalPaidAmount.formatted(.currency(code: currencyManager.currencyCode)))
+                    .foregroundStyle(plan.isCompleted ? Color.emeraldPrimary : Color.appPrimary)
                 LabeledContent("Remaining Months", value: "\(plan.remainingMonthsCount)")
                 if !plan.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     LabeledContent("Notes", value: plan.notes)
@@ -105,27 +106,31 @@ struct InstallmentDetailView: View {
             if !plan.isCompleted && plan.remainingBalance > 0 {
                 Section {
                     Button(action: { showingPayOffAlert = true }) {
-                        HStack {
+                        HStack(spacing: AppSpacing.sm) {
                             Spacer()
-                            Label("Pay Off Remaining Balance Early", systemImage: "checkmark.circle.fill")
-                                .font(.system(.subheadline, design: .rounded))
-                                .fontWeight(.semibold)
+                            Image(systemName: "checkmark.circle.fill")
+                            Text("Pay Off Remaining Balance Early")
                             Spacer()
                         }
-                        .padding(.vertical, 4)
+                        .font(.system(.subheadline, design: .rounded))
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .padding(.vertical, 12)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.emeraldPrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.medium))
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Color.emeraldPrimary)
+                    .buttonStyle(.plain)
                     .bouncyButtonStyle()
                     .accessibilityIdentifier("installment_pay_off_early_button")
                 }
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
             }
             
             // Generated Transactions List
-            Section {
+            Section("Generated Transactions (\(plan.transactions.count))") {
                 if plan.transactions.isEmpty {
                     VStack(spacing: AppSpacing.sm) {
                         Image(systemName: "tray")
@@ -149,7 +154,7 @@ struct InstallmentDetailView: View {
                         .buttonStyle(.plain)
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                         .accessibilityIdentifier("installment_transaction_row")
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
@@ -169,17 +174,8 @@ struct InstallmentDetailView: View {
                         }
                     }
                 }
-            } header: {
-                Text("Generated Transactions (\(plan.transactions.count))")
-                    .font(.system(.subheadline, design: .rounded))
-                    .fontWeight(.bold)
-                    .foregroundStyle(Color.appSecondary)
-                    .textCase(nil)
             }
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("Installment Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
