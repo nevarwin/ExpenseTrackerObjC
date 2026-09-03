@@ -94,11 +94,8 @@ struct TransactionListView: View {
 
     @ViewBuilder
     private func calendarContent(viewModel: TransactionViewModel) -> some View {
-        TransactionCalendarView(viewModel: viewModel) { hasTransactions in
+        TransactionCalendarView(viewModel: viewModel) { _ in
             hasUserSelectedDate = true
-            if !hasTransactions && !activeBudgets.isEmpty {
-                showingAddTransaction = true
-            }
         }
         .padding(.bottom, 8)
     }

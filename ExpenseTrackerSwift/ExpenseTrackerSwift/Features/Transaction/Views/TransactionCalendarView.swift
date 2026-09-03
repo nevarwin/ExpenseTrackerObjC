@@ -176,7 +176,7 @@ struct TransactionCalendarView: View {
                             }
                         } else {
                             Color.clear
-                                .frame(minHeight: 32)
+                                .frame(minHeight: 44)
                         }
                     }
                 }
@@ -307,6 +307,8 @@ struct DayCell: View {
                     }
                 }
             }
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Text("\(date.formatted(.dateTime.month().day())) \((hasIncome || hasExpense) ? "Has transactions" : "No transactions")"))

@@ -51,6 +51,16 @@ final class Transaction {
         category?.isIncome ?? false
     }
     
+    var iconName: String {
+        if installmentPlan != nil {
+            return "creditcard.fill"
+        }
+        if let category = category {
+            return category.iconName
+        }
+        return CategoryIconHelper.iconName(for: desc, isIncome: isIncome)
+    }
+    
     var monthYear: String {
         date.formatted(.dateTime.month(.wide).year())
     }

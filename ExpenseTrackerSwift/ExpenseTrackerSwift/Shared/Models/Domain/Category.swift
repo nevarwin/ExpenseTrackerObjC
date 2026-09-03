@@ -51,6 +51,10 @@ final class Category {
         usedAmount > allocatedAmount
     }
     
+    var iconName: String {
+        CategoryIconHelper.iconName(for: name, isIncome: isIncome)
+    }
+    
     
     func transactionsInMonth(_ date: Date = Date()) -> [Transaction] {
         let bounds = date.monthBounds

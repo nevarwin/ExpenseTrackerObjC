@@ -307,6 +307,12 @@ struct InstallmentRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             HStack(spacing: AppSpacing.md) {
+                CategoryIconBadge(
+                    iconName: "creditcard.fill",
+                    tintColor: plan.isCompleted ? Color.emeraldPrimary : Color.dynamicAccent
+                )
+                .accessibilityIdentifier("installment_icon_badge")
+                
                 VStack(alignment: .leading, spacing: AppSpacing.xs / 2) {
                     Text(plan.name)
                         .font(.system(.body, design: .rounded))

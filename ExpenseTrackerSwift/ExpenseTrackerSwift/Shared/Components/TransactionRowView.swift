@@ -13,7 +13,13 @@ struct TransactionRowView: View {
     @State private var isRevealed: Bool = false
 
     var body: some View {
-        HStack(spacing: AppSpacing.lg) {
+        HStack(spacing: AppSpacing.md) {
+            CategoryIconBadge(
+                iconName: transaction.iconName,
+                tintColor: transaction.isIncome ? Color.emeraldPrimary : Color.dynamicAccent
+            )
+            .accessibilityIdentifier("transaction_icon_badge")
+            
             VStack(alignment: .leading, spacing: AppSpacing.xs / 2) {
                 Text(transaction.desc)
                     .font(.system(.body, design: .rounded))
