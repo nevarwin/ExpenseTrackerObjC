@@ -80,6 +80,13 @@ struct TransactionQuickAddSheet: View {
                     Button("Cancel") { dismiss() }
                         .accessibilityIdentifier("quickadd_cancel_button")
                 }
+                
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        isAmountFocused = false
+                    }
+                }
             }
         }
         .alert("Amount Exceeds Allocation", isPresented: $showingOverflowAlert) {
@@ -135,6 +142,7 @@ struct TransactionQuickAddSheet: View {
                     .foregroundStyle(.secondary)
                 TextField("Notes", text: $description)
                     .font(.body)
+                    .submitLabel(.done)
                     .padding(8)
                     .background(Color.secondary.opacity(0.1))
                     .cornerRadius(8)

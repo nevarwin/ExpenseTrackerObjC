@@ -16,6 +16,13 @@ struct TransactionFormView: View {
     @State private var date: Date = Date()
     @State private var selectedBudgetPeriod: Date = Date()
     
+    enum FormField: Hashable {
+        case amount
+        case description
+    }
+    
+    @FocusState private var focusedField: FormField?
+    
     @State private var selectedCategory: Category?
     @State private var showingOverflowAlert = false
     @State private var showingError = false
@@ -59,6 +66,7 @@ struct TransactionFormView: View {
                     LabeledContent("Amount") {
                         TextField("0.00", text: $amount)
                             .keyboardType(.decimalPad)
+                            .focused($focusedField, equals: .amount)
                             .multilineTextAlignment(.trailing)
                             .accessibilityIdentifier("form_amount_field")
                             .onChange(of: amount) { oldValue, newValue in
@@ -71,6 +79,8 @@ struct TransactionFormView: View {
                     
                     LabeledContent("Description") {
                         TextField("Enter description", text: $description)
+                            .focused($focusedField, equals: .description)
+                            .submitLabel(.done)
                             .multilineTextAlignment(.trailing)
                             .accessibilityIdentifier("form_description_field")
                     }
@@ -131,6 +141,7 @@ struct TransactionFormView: View {
                     }
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle(existingTransaction == nil ? "New Transaction" : "Edit Transaction")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -143,6 +154,13 @@ struct TransactionFormView: View {
                     Button("Save") { saveTransaction() }
                         .disabled(!isValid)
                         .accessibilityIdentifier("form_save_button")
+                }
+                
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        focusedField = nil
+                    }
                 }
             }
             .alert("Amount Exceeds Allocation", isPresented: $showingOverflowAlert) {
@@ -164,6 +182,9 @@ struct TransactionFormView: View {
         }
         .onAppear {
             loadCategories()
+            if existingTransaction == nil {
+                focusedField = .amount
+            }
         }
         
         .onChange(of: date) { _, newDate in

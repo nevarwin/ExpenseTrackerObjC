@@ -152,6 +152,7 @@ struct InstallmentsListView: View {
                     .scrollContentBackground(.hidden)
                     .background(Color(uiColor: .systemGroupedBackground))
                     .searchable(text: $searchText, prompt: "Search installments...")
+                    .scrollDismissesKeyboard(.interactively)
                 }
             }
             .navigationTitle("Installments")

@@ -136,6 +136,7 @@ struct TransactionListView: View {
         }
         .coordinateSpace(name: "scroll")
         .accessibilityIdentifier("transaction_list")
+        .scrollDismissesKeyboard(.interactively)
         .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
             guard !viewModel.isLoading else { return }
             if value < -60 && viewModel.calendarScope == .month {

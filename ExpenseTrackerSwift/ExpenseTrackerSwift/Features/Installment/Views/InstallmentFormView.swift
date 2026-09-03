@@ -28,6 +28,16 @@ struct InstallmentFormView: View {
     @State private var errorMessage: String?
     @State private var showingDeleteConfirmation: Bool = false
     
+    enum FormField: Hashable {
+        case name
+        case totalAmount
+        case monthlyAmount
+        case customMonths
+        case notes
+    }
+    
+    @FocusState private var focusedField: FormField?
+    
     private let presetMonths: [Int] = [3, 6, 12, 18, 24, 36, 48, 60]
     
     init(planToEdit: InstallmentPlan? = nil) {
@@ -90,6 +100,8 @@ struct InstallmentFormView: View {
             Form {
                 Section(header: Text("Installment Plan Details")) {
                     TextField("Name (e.g. Laptop Purchase)", text: $name)
+                        .focused($focusedField, equals: .name)
+                        .submitLabel(.next)
                         .accessibilityIdentifier("installment_name_field")
                     
                     HStack {
@@ -97,6 +109,7 @@ struct InstallmentFormView: View {
                         Spacer()
                         TextField("2400.00", text: $totalAmountString)
                             .keyboardType(.decimalPad)
+                            .focused($focusedField, equals: .totalAmount)
                             .multilineTextAlignment(.trailing)
                             .accessibilityIdentifier("installment_amount_field")
                             .onChange(of: totalAmountString) { oldValue, newValue in
@@ -111,6 +124,7 @@ struct InstallmentFormView: View {
                         Spacer()
                         TextField("100.00", text: $monthlyAmountString)
                             .keyboardType(.decimalPad)
+                            .focused($focusedField, equals: .monthlyAmount)
                             .multilineTextAlignment(.trailing)
                             .accessibilityIdentifier("installment_monthly_field")
                     }
@@ -146,6 +160,7 @@ struct InstallmentFormView: View {
                         
                         TextField("Months", text: $totalMonthsString)
                             .keyboardType(.numberPad)
+                            .focused($focusedField, equals: .customMonths)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 60)
                             .textFieldStyle(.roundedBorder)
@@ -231,6 +246,8 @@ struct InstallmentFormView: View {
                 
                 Section(header: Text("Notes")) {
                     TextField("Optional notes or reference #", text: $notes)
+                        .focused($focusedField, equals: .notes)
+                        .submitLabel(.done)
                         .accessibilityIdentifier("installment_notes_field")
                 }
                 
@@ -245,6 +262,7 @@ struct InstallmentFormView: View {
                     }
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle(isEditing ? "Edit Installment Plan" : "New Installment Plan")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -261,6 +279,12 @@ struct InstallmentFormView: View {
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || totalAmountString.isEmpty || totalMonths < 1)
                     .accessibilityIdentifier("installment_save_button")
                 }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        focusedField = nil
+                    }
+                }
             }
             .onAppear {
                 if selectedBudget == nil {
@@ -268,6 +292,9 @@ struct InstallmentFormView: View {
                 }
                 if selectedCategory == nil, let firstCategory = currentBudget?.categories.first(where: { !$0.isIncome }) {
                     selectedCategory = firstCategory
+                }
+                if !isEditing {
+                    focusedField = .name
                 }
             }
             .alert(String(localized: "Delete Installment Plan"), isPresented: $showingDeleteConfirmation) {
