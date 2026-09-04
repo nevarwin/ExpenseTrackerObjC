@@ -4,10 +4,12 @@ import SwiftData
 struct TransactionListView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var currencyManager: SharedCurrencyService
+    @EnvironmentObject var appearanceManager: SharedAppearanceService
     @State private var viewModel: TransactionViewModel?
     @State private var showingAddTransaction = false
     @State private var selectedTransaction: Transaction?
     @State private var hasUserSelectedDate = false
+    @State private var isIncomeRevealed = false
 
     @Query(filter: #Predicate<Budget> { $0.isActive == true })
     private var activeBudgets: [Budget]
@@ -160,18 +162,41 @@ struct TransactionListView: View {
     @ViewBuilder
     private func transactionSummaryHeader(viewModel: TransactionViewModel) -> some View {
         if !viewModel.transactions.isEmpty {
-            HStack {
+            HStack(spacing: 0) {
                 VStack(alignment: .leading, spacing: AppSpacing.xs) {
                     Text("Income")
                         .font(.caption2)
                         .foregroundStyle(Color.appSecondary)
-                    Text(viewModel.totalIncome, format: .currency(code: currencyManager.currencyCode))
-                        .font(.system(.subheadline, design: .rounded))
-                        .fontWeight(.bold)
-                        .foregroundStyle(Color.emeraldPrimary)
+                    
+                    if !isIncomeRevealed && (viewModel.totalIncome > 0 || viewModel.transactions.contains(where: { $0.isIncome })) {
+                        Text("****")
+                            .font(.system(.subheadline, design: .rounded))
+                            .fontWeight(.bold)
+                            .foregroundStyle(Color.emeraldPrimary)
+                            .accessibilityIdentifier("summary_income_amount_censored")
+                            .onTapGesture {
+                                appearanceManager.triggerHaptic(.light)
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                                    isIncomeRevealed.toggle()
+                                }
+                            }
+                    } else {
+                        Text(viewModel.totalIncome, format: .currency(code: currencyManager.currencyCode))
+                            .font(.system(.subheadline, design: .rounded))
+                            .fontWeight(.bold)
+                            .foregroundStyle(Color.emeraldPrimary)
+                            .accessibilityIdentifier("summary_income_amount")
+                            .onTapGesture {
+                                if viewModel.totalIncome > 0 || viewModel.transactions.contains(where: { $0.isIncome }) {
+                                    appearanceManager.triggerHaptic(.light)
+                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                                        isIncomeRevealed.toggle()
+                                    }
+                                }
+                            }
+                    }
                 }
-
-                Spacer()
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 VStack(alignment: .center, spacing: AppSpacing.xs) {
                     Text("Expense")
@@ -182,8 +207,7 @@ struct TransactionListView: View {
                         .fontWeight(.bold)
                         .foregroundStyle(Color.appPrimary)
                 }
-
-                Spacer()
+                .frame(maxWidth: .infinity, alignment: .center)
 
                 VStack(alignment: .trailing, spacing: AppSpacing.xs) {
                     Text("Net")
@@ -194,6 +218,7 @@ struct TransactionListView: View {
                         .fontWeight(.bold)
                         .foregroundStyle(viewModel.netBalance >= 0 ? Color.emeraldPrimary : Color.red)
                 }
+                .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .appCardStyle()
             .padding(.bottom, AppSpacing.sm)
@@ -246,7 +271,7 @@ struct TransactionListView: View {
             .padding(.vertical, 40)
             .accessibilityIdentifier("transaction_empty_no_results")
         } else {
-            LazyVStack(spacing: 8) {
+            LazyVStack(spacing: AppSpacing.md) {
                 ForEach(viewModel.transactions, id: \.id) { transaction in
                     SwipeActionView(
                         trailingActions: [
@@ -313,4 +338,6 @@ private struct ScrollOffsetPreferenceKey: PreferenceKey {
 #Preview {
     TransactionListView()
         .modelContainer(for: [Budget.self, Category.self, Transaction.self])
+        .environmentObject(SharedCurrencyService())
+        .environmentObject(SharedAppearanceService())
 }

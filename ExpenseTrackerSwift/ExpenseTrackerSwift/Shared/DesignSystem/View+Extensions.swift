@@ -2,16 +2,24 @@ import SwiftUI
 
 struct AppCardModifier: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
+    var borderColor: Color? = nil
+    var borderWidth: CGFloat = 1
 
     func body(content: Content) -> some View {
         content
             .padding(AppSpacing.lg)
-            .background(Color(UIColor.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: AppRadius.card))
+            .background(
+                RoundedRectangle(cornerRadius: AppRadius.card)
+                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.card)
-                    .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.04), lineWidth: 1)
+                    .strokeBorder(
+                        borderColor ?? (colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.04)),
+                        lineWidth: borderWidth
+                    )
             )
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.card))
     }
 }
 
@@ -76,8 +84,8 @@ struct ShimmerModifier: ViewModifier {
 }
 
 extension View {
-    func appCardStyle() -> some View {
-        self.modifier(AppCardModifier())
+    func appCardStyle(borderColor: Color? = nil, borderWidth: CGFloat = 1) -> some View {
+        self.modifier(AppCardModifier(borderColor: borderColor, borderWidth: borderWidth))
     }
     
     func cardStyle(backgroundColor: Color = .appSurface, padding: CGFloat = AppSpacing.lg) -> some View {
