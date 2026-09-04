@@ -58,6 +58,11 @@ final class TransactionFormViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.availableCategories.count, 1)
         XCTAssertTrue(viewModel.availableCategories.contains(where: { $0.id == febFood.id }))
         XCTAssertFalse(viewModel.availableCategories.contains(where: { $0.id == janFood.id }))
+        
+        // Load for March (strict budget period isolation: since no categories exist for March, it must be empty)
+        let marDate = calendar.date(from: DateComponents(year: 2026, month: 3, day: 15))!
+        viewModel.loadAvailableCategories(transactionDate: marDate, budget: budget)
+        XCTAssertEqual(viewModel.availableCategories.count, 0)
     }
     
     func testBudgetIsolationForCategories() throws {

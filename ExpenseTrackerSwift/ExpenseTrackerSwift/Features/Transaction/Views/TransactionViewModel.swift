@@ -172,16 +172,28 @@ final class TransactionViewModel {
         excluding: Transaction? = nil
     ) {
         let budgetID = budget.id
+        
+        // Use a simple, robust predicate on Category to avoid SQLite relationship join translation issues
         let descriptor = FetchDescriptor<Category>(
             predicate: #Predicate<Category> { category in
-                category.budget?.id == budgetID
+                category.isActive == true
             }
         )
         
         do {
-            let categories = try modelContext.fetch(descriptor)
+            let allFetched = try modelContext.fetch(descriptor)
             
-            var validCategories = categories.filter { category in
+            // Filter by budget in Swift (safely across in-memory and SQLite backing stores)
+            var budgetCategories = allFetched.filter { $0.budget?.id == budgetID }
+            
+            // Ensure any categories in the budget's direct relationship are also included
+            for cat in budget.categories where cat.isActive {
+                if !budgetCategories.contains(where: { $0.id == cat.id }) {
+                    budgetCategories.append(cat)
+                }
+            }
+            
+            var validCategories = budgetCategories.filter { category in
                 category.isValid(for: transactionDate)
             }
             
