@@ -93,6 +93,19 @@ struct BudgetDetailView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
+                    Button {
+                        DefaultBudgetService.instance.setDefault(budget: budget)
+                    } label: {
+                        Label(
+                            DefaultBudgetService.instance.isDefault(budget: budget) ? String(localized: "Default Budget") : String(localized: "Set as Default Budget"),
+                            systemImage: DefaultBudgetService.instance.isDefault(budget: budget) ? "star.fill" : "star"
+                        )
+                    }
+                    .disabled(DefaultBudgetService.instance.isDefault(budget: budget))
+                    .accessibilityIdentifier("budget_set_default_menu_item")
+
+                    Divider()
+
                     Button(role: .destructive) {
                         showingDeleteConfirmation = true
                     } label: {

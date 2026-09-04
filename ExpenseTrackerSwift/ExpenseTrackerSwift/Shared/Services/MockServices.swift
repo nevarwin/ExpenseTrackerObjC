@@ -54,3 +54,37 @@ final class MockPermissionService: PermissionServiceProtocol {
         completion(mockStatus)
     }
 }
+
+// MARK: - Mock Default Budget Service
+
+final class MockDefaultBudgetService: DefaultBudgetServiceProtocol {
+    var defaultBudgetID: UUID?
+    private(set) var setDefaultCalledWith: Budget?
+    private(set) var clearDefaultCalled = false
+
+    init(defaultBudgetID: UUID? = nil) {
+        self.defaultBudgetID = defaultBudgetID
+    }
+
+    func isDefault(budget: Budget) -> Bool {
+        return budget.id == defaultBudgetID
+    }
+
+    func setDefault(budget: Budget) {
+        defaultBudgetID = budget.id
+        setDefaultCalledWith = budget
+    }
+
+    func clearDefault() {
+        defaultBudgetID = nil
+        clearDefaultCalled = true
+    }
+
+    func resolveDefaultBudget(from activeBudgets: [Budget]) -> Budget? {
+        if let id = defaultBudgetID,
+           let found = activeBudgets.first(where: { $0.id == id && $0.isActive }) {
+            return found
+        }
+        return activeBudgets.first(where: { $0.isActive })
+    }
+}

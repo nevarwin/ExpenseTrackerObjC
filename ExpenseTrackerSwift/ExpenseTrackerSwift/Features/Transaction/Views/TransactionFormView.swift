@@ -4,6 +4,7 @@ import SwiftData
 struct TransactionFormView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var currencyManager: SharedCurrencyService
+    @ObservedObject private var defaultBudgetService = DefaultBudgetService.instance
     @Bindable var viewModel: TransactionViewModel
     
     let activeBudgets: [Budget]
@@ -246,20 +247,40 @@ struct TransactionFormView: View {
             Spacer()
             
             Menu {
-                ForEach(activeBudgets) { budget in
-                    Button {
-                        selectBudget(budget)
-                    } label: {
-                        HStack {
-                            Text(budget.name)
-                            if budget.id == selectedBudget.id {
-                                Image(systemName: "checkmark")
+                Section {
+                    ForEach(activeBudgets) { budget in
+                        Button {
+                            selectBudget(budget)
+                        } label: {
+                            HStack {
+                                Text(budget.name + (defaultBudgetService.isDefault(budget: budget) ? " (Default)" : ""))
+                                if budget.id == selectedBudget.id {
+                                    Image(systemName: "checkmark")
+                                }
                             }
                         }
                     }
                 }
+                
+                Section {
+                    Button {
+                        defaultBudgetService.setDefault(budget: selectedBudget)
+                    } label: {
+                        Label(
+                            defaultBudgetService.isDefault(budget: selectedBudget) ? "Default Budget" : "Set as Default Budget",
+                            systemImage: defaultBudgetService.isDefault(budget: selectedBudget) ? "star.fill" : "star"
+                        )
+                    }
+                    .disabled(defaultBudgetService.isDefault(budget: selectedBudget))
+                    .accessibilityIdentifier("form_set_default_budget_button")
+                }
             } label: {
                 HStack(spacing: 4) {
+                    if defaultBudgetService.isDefault(budget: selectedBudget) {
+                        Image(systemName: "star.fill")
+                            .font(.caption2)
+                            .foregroundStyle(Color.emeraldPrimary)
+                    }
                     Text(selectedBudget.name)
                         .font(.subheadline)
                         .fontWeight(.medium)

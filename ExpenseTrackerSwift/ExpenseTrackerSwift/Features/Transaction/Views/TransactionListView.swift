@@ -62,17 +62,18 @@ struct TransactionListView: View {
                 }
             }
             .sheet(isPresented: $showingAddTransaction) {
-                if let firstBudget = activeBudgets.first, let viewModel = viewModel {
+                if let initialBudget = DefaultBudgetService.instance.resolveDefaultBudget(from: activeBudgets),
+                   let viewModel = viewModel {
                     TransactionQuickAddSheet(
                         viewModel: viewModel,
                         activeBudgets: activeBudgets,
-                        initialBudget: firstBudget
+                        initialBudget: initialBudget
                     )
                 }
             }
             .sheet(item: $selectedTransaction) { transaction in
                 if let viewModel = viewModel,
-                   let budget = transaction.budget ?? activeBudgets.first {
+                   let budget = transaction.budget ?? DefaultBudgetService.instance.resolveDefaultBudget(from: activeBudgets) {
                     TransactionFormView(
                         activeBudgets: activeBudgets,
                         initialBudget: budget,

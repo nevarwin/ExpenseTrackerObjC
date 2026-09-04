@@ -23,6 +23,12 @@ private struct PermissionServiceKey: EnvironmentKey {
     static let defaultValue: PermissionServiceProtocol = SharedPermissionService.instance
 }
 
+// MARK: - Default Budget Service Environment Key
+
+private struct DefaultBudgetServiceKey: EnvironmentKey {
+    static let defaultValue: DefaultBudgetServiceProtocol = DefaultBudgetService.instance
+}
+
 // MARK: - EnvironmentValues Extension
 
 extension EnvironmentValues {
@@ -39,5 +45,10 @@ extension EnvironmentValues {
     var permissionService: PermissionServiceProtocol {
         get { self[PermissionServiceKey.self] }
         set { self[PermissionServiceKey.self] = newValue }
+    }
+
+    var defaultBudgetService: DefaultBudgetServiceProtocol {
+        get { self[DefaultBudgetServiceKey.self] }
+        set { self[DefaultBudgetServiceKey.self] = newValue }
     }
 }

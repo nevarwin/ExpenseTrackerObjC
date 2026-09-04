@@ -21,6 +21,7 @@ struct ExpenseMeApp: App {
         SharedAnalyticsService.configure()
         SharedCurrencyService.configure()
         SharedPermissionService.configure()
+        DefaultBudgetService.configure()
 
         // 2. Setup analytics
         SharedAnalyticsService.instance.setup()

@@ -77,6 +77,9 @@ final class BudgetViewModel: ObservableObject {
     }
     
     func deleteBudget(_ budget: Budget) throws {
+        if DefaultBudgetService.instance.isDefault(budget: budget) {
+            DefaultBudgetService.instance.clearDefault()
+        }
         modelContext.delete(budget)
         try modelContext.save()
         

@@ -98,6 +98,41 @@ struct HomeContent: View {
                         }
                         .tint(Color.emeraldPrimary)
                     }
+                    .swipeActions(edge: .leading) {
+                        Button {
+                            DefaultBudgetService.instance.setDefault(budget: budget)
+                        } label: {
+                            Label(
+                                DefaultBudgetService.instance.isDefault(budget: budget) ? String(localized: "Default") : String(localized: "Make Default"),
+                                systemImage: "star.fill"
+                            )
+                        }
+                        .tint(Color.emeraldPrimary)
+                        .disabled(DefaultBudgetService.instance.isDefault(budget: budget))
+                    }
+                    .contextMenu {
+                        Button {
+                            DefaultBudgetService.instance.setDefault(budget: budget)
+                        } label: {
+                            Label(
+                                DefaultBudgetService.instance.isDefault(budget: budget) ? String(localized: "Default Budget") : String(localized: "Set as Default Budget"),
+                                systemImage: DefaultBudgetService.instance.isDefault(budget: budget) ? "star.fill" : "star"
+                            )
+                        }
+                        .disabled(DefaultBudgetService.instance.isDefault(budget: budget))
+
+                        Button {
+                            budgetToEdit = budget
+                        } label: {
+                            Label(String(localized: "Edit"), systemImage: "pencil")
+                        }
+
+                        Button(role: .destructive) {
+                            budgetToDelete = budget
+                        } label: {
+                            Label(String(localized: "Delete"), systemImage: "trash")
+                        }
+                    }
                 }
             }
         }
@@ -206,6 +241,7 @@ struct BudgetCardView: View {
     private let budgetCalculator: BudgetCalculator
     @EnvironmentObject var currencyManager: SharedCurrencyService
     @EnvironmentObject var appearanceManager: SharedAppearanceService
+    @ObservedObject private var defaultBudgetService = DefaultBudgetService.instance
     @ScaledMetric(relativeTo: .body) private var barHeight: CGFloat = AppRow.progressBarHeight
     @State private var animatedProgress: Double = 0
     
@@ -231,10 +267,24 @@ struct BudgetCardView: View {
             // Header: Budget Name & Month Selector
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(budget.name)
-                        .font(.system(.title3, design: .rounded))
-                        .fontWeight(.bold)
-                        .foregroundStyle(Color.appPrimary)
+                    HStack(spacing: 8) {
+                        Text(budget.name)
+                            .font(.system(.title3, design: .rounded))
+                            .fontWeight(.bold)
+                            .foregroundStyle(Color.appPrimary)
+
+                        if defaultBudgetService.isDefault(budget: budget) {
+                            Text("Default")
+                                .font(.system(.caption2, design: .rounded))
+                                .fontWeight(.bold)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 2)
+                                .background(Color.emeraldSurface)
+                                .foregroundStyle(Color.emeraldPrimary)
+                                .clipShape(Capsule())
+                                .accessibilityIdentifier("budget_default_badge_\(budget.name)")
+                        }
+                    }
                     
                     Text("\(displayMonth.monthYearString) Budget")
                         .subheaderStyle()
