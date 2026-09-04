@@ -95,8 +95,11 @@ struct TransactionListView: View {
 
     @ViewBuilder
     private func calendarContent(viewModel: TransactionViewModel) -> some View {
-        TransactionCalendarView(viewModel: viewModel) { _ in
+        TransactionCalendarView(viewModel: viewModel) { hasTransactions in
             hasUserSelectedDate = true
+            if !hasTransactions && !activeBudgets.isEmpty && !viewModel.isRangeMode {
+                showingAddTransaction = true
+            }
         }
         .padding(.bottom, 8)
     }
@@ -217,15 +220,29 @@ struct TransactionListView: View {
             .padding(.vertical, 40)
             .accessibilityIdentifier("transaction_empty_select_date")
         } else if viewModel.transactions.isEmpty {
-            ContentUnavailableView(
-                viewModel.searchText.isEmpty ? "No Transactions" : "No Results",
-                systemImage: viewModel.searchText.isEmpty ? "list.bullet" : "magnifyingglass",
-                description: Text(
+            ContentUnavailableView {
+                Label(
+                    viewModel.searchText.isEmpty ? "No Transactions" : "No Results",
+                    systemImage: viewModel.searchText.isEmpty ? "list.bullet" : "magnifyingglass"
+                )
+            } description: {
+                Text(
                     viewModel.searchText.isEmpty
                         ? "No transactions found for this period"
                         : "No transactions match '\(viewModel.searchText)'"
                 )
-            )
+            } actions: {
+                if viewModel.searchText.isEmpty && !activeBudgets.isEmpty {
+                    Button(action: { showingAddTransaction = true }) {
+                        Text("Add Transaction")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color.emeraldPrimary)
+                    .accessibilityIdentifier("empty_state_add_transaction_button")
+                }
+            }
             .padding(.vertical, 40)
             .accessibilityIdentifier("transaction_empty_no_results")
         } else {
