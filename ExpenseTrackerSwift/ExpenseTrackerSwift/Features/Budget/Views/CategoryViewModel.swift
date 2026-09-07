@@ -77,4 +77,11 @@ final class CategoryViewModel {
         categories.append(category)
         categories.sort { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
+    
+    func deleteCategory(_ category: Category) {
+        category.isActive = false
+        category.updatedAt = Date()
+        try? modelContext.save()
+        categories.removeAll { $0.id == category.id }
+    }
 }

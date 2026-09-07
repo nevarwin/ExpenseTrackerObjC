@@ -21,6 +21,11 @@ struct MonthlyBudgetDetailView: View {
     // Search Text State
     @State private var searchText: String = ""
     
+    // Category Action States
+    @State private var categoryToEdit: Category?
+    @State private var categoryToDelete: Category?
+    @State private var showingDeleteAlert = false
+    
     var body: some View {
         List {
             Section("Expense Overview") {
@@ -82,6 +87,35 @@ struct MonthlyBudgetDetailView: View {
                                 .listRowBackground(Color.clear)
                                 .listRowSeparator(.hidden)
                                 .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    Button(role: .destructive) {
+                                        categoryToDelete = category
+                                        showingDeleteAlert = true
+                                    } label: {
+                                        Label(String(localized: "Delete"), systemImage: "trash")
+                                    }
+                                    
+                                    Button {
+                                        categoryToEdit = category
+                                    } label: {
+                                        Label(String(localized: "Edit"), systemImage: "pencil")
+                                    }
+                                    .tint(Color.dynamicAccent)
+                                }
+                                .contextMenu {
+                                    Button {
+                                        categoryToEdit = category
+                                    } label: {
+                                        Label(String(localized: "Edit Category"), systemImage: "pencil")
+                                    }
+                                    
+                                    Button(role: .destructive) {
+                                        categoryToDelete = category
+                                        showingDeleteAlert = true
+                                    } label: {
+                                        Label(String(localized: "Delete Category"), systemImage: "trash")
+                                    }
+                                }
                             }
                         }
                     }
@@ -95,6 +129,35 @@ struct MonthlyBudgetDetailView: View {
                                 .listRowBackground(Color.clear)
                                 .listRowSeparator(.hidden)
                                 .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    Button(role: .destructive) {
+                                        categoryToDelete = category
+                                        showingDeleteAlert = true
+                                    } label: {
+                                        Label(String(localized: "Delete"), systemImage: "trash")
+                                    }
+                                    
+                                    Button {
+                                        categoryToEdit = category
+                                    } label: {
+                                        Label(String(localized: "Edit"), systemImage: "pencil")
+                                    }
+                                    .tint(Color.dynamicAccent)
+                                }
+                                .contextMenu {
+                                    Button {
+                                        categoryToEdit = category
+                                    } label: {
+                                        Label(String(localized: "Edit Category"), systemImage: "pencil")
+                                    }
+                                    
+                                    Button(role: .destructive) {
+                                        categoryToDelete = category
+                                        showingDeleteAlert = true
+                                    } label: {
+                                        Label(String(localized: "Delete Category"), systemImage: "trash")
+                                    }
+                                }
                             }
                         }
                     }
@@ -145,6 +208,25 @@ struct MonthlyBudgetDetailView: View {
         }
         .searchable(text: $searchText, prompt: "Search categories")
         .navigationTitle(month.monthYearString)
+        .sheet(item: $categoryToEdit) { category in
+            CategoryEditFormView(category: category)
+                .environmentObject(currencyManager)
+                .onDisappear {
+                    categoryViewModel?.loadCategories(for: budget, month: month)
+                }
+        }
+        .alert(String(localized: "Delete Category"), isPresented: $showingDeleteAlert, presenting: categoryToDelete) { category in
+            Button(String(localized: "Delete"), role: .destructive) {
+                withAnimation {
+                    categoryViewModel?.deleteCategory(category)
+                }
+            }
+            Button(String(localized: "Cancel"), role: .cancel) {
+                categoryToDelete = nil
+            }
+        } message: { _ in
+            Text(String(localized: "Are you sure you want to delete this category? It will be removed from this budget."))
+        }
         .onAppear {
             if categoryViewModel == nil {
                 categoryViewModel = CategoryViewModel(modelContext: modelContext)
