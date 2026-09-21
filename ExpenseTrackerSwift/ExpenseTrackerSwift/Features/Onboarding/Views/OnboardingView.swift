@@ -56,7 +56,7 @@ struct OnboardingView: View {
                 }) {
                     Text(!viewModel.isLastPage ? String(localized: "Next") : String(localized: "Get Started"))
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(
