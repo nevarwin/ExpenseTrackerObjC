@@ -102,6 +102,7 @@ struct InstallmentFormView: View {
                     TextField("Name (e.g. Laptop Purchase)", text: $name)
                         .focused($focusedField, equals: .name)
                         .submitLabel(.next)
+                        .accessibilityLabel(String(localized: "Plan Name"))
                         .accessibilityIdentifier("installment_name_field")
                     
                     HStack {
@@ -111,6 +112,7 @@ struct InstallmentFormView: View {
                             .keyboardType(.decimalPad)
                             .focused($focusedField, equals: .totalAmount)
                             .multilineTextAlignment(.trailing)
+                            .accessibilityLabel(String(localized: "Total Amount in \(currencyManager.currencyCode)"))
                             .accessibilityIdentifier("installment_amount_field")
                             .onChange(of: totalAmountString) { oldValue, newValue in
                                 if monthlyAmountString.isEmpty || oldValue != newValue {
@@ -126,6 +128,7 @@ struct InstallmentFormView: View {
                             .keyboardType(.decimalPad)
                             .focused($focusedField, equals: .monthlyAmount)
                             .multilineTextAlignment(.trailing)
+                            .accessibilityLabel(String(localized: "Monthly Payment in \(currencyManager.currencyCode)"))
                             .accessibilityIdentifier("installment_monthly_field")
                     }
                 }
@@ -148,6 +151,8 @@ struct InstallmentFormView: View {
                                         .clipShape(Capsule())
                                 }
                                 .buttonStyle(.plain)
+                                .accessibilityLabel(String(localized: "\(months) months"))
+                                .accessibilityAddTraits(totalMonths == months ? [.isButton, .isSelected] : [.isButton])
                             }
                         }
                         .padding(.vertical, 4)
@@ -164,6 +169,7 @@ struct InstallmentFormView: View {
                             .multilineTextAlignment(.trailing)
                             .frame(width: 60)
                             .textFieldStyle(.roundedBorder)
+                            .accessibilityLabel(String(localized: "Custom duration in months"))
                             .accessibilityIdentifier("installment_months_field")
                             .onChange(of: totalMonthsString) { _, newValue in
                                 if let parsed = Int(newValue), parsed > 0 {
@@ -182,6 +188,7 @@ struct InstallmentFormView: View {
                             }
                         ), in: 1...240)
                         .labelsHidden()
+                        .accessibilityLabel(String(localized: "Adjust custom months"))
                     }
                 }
                 

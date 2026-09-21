@@ -31,6 +31,7 @@ struct AppearanceSettingsView: View {
                         }
                     }
                     .accessibilityIdentifier("appearance_option_\(appearance.rawValue)")
+                    .accessibilityAddTraits(appearanceManager.userAppearance == appearance ? [.isSelected] : [])
                 }
             }
         }

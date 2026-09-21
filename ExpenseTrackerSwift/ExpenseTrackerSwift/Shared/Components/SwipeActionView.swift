@@ -114,6 +114,7 @@ struct SwipeActionView<Content: View>: View {
                     }
                 }
         )
+        .modifier(SwipeAccessibilityModifier(actions: trailingActions, onTap: onTap))
         .clipped()
     }
 
@@ -149,3 +150,30 @@ struct SwipeActionView<Content: View>: View {
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.card))
     }
 }
+
+// MARK: - Accessibility Actions Support
+
+private struct SwipeAccessibilityModifier: ViewModifier {
+    let actions: [SwipeAction]
+    let onTap: (() -> Void)?
+
+    func body(content: Content) -> some View {
+        var modified = AnyView(content)
+        for action in actions {
+            modified = AnyView(
+                modified.accessibilityAction(named: Text(action.label)) {
+                    action.action()
+                }
+            )
+        }
+        if let onTap = onTap {
+            modified = AnyView(
+                modified.accessibilityAction(.default) {
+                    onTap()
+                }
+            )
+        }
+        return modified
+    }
+}
+

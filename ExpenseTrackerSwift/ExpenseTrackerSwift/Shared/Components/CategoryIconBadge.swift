@@ -21,6 +21,7 @@ struct CategoryIconBadge: View {
                 .foregroundStyle(tintColor)
                 .font(.system(size: iconSize * 0.4, weight: .semibold, design: .rounded))
         }
+        .accessibilityHidden(true)
     }
 }
 

@@ -54,6 +54,20 @@ struct BudgetCategoryRowView: View {
             }
         }
         .appCardStyle()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilitySummary)
+        .accessibilityHint(String(localized: "Double tap to view transactions for this category"))
+    }
+
+    private var accessibilitySummary: String {
+        var parts: [String] = []
+        parts.append(category.name)
+        parts.append(category.isIncome ? String(localized: "Income") : String(localized: "Expense"))
+        parts.append("\(String(localized: "Spent")) \(formatCurrency(spentAmount)) of \(formatCurrency(category.allocatedAmount))")
+        parts.append(statusSubtitle.text)
+        parts.append(usageLabelText)
+        parts.append("\(transactionsCount) \(transactionsCount == 1 ? String(localized: "transaction") : String(localized: "transactions"))")
+        return parts.joined(separator: ", ")
     }
     
     // MARK: - Computed Properties

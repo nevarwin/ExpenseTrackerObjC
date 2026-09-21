@@ -45,6 +45,7 @@ struct TransactionRowView: View {
                 Text("•")
                     .font(.caption)
                     .foregroundStyle(Color.appSecondary)
+                    .accessibilityHidden(true)
                 
                 Text(transaction.budgetPeriod.monthYearString)
                     .font(.caption)
@@ -55,6 +56,7 @@ struct TransactionRowView: View {
                     Text("•")
                         .font(.caption)
                         .foregroundStyle(Color.appSecondary)
+                        .accessibilityHidden(true)
                     
                     Text("Month \(idx)/\(total)")
                         .font(.system(size: 10, weight: .semibold, design: .rounded))
@@ -73,6 +75,7 @@ struct TransactionRowView: View {
                     Image(systemName: transaction.iconName)
                         .font(.caption2)
                         .foregroundStyle(transaction.isIncome ? Color.emeraldPrimary : Color.dynamicAccent)
+                        .accessibilityHidden(true)
                     
                     if let categoryName = transaction.category?.name, !categoryName.isEmpty {
                         Text(categoryName)
@@ -88,6 +91,36 @@ struct TransactionRowView: View {
             borderWidth: 1
         )
         .accessibilityIdentifier("transaction_row")
+        .accessibilityLabel(accessibilitySummary)
+        .accessibilityHint(String(localized: "Double tap to view or edit transaction"))
+        .accessibilityAction(named: isRevealed ? String(localized: "Hide amount") : String(localized: "Reveal amount")) {
+            if transaction.shouldCensorAmount {
+                appearanceManager.triggerHaptic(.light)
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                    isRevealed.toggle()
+                }
+            }
+        }
+    }
+
+    private var accessibilitySummary: String {
+        var parts: [String] = []
+        parts.append(transaction.desc)
+        if let categoryName = transaction.category?.name, !categoryName.isEmpty {
+            parts.append(categoryName)
+        }
+        parts.append(transaction.date.formatted(date: .abbreviated, time: .omitted))
+        if transaction.shouldCensorAmount && !isRevealed {
+            parts.append(String(localized: "Amount hidden"))
+        } else {
+            let type = transaction.isIncome ? String(localized: "Income") : String(localized: "Expense")
+            let formatted = transaction.amount.formatted(.currency(code: currencyManager.currencyCode))
+            parts.append("\(type) \(formatted)")
+        }
+        if let idx = transaction.installmentIndex, let total = transaction.installmentTotalMonths {
+            parts.append("Installment \(idx) of \(total)")
+        }
+        return parts.joined(separator: ", ")
     }
 
     @ViewBuilder
@@ -98,6 +131,8 @@ struct TransactionRowView: View {
                 .fontWeight(.bold)
                 .foregroundStyle(transaction.isIncome ? Color.emeraldPrimary : Color.appPrimary)
                 .accessibilityIdentifier("transaction_amount_censored")
+                .accessibilityLabel(String(localized: "Amount hidden"))
+                .accessibilityHint(String(localized: "Double tap to reveal amount"))
                 .onTapGesture {
                     appearanceManager.triggerHaptic(.light)
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
@@ -110,6 +145,7 @@ struct TransactionRowView: View {
                 .fontWeight(.bold)
                 .foregroundStyle(transaction.isIncome ? Color.emeraldPrimary : Color.appPrimary)
                 .accessibilityIdentifier("transaction_amount")
+                .accessibilityLabel("\(transaction.isIncome ? String(localized: "Income") : String(localized: "Expense")): \(transaction.amount.formatted(.currency(code: currencyManager.currencyCode)))")
                 .onTapGesture {
                     if transaction.shouldCensorAmount {
                         appearanceManager.triggerHaptic(.light)

@@ -54,6 +54,9 @@ struct AppProgressBar: View {
             }
         }
         .frame(height: height)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(String(localized: "Progress"))
+        .accessibilityValue(String(localized: "\(Int(progress * 100))%"))
     }
 }
 

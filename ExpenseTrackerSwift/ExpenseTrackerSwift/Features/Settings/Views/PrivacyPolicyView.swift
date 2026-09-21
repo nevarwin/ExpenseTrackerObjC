@@ -14,6 +14,7 @@ struct PrivacyPolicyView: View {
                 Text("Privacy Policy")
                     .font(.largeTitle)
                     .bold()
+                    .accessibilityAddTraits(.isHeader)
                 
                 Text("Last Updated: April 14, 2026")
                     .font(.subheadline)
@@ -50,6 +51,7 @@ struct PrivacyPolicyView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
             Text(content)
                 .font(.body)
                 .foregroundColor(.primary.opacity(0.8))
