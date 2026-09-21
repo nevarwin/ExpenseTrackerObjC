@@ -19,20 +19,17 @@ struct MainTabView: View {
         Group {
             if let viewModel = budgetViewModel {
                 TabView {
-                    TransactionListView()
-                        .tabItem {
-                            Label(String(localized: "Transactions"), systemImage: "list.bullet")
-                        }
+                    Tab(String(localized: "Transactions"), systemImage: "list.bullet") {
+                        TransactionListView()
+                    }
                     
-                    BudgetListView(viewModel: viewModel)
-                        .tabItem {
-                            Label(String(localized: "Budget"), systemImage: "creditcard.fill")
-                        }
+                    Tab(String(localized: "Budget"), systemImage: "creditcard.fill") {
+                        BudgetListView(viewModel: viewModel)
+                    }
                     
-                    InstallmentsListView()
-                        .tabItem {
-                            Label(String(localized: "Installments"), systemImage: "calendar.badge.clock")
-                        }
+                    Tab(String(localized: "Installments"), systemImage: "calendar.badge.clock") {
+                        InstallmentsListView()
+                    }
                 }
             } else {
                 ProgressView()

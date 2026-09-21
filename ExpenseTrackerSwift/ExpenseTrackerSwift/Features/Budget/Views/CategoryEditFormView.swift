@@ -29,7 +29,7 @@ struct CategoryEditFormView: View {
                             if name.trimmingCharacters(in: .whitespaces).isEmpty {
                                 Text("Required")
                                     .font(.caption)
-                                    .foregroundColor(.red)
+                                    .foregroundStyle(.red)
                                     .padding(.trailing, 8)
                             }
                         }

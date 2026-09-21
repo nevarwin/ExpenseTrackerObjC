@@ -18,7 +18,7 @@ struct PrivacyPolicyView: View {
                 
                 Text("Last Updated: April 14, 2026")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 Group {
                     policySection(title: "1. Introduction", content: "Welcome to ExpenseMe. We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, and safeguard your data.")
@@ -54,7 +54,7 @@ struct PrivacyPolicyView: View {
                 .accessibilityAddTraits(.isHeader)
             Text(content)
                 .font(.body)
-                .foregroundColor(.primary.opacity(0.8))
+                .foregroundStyle(.primary.opacity(0.8))
         }
     }
 }

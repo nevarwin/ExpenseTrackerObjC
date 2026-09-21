@@ -198,7 +198,7 @@ struct InstallmentFormView: View {
                     
                     HStack(spacing: AppSpacing.md) {
                         Image(systemName: "clock.arrow.circlepath")
-                            .foregroundColor(Color.emeraldPrimary)
+                            .foregroundStyle(Color.emeraldPrimary)
                             .font(.title3)
                         
                         VStack(alignment: .leading, spacing: 4) {
