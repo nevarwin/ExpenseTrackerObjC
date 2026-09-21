@@ -88,6 +88,7 @@ struct CategoryTransactionsView: View {
                 } label: {
                     Image(systemName: "pencil")
                 }
+                .accessibilityLabel(String(localized: "Edit Category"))
                 .accessibilityIdentifier("category_edit_button")
             }
             ToolbarItem(placement: .topBarTrailing) {
@@ -97,6 +98,7 @@ struct CategoryTransactionsView: View {
                     Image(systemName: "plus")
                 }
                 .disabled(activeBudgets.isEmpty)
+                .accessibilityLabel(String(localized: "Add Transaction"))
                 .accessibilityIdentifier("category_add_transaction_button")
             }
         }

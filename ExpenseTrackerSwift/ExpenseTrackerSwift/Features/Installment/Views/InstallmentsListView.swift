@@ -296,6 +296,10 @@ struct InstallmentsSummaryCardView: View {
             }
         }
         .appCardStyle()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            String(localized: "Installments summary: Total remaining debt \(totalRemaining.formatted(.currency(code: currencyManager.currencyCode))), monthly commitment \(monthlyTotal.formatted(.currency(code: currencyManager.currencyCode))), \(activeCount) active, \(completedCount) completed")
+        )
     }
 }
 
@@ -330,6 +334,7 @@ struct InstallmentRowView: View {
                             Text("•")
                                 .font(.caption)
                                 .foregroundStyle(Color.appSecondary)
+                                .accessibilityHidden(true)
                             
                             Text("Completed")
                                 .font(.system(size: 10, weight: .semibold, design: .rounded))
@@ -372,7 +377,24 @@ struct InstallmentRowView: View {
             }
         }
         .appCardStyle()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilitySummary)
+        .accessibilityHint(String(localized: "Double tap to view installment details"))
         .accessibilityIdentifier("installment_row_\(plan.name)")
+    }
+
+    private var accessibilitySummary: String {
+        var parts: [String] = []
+        parts.append(plan.name)
+        parts.append(plan.isCompleted ? String(localized: "Completed") : String(localized: "Active"))
+        parts.append("\(String(localized: "Remaining balance")): \(plan.remainingBalance.formatted(.currency(code: currencyManager.currencyCode)))")
+        parts.append("\(plan.monthlyAmount.formatted(.currency(code: currencyManager.currencyCode))) \(String(localized: "per month"))")
+        parts.append("\(String(localized: "Month")) \(plan.elapsedMonths()) \(String(localized: "of")) \(plan.totalMonths)")
+        parts.append("\(Int(plan.progressPercentage * 100))% \(String(localized: "paid"))")
+        if !plan.isCompleted {
+            parts.append("\(plan.remainingMonthsCount) \(String(localized: "months left"))")
+        }
+        return parts.joined(separator: ", ")
     }
 }
 

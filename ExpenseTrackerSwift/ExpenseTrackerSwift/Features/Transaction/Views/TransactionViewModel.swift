@@ -58,10 +58,10 @@ final class TransactionViewModel {
     
     init(
         modelContext: ModelContext,
-        analyticsService: AnalyticsServiceProtocol = SharedAnalyticsService.instance
+        analyticsService: AnalyticsServiceProtocol? = nil
     ) {
         self.modelContext = modelContext
-        self.analyticsService = analyticsService
+        self.analyticsService = analyticsService ?? SharedAnalyticsService.instance
     }
     
     // MARK: - Filter Logic

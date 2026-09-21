@@ -52,6 +52,8 @@ struct TransactionCalendarView: View {
                     Toggle("Range", isOn: $viewModel.isRangeMode)
                         .labelsHidden()
                         .toggleStyle(SwitchToggleStyle(tint: .appAccent))
+                        .accessibilityLabel(String(localized: "Date range mode"))
+                        .accessibilityHint(String(localized: "Toggle between single date and date range selection"))
                         .accessibilityIdentifier("calendar_range_toggle")
                 }
                 .padding(.horizontal)
@@ -72,6 +74,7 @@ struct TransactionCalendarView: View {
                             .minTouchTarget()
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(viewModel.calendarScope == .week ? String(localized: "Previous week") : String(localized: "Previous month"))
                     .accessibilityIdentifier("calendar_prev_button")
                     
                     // Month/Year Title (Unified Picker)
@@ -82,6 +85,7 @@ struct TransactionCalendarView: View {
                                 .fontWeight(.bold)
                             Image(systemName: "chevron.down")
                                 .font(.caption)
+                                .accessibilityHidden(true)
                         }
                         .padding(8)
                         .background(Color.secondary.opacity(0.1))
@@ -89,6 +93,8 @@ struct TransactionCalendarView: View {
                         .foregroundStyle(.primary)
                         .minTouchTarget()
                     }
+                    .accessibilityLabel(String(localized: "Selected period: \(monthYearString)"))
+                    .accessibilityHint(String(localized: "Double tap to change month and year"))
                     .accessibilityIdentifier("calendar_month_year_button")
                     .sheet(isPresented: $showingDatePicker) {
                         VStack(spacing: 20) {
@@ -147,6 +153,7 @@ struct TransactionCalendarView: View {
                             .minTouchTarget()
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(viewModel.calendarScope == .week ? String(localized: "Next week") : String(localized: "Next month"))
                     .accessibilityIdentifier("calendar_next_button")
                 }
                 .padding(.horizontal)
@@ -311,7 +318,36 @@ struct DayCell: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Text("\(date.formatted(.dateTime.month().day())) \((hasIncome || hasExpense) ? "Has transactions" : "No transactions")"))
+        .accessibilityLabel(dayAccessibilityDescription)
+        .accessibilityAddTraits(selectionState != .none ? [.isButton, .isSelected] : [.isButton])
+    }
+
+    private var dayAccessibilityDescription: String {
+        var parts: [String] = []
+        if isToday {
+            parts.append(String(localized: "Today"))
+        }
+        parts.append(date.formatted(.dateTime.month().day()))
+        if hasIncome && hasExpense {
+            parts.append(String(localized: "has income and expenses"))
+        } else if hasIncome {
+            parts.append(String(localized: "has income"))
+        } else if hasExpense {
+            parts.append(String(localized: "has expenses"))
+        }
+        if isSearchResult {
+            parts.append(String(localized: "search match"))
+        }
+        if viewModel.isRangeMode {
+            switch selectionState {
+            case .start: parts.append(String(localized: "start of range"))
+            case .middle: parts.append(String(localized: "in range"))
+            case .end: parts.append(String(localized: "end of range"))
+            case .single: parts.append(String(localized: "selected range"))
+            case .none: break
+            }
+        }
+        return parts.joined(separator: ", ")
     }
     
     @ViewBuilder

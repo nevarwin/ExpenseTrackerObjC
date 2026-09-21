@@ -85,6 +85,8 @@ struct InstallmentDetailView: View {
                     }
                 }
                 .appCardStyle()
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("\(plan.name), \(plan.isCompleted ? String(localized: "Completed") : String(localized: "Active")), \(String(localized: "Started")) \(plan.startDate.formatted(date: .abbreviated, time: .omitted)). \(plan.elapsedMonths()) of \(plan.totalMonths) \(String(localized: "months elapsed")), \(String(localized: "remaining balance")): \(plan.remainingBalance.formatted(.currency(code: currencyManager.currencyCode))), \(Int(plan.progressPercentage * 100))% \(String(localized: "paid")).")
             }
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
@@ -122,6 +124,8 @@ struct InstallmentDetailView: View {
                     }
                     .buttonStyle(.plain)
                     .bouncyButtonStyle()
+                    .accessibilityLabel(String(localized: "Pay Off Remaining Balance Early"))
+                    .accessibilityHint(String(localized: "Logs a final payment for the remaining balance and marks this plan as completed"))
                     .accessibilityIdentifier("installment_pay_off_early_button")
                 }
                 .listRowBackground(Color.clear)

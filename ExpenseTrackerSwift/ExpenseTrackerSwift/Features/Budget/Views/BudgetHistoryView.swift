@@ -99,6 +99,8 @@ struct BudgetHistoryView: View {
                         }
                         .frame(height: 200)
                         .chartScrollableAxes(.horizontal)
+                        .accessibilityElement(children: .contain)
+                        .accessibilityLabel("Spending Trend Chart, showing \(selectedRange.displayName)")
                         // 183 days is approximately 6 months (in seconds)
                         .chartXVisibleDomain(length: 3600 * 24 * 183)
                         .chartXAxis {
@@ -136,6 +138,7 @@ struct BudgetHistoryView: View {
                         Image(systemName: "chart.line.uptrend.xyaxis")
                             .font(.largeTitle)
                             .foregroundStyle(Color.appSecondary.opacity(0.3))
+                            .accessibilityHidden(true)
                         Text("Not enough data to show trend")
                             .font(.subheadline)
                             .foregroundStyle(Color.appSecondary)
@@ -149,7 +152,7 @@ struct BudgetHistoryView: View {
             Section("Monthly Breakdown") {
                 if monthsToShow.isEmpty {
                     Text("No transaction history")
-                        .foregroundStyle(. secondary)
+                        .foregroundStyle(.secondary)
                         .padding()
                 } else {
                     ForEach(monthsToShow.reversed(), id: \.self) { month in
@@ -178,6 +181,14 @@ struct MonthSummaryRow: View {
     
     private var isCurrentMonth: Bool {
         month.isInCurrentMonth
+    }
+    
+    private var accessibilitySummary: String {
+        let currentTag = isCurrentMonth ? ", Current month" : ""
+        let income = budgetCalculator.incomeInMonth(date: month).formatted(.currency(code: currencyManager.currencyCode))
+        let spent = budgetCalculator.expensesInMonth(date: month).formatted(.currency(code: currencyManager.currencyCode))
+        let remaining = budgetCalculator.remainingInMonth(date: month).formatted(.currency(code: currencyManager.currencyCode))
+        return "\(month.monthYearString)\(currentTag). Income: \(income), Spent: \(spent), Remaining: \(remaining)"
     }
     
     var body: some View {
@@ -235,6 +246,8 @@ struct MonthSummaryRow: View {
             }
         }
         .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilitySummary)
     }
 }
 

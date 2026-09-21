@@ -197,6 +197,20 @@ struct TransactionListView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(
+                    !isIncomeRevealed && (viewModel.totalIncome > 0 || viewModel.transactions.contains(where: { $0.isIncome }))
+                        ? String(localized: "Income: hidden")
+                        : "\(String(localized: "Income")): \(viewModel.totalIncome.formatted(.currency(code: currencyManager.currencyCode)))"
+                )
+                .accessibilityHint(String(localized: "Double tap to toggle income visibility"))
+                .accessibilityAddTraits(.isButton)
+                .accessibilityAction(named: isIncomeRevealed ? String(localized: "Hide income") : String(localized: "Reveal income")) {
+                    appearanceManager.triggerHaptic(.light)
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                        isIncomeRevealed.toggle()
+                    }
+                }
 
                 VStack(alignment: .center, spacing: AppSpacing.xs) {
                     Text("Expense")
@@ -208,6 +222,8 @@ struct TransactionListView: View {
                         .foregroundStyle(Color.appPrimary)
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("\(String(localized: "Expense")): \(viewModel.totalExpense.formatted(.currency(code: currencyManager.currencyCode)))")
 
                 VStack(alignment: .trailing, spacing: AppSpacing.xs) {
                     Text("Net")
@@ -219,6 +235,8 @@ struct TransactionListView: View {
                         .foregroundStyle(viewModel.netBalance >= 0 ? Color.emeraldPrimary : Color.red)
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("\(String(localized: "Net balance")): \(viewModel.netBalance.formatted(.currency(code: currencyManager.currencyCode)))")
             }
             .appCardStyle()
             .padding(.bottom, AppSpacing.sm)
@@ -323,6 +341,8 @@ struct TransactionListView: View {
                 .shimmering()
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(String(localized: "Loading transactions"))
     }
 }
 

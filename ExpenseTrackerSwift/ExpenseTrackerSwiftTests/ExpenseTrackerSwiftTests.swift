@@ -12,7 +12,7 @@ import Foundation
 
 struct ExpenseTrackerSwiftTests {
 
-    @Test func testAppProgressBarStatusCases() {
+    @Test @MainActor func testAppProgressBarStatusCases() {
         let healthy = AppProgressBar.Status.healthy
         let warning = AppProgressBar.Status.warning
         let critical = AppProgressBar.Status.critical

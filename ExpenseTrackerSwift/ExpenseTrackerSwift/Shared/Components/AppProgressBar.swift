@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct AppProgressBar: View {
-    enum Status {
+    enum Status: Sendable {
         case healthy
         case warning
         case critical
@@ -54,6 +54,9 @@ struct AppProgressBar: View {
             }
         }
         .frame(height: height)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(String(localized: "Progress"))
+        .accessibilityValue(String(localized: "\(Int(progress * 100))%"))
     }
 }
 

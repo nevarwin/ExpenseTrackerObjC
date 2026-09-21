@@ -164,12 +164,13 @@ struct TransactionFormView: View {
     
     // MARK: - Top: Type Segmented Pill
     private var typeSegmentedPill: some View {
-        Picker("", selection: $isIncome) {
+        Picker("Transaction Type", selection: $isIncome) {
             Text("Expense").tag(false)
             Text("Income").tag(true)
         }
         .pickerStyle(.segmented)
         .frame(maxWidth: .infinity)
+        .accessibilityLabel(String(localized: "Transaction Type"))
         .accessibilityIdentifier("quickadd_type_picker")
     }
     
@@ -294,6 +295,8 @@ struct TransactionFormView: View {
                 .background(Color.appLightGray)
                 .clipShape(RoundedRectangle(cornerRadius: AppRadius.small))
             }
+            .accessibilityLabel(String(localized: "Budget: \(selectedBudget.name)"))
+            .accessibilityHint(String(localized: "Double tap to select budget"))
             .accessibilityIdentifier("form_budget_picker")
         }
         .padding(.vertical, AppSpacing.sm)
@@ -336,12 +339,15 @@ struct TransactionFormView: View {
                     Image(systemName: "chevron.up.chevron.down")
                         .font(.caption2)
                         .foregroundStyle(Color.appSecondary)
+                        .accessibilityHidden(true)
                 }
                 .padding(.vertical, 6)
                 .padding(.horizontal, 10)
                 .background(Color.appLightGray)
                 .clipShape(RoundedRectangle(cornerRadius: AppRadius.small))
             }
+            .accessibilityLabel(String(localized: "Category: \(selectedCategory?.name ?? "Select Category")"))
+            .accessibilityHint(String(localized: "Double tap to select category"))
             .accessibilityIdentifier("form_category_picker")
         }
         .padding(.vertical, AppSpacing.sm)
@@ -371,6 +377,7 @@ struct TransactionFormView: View {
                         .focused($isAmountFocused)
                         .multilineTextAlignment(.trailing)
                         .frame(minWidth: 80, maxWidth: 140)
+                        .accessibilityLabel(String(localized: "Amount in \(currencyManager.currencyCode)"))
                         .accessibilityIdentifier("form_amount_field")
                         .onChange(of: amount) { oldValue, newValue in
                             let parts = newValue.split(separator: ".")
@@ -405,6 +412,7 @@ struct TransactionFormView: View {
                     .multilineTextAlignment(.trailing)
                     .submitLabel(.done)
                     .frame(maxWidth: .infinity)
+                    .accessibilityLabel(String(localized: "Description"))
                     .accessibilityIdentifier("form_description_field")
                     .onChange(of: description) { _, newValue in
                         if newValue.count > 128 {
@@ -454,12 +462,15 @@ struct TransactionFormView: View {
                     Image(systemName: "chevron.up.chevron.down")
                         .font(.caption2)
                         .foregroundStyle(Color.appSecondary)
+                        .accessibilityHidden(true)
                 }
                 .padding(.vertical, 6)
                 .padding(.horizontal, 10)
                 .background(Color.appLightGray)
                 .clipShape(RoundedRectangle(cornerRadius: AppRadius.small))
             }
+            .accessibilityLabel(String(localized: "Budget period: \(selectedBudgetPeriod.monthYearString)"))
+            .accessibilityHint(String(localized: "Double tap to change budget period"))
             .accessibilityIdentifier("form_budget_period_button")
         }
         .padding(.vertical, AppSpacing.sm)
@@ -475,9 +486,10 @@ struct TransactionFormView: View {
             
             Spacer()
             
-            DatePicker("", selection: $date, displayedComponents: .date)
+            DatePicker("Transaction Date", selection: $date, displayedComponents: .date)
                 .labelsHidden()
                 .datePickerStyle(.compact)
+                .accessibilityLabel(String(localized: "Transaction Date"))
                 .accessibilityIdentifier("form_date_picker")
         }
         .padding(.vertical, AppSpacing.xs)

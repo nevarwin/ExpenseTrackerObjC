@@ -171,12 +171,14 @@ struct MonthlyBudgetDetailView: View {
                         HStack(spacing: 12) {
                             TextField("Name", text: $newCategoryName)
                                 .textFieldStyle(.roundedBorder)
+                                .accessibilityLabel(String(localized: "Category Name"))
                                 .accessibilityIdentifier("quickadd_category_name_field")
                             
                             TextField("Amount", text: $newCategoryAmount)
                                 .keyboardType(.decimalPad)
                                 .textFieldStyle(.roundedBorder)
                                 .frame(width: 100)
+                                .accessibilityLabel(String(localized: "Category Allocated Amount in \(currencyManager.currencyCode)"))
                                 .accessibilityIdentifier("quickadd_category_amount_field")
                         }
                         
@@ -187,6 +189,7 @@ struct MonthlyBudgetDetailView: View {
                             }
                             .pickerStyle(.segmented)
                             .frame(maxWidth: 160)
+                            .accessibilityLabel(String(localized: "Category Type"))
                             .accessibilityIdentifier("quickadd_category_type_picker")
                             
                             Spacer()
@@ -198,6 +201,7 @@ struct MonthlyBudgetDetailView: View {
                             }
                             .disabled(newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty || (Decimal(string: newCategoryAmount) ?? 0) <= 0)
                             .buttonStyle(.plain)
+                            .accessibilityLabel(String(localized: "Add Category"))
                             .accessibilityIdentifier("quickadd_category_save_button")
                         }
                     }

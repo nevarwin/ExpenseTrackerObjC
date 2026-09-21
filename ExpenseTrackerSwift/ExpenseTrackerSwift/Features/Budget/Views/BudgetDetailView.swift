@@ -84,6 +84,8 @@ struct BudgetDetailView: View {
                                     .clipShape(Capsule())
                             }
                             .padding(.vertical, 4)
+                            .accessibilityElement(children: .combine)
+                            .accessibilityHint(String(localized: "Double tap to view monthly budget breakdown"))
                         }
                     }
                 }
@@ -144,6 +146,7 @@ struct BudgetDetailView: View {
                     
                 } label: {
                     Image(systemName: "ellipsis.circle")
+                        .accessibilityLabel(String(localized: "Budget options"))
                         .accessibilityIdentifier("budget_detail_menu_button")
                 }
             }

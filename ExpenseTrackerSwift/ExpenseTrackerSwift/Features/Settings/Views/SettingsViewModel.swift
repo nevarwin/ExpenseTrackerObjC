@@ -16,11 +16,11 @@ final class SettingsViewModel {
     let analyticsService: AnalyticsServiceProtocol
     
     init(
-        appearanceService: SharedAppearanceService = SharedAppearanceService.instance,
-        analyticsService: AnalyticsServiceProtocol = SharedAnalyticsService.instance
+        appearanceService: SharedAppearanceService? = nil,
+        analyticsService: AnalyticsServiceProtocol? = nil
     ) {
-        self.appearanceService = appearanceService
-        self.analyticsService = analyticsService
+        self.appearanceService = appearanceService ?? SharedAppearanceService.instance
+        self.analyticsService = analyticsService ?? SharedAnalyticsService.instance
     }
     
     var isAnalyticsEnabled: Bool {

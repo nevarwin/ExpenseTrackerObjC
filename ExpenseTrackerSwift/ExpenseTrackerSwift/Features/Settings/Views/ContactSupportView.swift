@@ -46,6 +46,7 @@ struct ContactSupportView: View {
                                 RoundedRectangle(cornerRadius: 12)
                                     .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
                             )
+                            .accessibilityLabel(String(localized: "Attached screenshot"))
                         
                         Button(role: .destructive) {
                             withAnimation {
@@ -61,6 +62,7 @@ struct ContactSupportView: View {
                                 Image(systemName: "photo.badge.plus")
                                     .font(.system(size: 40))
                                     .foregroundStyle(Color.emeraldPrimary)
+                                    .accessibilityHidden(true)
                                 
                                 Text(String(localized: "Attach a Photo or Screenshot"))
                                     .font(.subheadline)
@@ -75,6 +77,8 @@ struct ContactSupportView: View {
                             )
                         }
                         .accessibilityIdentifier("contact_support_attach_photo")
+                        .accessibilityLabel(String(localized: "Attach a photo or screenshot"))
+                        .accessibilityHint(String(localized: "Double tap to select an image from your photo library"))
                         .simultaneousGesture(TapGesture().onEnded {
                             checkPermission()
                         })
