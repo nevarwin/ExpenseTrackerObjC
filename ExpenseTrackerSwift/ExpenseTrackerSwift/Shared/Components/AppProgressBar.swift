@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct AppProgressBar: View {
-    enum Status {
+    enum Status: Sendable {
         case healthy
         case warning
         case critical

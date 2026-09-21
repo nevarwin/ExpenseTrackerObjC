@@ -478,7 +478,6 @@ class ImportManager {
         let (isInstallment, cleanName) = parseInstallmentCategoryName(from: name)
         let categoryName = cleanName.isEmpty ? name : cleanName
         
-        let category: Category
         if let existing = budget.categories.first(where: {
             $0.name.caseInsensitiveCompare(categoryName) == .orderedSame &&
             $0.budgetPeriod.isSameMonth(as: budgetPeriod)
@@ -487,7 +486,6 @@ class ImportManager {
             existing.isIncome = isIncome
             existing.isActive = true
             existing.updatedAt = Date()
-            category = existing
         } else {
             let newCat = Category(
                 name: categoryName,
@@ -498,7 +496,6 @@ class ImportManager {
             )
             modelContext.insert(newCat)
             budget.categories.append(newCat)
-            category = newCat
         }
         
         if isInstallment && plannedAmount > 0 {

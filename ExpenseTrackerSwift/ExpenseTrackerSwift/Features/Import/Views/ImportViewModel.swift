@@ -23,12 +23,12 @@ final class ImportViewModel {
     
     init(
         modelContext: ModelContext,
-        parser: CSVParser = CSVParser.shared,
-        analyticsService: AnalyticsServiceProtocol = SharedAnalyticsService.instance
+        parser: CSVParser? = nil,
+        analyticsService: AnalyticsServiceProtocol? = nil
     ) {
         self.modelContext = modelContext
-        self.parser = parser
-        self.analyticsService = analyticsService
+        self.parser = parser ?? CSVParser.shared
+        self.analyticsService = analyticsService ?? SharedAnalyticsService.instance
     }
     
     func cancelImport() {
